@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import type { CardDraft } from '../../types/card'
 import styles from './CardFormDialog.module.css'
 
@@ -21,11 +21,6 @@ export function CardFormDialog({ heading, initialDraft, onSubmit, onClose }: Car
     dialogRef.current?.showModal()
   }, [])
 
-  function handleSubmit(event: FormEvent) {
-    event.preventDefault()
-    onSubmit({ title: title.trim(), description: description.trim() })
-  }
-
   return (
     // onClose срабатывает и при нажатии Esc
     <dialog ref={dialogRef} className={styles.dialog} onClose={onClose}>
@@ -36,7 +31,7 @@ export function CardFormDialog({ heading, initialDraft, onSubmit, onClose }: Car
           Заголовок
           <input
             value={title}
-            onChange={(event) => setTitle(event.target.value)}
+            onChange={handleTitleChange}
             maxLength={200}
             required
             autoFocus
@@ -47,7 +42,7 @@ export function CardFormDialog({ heading, initialDraft, onSubmit, onClose }: Car
           Описание
           <textarea
             value={description}
-            onChange={(event) => setDescription(event.target.value)}
+            onChange={handleDescriptionChange}
             rows={4}
           />
         </label>
@@ -63,4 +58,17 @@ export function CardFormDialog({ heading, initialDraft, onSubmit, onClose }: Car
       </form>
     </dialog>
   )
+
+  function handleTitleChange(event: ChangeEvent<HTMLInputElement>) {
+    setTitle(event.target.value)
+  }
+
+  function handleDescriptionChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    setDescription(event.target.value)
+  }
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault()
+    onSubmit({ title: title.trim(), description: description.trim() })
+  }
 }

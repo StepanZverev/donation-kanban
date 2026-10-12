@@ -15,16 +15,6 @@ export function Board() {
   const { isLoading, error, getColumnCards, addCard, editCard, removeCard } = useCards()
   const [form, setForm] = useState<FormState>(null)
 
-  function handleFormSubmit(draft: CardDraft) {
-    if (form?.mode === 'create') {
-      addCard(draft, form.status)
-    }
-    if (form?.mode === 'edit') {
-      editCard(form.card.id, draft)
-    }
-    setForm(null)
-  }
-
   if (isLoading) {
     return <p>Загружаю карточки…</p>
   }
@@ -39,9 +29,9 @@ export function Board() {
             key={column.status}
             title={column.title}
             cards={getColumnCards(column.status)}
-            onAddClick={() => setForm({ mode: 'create', status: column.status })}
-            onEditCard={(card) => setForm({ mode: 'edit', card })}
-            onRemoveCard={(card) => removeCard(card.id)}
+            onAddClick={() => handleAddClick(column.status)}
+            onEditCard={handleEditCard}
+            onRemoveCard={handleRemoveCard}
           />
         ))}
       </div>
@@ -55,9 +45,35 @@ export function Board() {
               : { title: '', description: '' }
           }
           onSubmit={handleFormSubmit}
-          onClose={() => setForm(null)}
+          onClose={handleFormClose}
         />
       )}
     </>
   )
+
+  function handleAddClick(status: CardStatus) {
+    setForm({ mode: 'create', status })
+  }
+
+  function handleEditCard(card: Card) {
+    setForm({ mode: 'edit', card })
+  }
+
+  function handleRemoveCard(card: Card) {
+    removeCard(card.id)
+  }
+
+  function handleFormSubmit(draft: CardDraft) {
+    if (form?.mode === 'create') {
+      addCard(draft, form.status)
+    }
+    if (form?.mode === 'edit') {
+      editCard(form.card.id, draft)
+    }
+    setForm(null)
+  }
+
+  function handleFormClose() {
+    setForm(null)
+  }
 }

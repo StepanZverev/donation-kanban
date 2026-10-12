@@ -10,12 +10,6 @@ type CardItemProps = {
 export function CardItem({ card, onEdit, onRemove }: CardItemProps) {
   const isDonation = card.source === 'donationalerts'
 
-  function handleRemove() {
-    if (window.confirm(`Убрать «${card.title}» с доски в историю?`)) {
-      onRemove(card)
-    }
-  }
-
   return (
     <article className={styles.card}>
       {isDonation && (
@@ -29,7 +23,7 @@ export function CardItem({ card, onEdit, onRemove }: CardItemProps) {
       {card.description && <p className={styles.description}>{card.description}</p>}
 
       <div className={styles.actions}>
-        <button type="button" onClick={() => onEdit(card)}>
+        <button type="button" onClick={handleEdit}>
           Изменить
         </button>
         <button type="button" onClick={handleRemove}>
@@ -38,4 +32,14 @@ export function CardItem({ card, onEdit, onRemove }: CardItemProps) {
       </div>
     </article>
   )
+
+  function handleEdit() {
+    onEdit(card)
+  }
+
+  function handleRemove() {
+    if (window.confirm(`Убрать «${card.title}» с доски в историю?`)) {
+      onRemove(card)
+    }
+  }
 }
