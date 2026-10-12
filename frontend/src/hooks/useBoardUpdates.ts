@@ -40,13 +40,25 @@ export function useBoardUpdates(onChange: () => void) {
       }
     }
 
+    // Если соединение ещё устанавливается, закрываем его сразу после установки.
+    // Иначе браузер пишет в консоль предупреждение «closed before the connection
+    // is established» (в режиме разработки React специально монтирует эффекты дважды).
+    function closeSocket() {
+      if (socket?.readyState === WebSocket.CONNECTING) {
+        const connectingSocket = socket
+        connectingSocket.onopen = () => connectingSocket.close()
+      } else {
+        socket?.close()
+      }
+    }
+
     connect()
 
     // Страницу закрыли или ушли на другую — закрываем соединение.
     return () => {
       isStopped = true
       window.clearTimeout(reconnectTimer)
-      socket?.close()
+      closeSocket()
     }
   }, [onChange])
 }
