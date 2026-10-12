@@ -35,7 +35,7 @@ uvicorn app.main:app --reload
 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` и повтори активацию.
 После активации в начале строки терминала появится `(.venv)`.
 
-**Фронтенд** (http://localhost:5173), в отдельном терминале:
+**Фронтенд** (http://127.0.0.1:5173), в отдельном терминале:
 
 ```bash
 cd frontend
