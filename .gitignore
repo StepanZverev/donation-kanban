@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+backend/.venv/
+backend/.env
+backend/*.db
+
+# Редакторы и система
+.DS_Store
+.idea/
+.vscode/
