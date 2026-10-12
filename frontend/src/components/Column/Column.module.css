@@ -36,3 +36,41 @@
   text-align: center;
   color: var(--color-text-secondary);
 }
+
+.columnDragOver {
+  outline: 2px dashed var(--color-accent);
+  outline-offset: -2px;
+}
+
+/* Обёртка карточки, к которой рисуется линия «сюда встанет карточка» */
+.slot {
+  position: relative;
+}
+
+.dropBefore::before,
+.dropAfter::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--color-accent);
+}
+
+/* Между карточками 8px, линия ровно посередине */
+.dropBefore::before {
+  top: -6px;
+}
+
+.dropAfter::after {
+  bottom: -6px;
+}
+
+/* Пустая колонка, над которой держат карточку. Меняем только стиль, а не сам элемент:
+   если убрать элемент из-под курсора во время перетаскивания, браузер может потерять drop. */
+.emptyDropTarget {
+  border-radius: 6px;
+  background-color: var(--color-surface);
+  color: var(--color-accent);
+}

@@ -31,3 +31,12 @@
   gap: 8px;
   margin-top: 10px;
 }
+
+.card[draggable='true'] {
+  cursor: grab;
+}
+
+/* Карточка, которую сейчас тащат, остаётся на месте полупрозрачной */
+.dragging {
+  opacity: 0.4;
+}
