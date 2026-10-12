@@ -128,13 +128,18 @@ def extract_donation(message: dict) -> dict | None:
 
 
 def to_donation(data: dict) -> Donation:
+    amount = float(data["amount"])
+    # DonationAlerts сам переводит сумму в основную валюту стримера и кладёт её
+    # в amount_in_user_currency. Если поля вдруг нет — берём сумму как есть.
+    streamer_amount = data.get("amount_in_user_currency")
     return Donation(
         id=int(data["id"]),
         username=data.get("username") or "Аноним",
         # У голосовых донатов текста может не быть
         message=data.get("message") or "",
-        amount=float(data["amount"]),
+        amount=amount,
         currency=data.get("currency") or "",
+        streamer_amount=float(streamer_amount) if streamer_amount is not None else amount,
     )
 
 
