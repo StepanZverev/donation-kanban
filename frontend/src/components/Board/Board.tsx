@@ -12,7 +12,7 @@ type FormState =
   | null
 
 export function Board() {
-  const { isLoading, error, getColumnCards, addCard, editCard, removeCard } = useCards()
+  const { isLoading, error, getColumnCards, addCard, editCard, moveCard, removeCard } = useCards()
   const [form, setForm] = useState<FormState>(null)
 
   if (isLoading) {
@@ -28,10 +28,12 @@ export function Board() {
           <Column
             key={column.status}
             title={column.title}
+            status={column.status}
             cards={getColumnCards(column.status)}
             onAddClick={() => handleAddClick(column.status)}
             onEditCard={handleEditCard}
             onRemoveCard={handleRemoveCard}
+            onDropCard={moveCard}
           />
         ))}
       </div>
