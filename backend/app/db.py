@@ -50,7 +50,11 @@ def now() -> str:
 
 
 def connect() -> sqlite3.Connection:
-    connection = sqlite3.connect(get_database_path())
+    # check_same_thread=False: FastAPI может открыть соединение в одном потоке,
+    # а закрыть (commit/close в get_db) — в другом. По умолчанию sqlite3 на это
+    # падает с ошибкой. Нам это безопасно: одно соединение обслуживает только
+    # один запрос, одновременно из двух потоков им никто не пользуется.
+    connection = sqlite3.connect(get_database_path(), check_same_thread=False)
     # Благодаря row_factory строки из базы можно читать как словарь: row["title"]
     connection.row_factory = sqlite3.Row
     return connection

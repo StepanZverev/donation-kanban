@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends
 
 from ..board import get_card, get_column_ids, save_column_order
 from ..db import get_db, now
+from ..realtime import notify_board_changed
 from ..schemas import Card, CardCreate, CardMove, CardUpdate
 
 router = APIRouter(prefix="/api/cards", tags=["Карточки"])
@@ -37,6 +38,7 @@ def create_card(data: CardCreate, db: sqlite3.Connection = Depends(get_db)) -> C
         """,
         (data.title, data.description, data.status, position, timestamp, timestamp),
     )
+    notify_board_changed(db)
     return get_card(db, cursor.lastrowid)
 
 
@@ -53,6 +55,7 @@ def update_card(card_id: int, data: CardUpdate, db: sqlite3.Connection = Depends
             card_id,
         ),
     )
+    notify_board_changed(db)
     return get_card(db, card_id)
 
 
@@ -78,6 +81,7 @@ def move_card(card_id: int, data: CardMove, db: sqlite3.Connection = Depends(get
     save_column_order(db, data.status, new_column)
 
     db.execute("UPDATE cards SET updated_at = ? WHERE id = ?", (now(), card_id))
+    notify_board_changed(db)
     return get_card(db, card_id)
 
 
@@ -100,4 +104,5 @@ def remove_card(card_id: int, db: sqlite3.Connection = Depends(get_db)) -> Card:
     column = get_column_ids(db, card.status)
     save_column_order(db, card.status, column)
 
+    notify_board_changed(db)
     return get_card(db, card_id)

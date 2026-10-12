@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as cardsApi from '../api/cards'
 import type { Card, CardDraft, CardStatus } from '../types/card'
+import { useBoardUpdates } from './useBoardUpdates'
 
 export function useCards() {
   const [cards, setCards] = useState<Card[]>([])
@@ -26,6 +27,9 @@ export function useCards() {
   useEffect(() => {
     reload()
   }, [reload])
+
+  // Изменения от других вкладок и новые донаты.
+  useBoardUpdates(reload)
 
   // После каждого изменения заново забираем карточки с сервера.
   // Так позиции в колонках всегда совпадают с тем, что в базе.

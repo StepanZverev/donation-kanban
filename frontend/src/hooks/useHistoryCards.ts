@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as historyApi from '../api/history'
 import type { Card } from '../types/card'
+import { useBoardUpdates } from './useBoardUpdates'
 
 export function useHistoryCards() {
   const [cards, setCards] = useState<Card[]>([])
@@ -23,6 +24,9 @@ export function useHistoryCards() {
   useEffect(() => {
     reload()
   }, [reload])
+
+  // Карточку могли убрать в историю или переоткрыть в другой вкладке.
+  useBoardUpdates(reload)
 
   async function runAndReload(action: () => Promise<unknown>) {
     try {
