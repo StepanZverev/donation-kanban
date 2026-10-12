@@ -1,0 +1,33 @@
+.card {
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+}
+
+.donation {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
