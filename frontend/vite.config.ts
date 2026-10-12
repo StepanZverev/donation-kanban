@@ -14,8 +14,9 @@ export default defineConfig({
     // поэтому в коде можно писать просто fetch('/api/...') без адреса сервера.
     // Адрес 127.0.0.1, а не localhost: на Windows localhost может уйти в IPv6 (::1),
     // а uvicorn по умолчанию слушает только IPv4.
+    // ws: true — пересылать и WebSocket-соединения (живые обновления доски).
     proxy: {
-      '/api': 'http://127.0.0.1:8000',
+      '/api': { target: 'http://127.0.0.1:8000', ws: true },
     },
   },
 })

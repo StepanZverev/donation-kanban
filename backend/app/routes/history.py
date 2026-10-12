@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..board import get_card, get_column_ids
 from ..db import get_db, now
+from ..realtime import notify_board_changed
 from ..schemas import Card
 
 router = APIRouter(prefix="/api/history", tags=["История"])
@@ -42,6 +43,7 @@ def restore_card(card_id: int, db: sqlite3.Connection = Depends(get_db)) -> Card
         """,
         (position, now(), card_id),
     )
+    notify_board_changed(db)
     return get_card(db, card_id)
 
 
@@ -50,3 +52,4 @@ def delete_forever(card_id: int, db: sqlite3.Connection = Depends(get_db)) -> No
     """Удаляет карточку из истории окончательно, без возможности вернуть."""
     get_archived_card(db, card_id)
     db.execute("DELETE FROM cards WHERE id = ?", (card_id,))
+    notify_board_changed(db)

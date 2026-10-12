@@ -67,5 +67,7 @@ pytest
 | `GET /api/history` | история, сначала новые |
 | `POST /api/history/{id}/restore` | вернуть из истории в «В очереди» |
 | `DELETE /api/history/{id}` | удалить из истории насовсем |
+| `POST /api/dev/fake-donation` | создать карточку из случайного выдуманного доната (для проверки) |
+| `WS /api/ws` | WebSocket: сервер шлёт `{"type": "board_changed"}` при любом изменении доски |
 
 Статусы: `queue` (в очереди), `in_progress` (в работе), `done` (выполнено).

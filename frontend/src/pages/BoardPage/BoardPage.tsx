@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { sendFakeDonation } from '../../api/dev'
 import { useCards } from '../../hooks/useCards'
 import { COLUMNS, type Card, type CardDraft, type CardStatus } from '../../types/card'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
@@ -22,6 +23,13 @@ export function BoardPage() {
   return (
     <>
       {error && <p className={styles.error}>{error}</p>}
+
+      <div className={styles.toolbar}>
+        {/* Карточка появится сама: бэкенд пришлёт обновление через WebSocket */}
+        <button type="button" onClick={handleFakeDonationClick}>
+          + Тестовый донат
+        </button>
+      </div>
 
       <div className={styles.board}>
         {COLUMNS.map((column) => (
@@ -73,6 +81,10 @@ export function BoardPage() {
       editCard(form.card.id, draft)
     }
     setForm(null)
+  }
+
+  function handleFakeDonationClick() {
+    sendFakeDonation().catch(() => window.alert('Не удалось создать тестовый донат'))
   }
 
   function handleFormClose() {
