@@ -1,0 +1,75 @@
+import { useHistory } from '../../hooks/useHistory'
+import type { Card } from '../../types/card'
+import styles from './History.module.css'
+
+const archiveReasonLabels = {
+  done: 'Выполнена',
+  deleted: 'Удалена',
+}
+
+export function History() {
+  const { cards, isLoading, error, restoreCard, deleteForever } = useHistory()
+
+  if (isLoading) {
+    return <p>Загружаю историю…</p>
+  }
+
+  return (
+    <>
+      {error && <p className={styles.error}>{error}</p>}
+
+      {cards.length === 0 && <p className={styles.empty}>В истории пока ничего нет</p>}
+
+      <ul className={styles.list}>
+        {cards.map((card) => (
+          <li key={card.id} className={styles.item}>
+            <div className={styles.info}>
+              <p className={styles.meta}>
+                {card.archiveReason && (
+                  <span className={`${styles.badge} ${styles[card.archiveReason]}`}>
+                    {archiveReasonLabels[card.archiveReason]}
+                  </span>
+                )}
+                {card.archivedAt && formatDate(card.archivedAt)}
+                {card.source === 'donationalerts' &&
+                  ` · ${card.donorName} · ${card.amount} ${card.currency}`}
+              </p>
+              <h3 className={styles.title}>{card.title}</h3>
+              {card.description && <p className={styles.description}>{card.description}</p>}
+            </div>
+
+            <div className={styles.actions}>
+              <button type="button" onClick={() => handleRestore(card)}>
+                Переоткрыть
+              </button>
+              <button type="button" onClick={() => handleDeleteForever(card)}>
+                Удалить навсегда
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </>
+  )
+
+  function handleRestore(card: Card) {
+    restoreCard(card.id)
+  }
+
+  function handleDeleteForever(card: Card) {
+    if (window.confirm(`Удалить «${card.title}» навсегда? Вернуть будет нельзя.`)) {
+      deleteForever(card.id)
+    }
+  }
+}
+
+// '2026-10-12T13:04:13+00:00' → '12.10.2026, 16:04' (в часовом поясе пользователя)
+function formatDate(isoDate: string) {
+  return new Date(isoDate).toLocaleString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}

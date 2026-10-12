@@ -1,0 +1,90 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+}
+
+/* На узких экранах кнопки уходят под текст */
+@media (max-width: 600px) {
+  .item {
+    flex-direction: column;
+  }
+}
+
+.info {
+  min-width: 0;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.badge {
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.done {
+  background-color: var(--color-success-background);
+  color: var(--color-success);
+}
+
+.deleted {
+  background-color: var(--color-column);
+  color: var(--color-text-secondary);
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.empty {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.error {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
