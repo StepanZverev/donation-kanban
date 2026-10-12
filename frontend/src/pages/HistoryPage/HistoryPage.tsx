@@ -1,14 +1,14 @@
-import { useHistory } from '../../hooks/useHistory'
+import { useHistoryCards } from '../../hooks/useHistoryCards'
 import type { Card } from '../../types/card'
-import styles from './History.module.css'
+import styles from './HistoryPage.module.css'
 
 const archiveReasonLabels = {
   done: 'Выполнена',
   deleted: 'Удалена',
 }
 
-export function History() {
-  const { cards, isLoading, error, restoreCard, deleteForever } = useHistory()
+export function HistoryPage() {
+  const { cards, isLoading, error, restoreCard, deleteForever } = useHistoryCards()
 
   if (isLoading) {
     return <p>Загружаю историю…</p>

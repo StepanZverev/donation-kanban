@@ -1,26 +1,21 @@
-import { useState } from 'react'
-import { Board } from './components/Board/Board'
-import { History } from './components/History/History'
-import { Tabs } from './components/Tabs/Tabs'
-
-type Page = 'board' | 'history'
-
-const pages: { id: Page; label: string }[] = [
-  { id: 'board', label: 'Доска' },
-  { id: 'history', label: 'История' },
-]
+import { Navigate, Route, Routes } from 'react-router'
+import { Navigation } from './components/Navigation/Navigation'
+import { BoardPage } from './pages/BoardPage/BoardPage'
+import { HistoryPage } from './pages/HistoryPage/HistoryPage'
 
 function App() {
-  const [page, setPage] = useState<Page>('board')
-
   return (
     <main className="app">
       <h1>Менеджер донатов</h1>
-      <Tabs tabs={pages} activeTab={page} onChange={setPage} />
+      <Navigation />
 
-      {/* Каждая вкладка при открытии сама загружает свежие данные с сервера */}
-      {page === 'board' && <Board />}
-      {page === 'history' && <History />}
+      {/* Какую страницу показать, зависит от адреса в браузере */}
+      <Routes>
+        <Route path="/" element={<BoardPage />} />
+        <Route path="/history" element={<HistoryPage />} />
+        {/* Любой неизвестный адрес отправляем на доску */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </main>
   )
 }

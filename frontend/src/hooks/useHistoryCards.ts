@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import * as historyApi from '../api/history'
 import type { Card } from '../types/card'
 
-export function useHistory() {
+export function useHistoryCards() {
   const [cards, setCards] = useState<Card[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

@@ -7,7 +7,9 @@
 - Drag-and-drop — на нативном HTML5 DnD.
 - В компонентах обработчики (`handleX`) объявляются через `function` **после** `return`
   (function declarations всплывают, поэтому JSX может на них ссылаться).
-- Запросы к API только через `src/api/`, логика доски — в `src/hooks/useCards.ts`.
+- Запросы к API только через `src/api/`, логика данных — в хуках `src/hooks/`.
+- Страницы (то, что открывается по адресу) лежат в `src/pages/`, переиспользуемые куски — в `src/components/`.
+- Навигация — React Router 7 (`react-router`), маршруты описаны в `src/App.tsx`.
 - Стили — CSS Modules рядом с компонентом, цвета — CSS-переменные в `src/index.css`.
 
 ## Бэкенд (Python, FastAPI)

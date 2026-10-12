@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useCards } from '../../hooks/useCards'
 import { COLUMNS, type Card, type CardDraft, type CardStatus } from '../../types/card'
-import { CardFormDialog } from '../CardFormDialog/CardFormDialog'
-import { Column } from '../Column/Column'
-import styles from './Board.module.css'
+import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
+import { Column } from '../../components/Column/Column'
+import styles from './BoardPage.module.css'
 
 // Какую форму сейчас показываем: создание в колонке, редактирование карточки или никакую.
 type FormState =
@@ -11,7 +11,7 @@ type FormState =
   | { mode: 'edit'; card: Card }
   | null
 
-export function Board() {
+export function BoardPage() {
   const { isLoading, error, getColumnCards, addCard, editCard, moveCard, removeCard } = useCards()
   const [form, setForm] = useState<FormState>(null)
 
