@@ -22,25 +22,38 @@ def get_database_path() -> str:
     return os.environ.get("DATABASE_PATH", str(DEFAULT_DATABASE_PATH))
 
 
-# Одна таблица на всё: и карточки на доске, и история.
-# Если archived_at пустой (NULL) — карточка на доске.
+# Колонки доски. Их три вида (поле kind):
+#   incoming — «Куча», куда падают новые донаты (всегда одна, крайняя левая);
+#   work     — промежуточные колонки, например «В работе» (их может быть несколько);
+#   done     — «Выполнено» (всегда одна, крайняя правая).
+#
+# Карточки: и те, что на доске, и история.
+# Если archived_at пустой (NULL) — карточка на доске, в колонке column_id.
 # Если заполнен — карточка в истории.
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS board_columns (
+    id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    title    TEXT    NOT NULL,
+    kind     TEXT    NOT NULL,              -- incoming | work | done
+    position INTEGER NOT NULL DEFAULT 0     -- порядок слева направо
+);
+
 CREATE TABLE IF NOT EXISTS cards (
-    id             INTEGER PRIMARY KEY AUTOINCREMENT,
-    title          TEXT    NOT NULL,
-    description    TEXT    NOT NULL DEFAULT '',
-    status         TEXT    NOT NULL DEFAULT 'queue',   -- queue | in_progress | done
-    position       INTEGER NOT NULL DEFAULT 0,         -- порядок внутри колонки, с нуля
-    source         TEXT    NOT NULL DEFAULT 'manual',  -- manual | donationalerts
-    donation_id    INTEGER UNIQUE,                     -- id доната в DonationAlerts, защищает от дублей
-    donor_name     TEXT,
-    amount         REAL,
-    currency       TEXT,
-    created_at     TEXT    NOT NULL,
-    updated_at     TEXT    NOT NULL,
-    archived_at    TEXT,                               -- когда убрали с доски в историю
-    archive_reason TEXT                                -- done | deleted
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    title           TEXT    NOT NULL,
+    description     TEXT    NOT NULL DEFAULT '',
+    column_id       INTEGER REFERENCES board_columns (id),
+    source          TEXT    NOT NULL DEFAULT 'manual',  -- manual | donationalerts
+    donation_id     INTEGER UNIQUE,                     -- id доната в DonationAlerts, защищает от дублей
+    donor_name      TEXT,
+    amount          REAL,                               -- сумма в валюте донатера
+    currency        TEXT,
+    streamer_amount REAL,                               -- та же сумма в валюте стримера, по ней сортируем
+    created_at      TEXT    NOT NULL,
+    updated_at      TEXT    NOT NULL,
+    moved_at        TEXT    NOT NULL,                   -- когда карточка попала в текущую колонку
+    archived_at     TEXT,                               -- когда убрали с доски в историю
+    archive_reason  TEXT                                -- done | deleted
 );
 
 -- Простое хранилище «ключ — значение» для служебных данных,
@@ -51,10 +64,21 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 """
 
+# Колонки, с которыми доска создаётся впервые.
+DEFAULT_COLUMNS = [
+    ("Куча", "incoming"),
+    ("В работе", "work"),
+    ("Выполнено", "done"),
+]
+
 
 def now() -> str:
-    """Текущее время в UTC строкой, например '2026-10-12T11:52:48+00:00'."""
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    """
+    Текущее время в UTC строкой, например '2026-10-12T11:52:48.123+00:00'.
+    Миллисекунды нужны, чтобы различать действия, сделанные в одну секунду
+    (например, две карточки, отправленные в «Выполнено» подряд).
+    """
+    return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
 
 
 def connect() -> sqlite3.Connection:
@@ -83,9 +107,67 @@ def open_db() -> Iterator[sqlite3.Connection]:
 
 
 def init_db() -> None:
-    """Создаёт таблицы, если их ещё нет. Вызывается один раз при старте сервера."""
+    """
+    Готовит базу при старте сервера: переделывает старую базу под новую схему,
+    создаёт недостающие таблицы и колонки доски по умолчанию.
+    """
     with open_db() as db:
+        migrate_from_fixed_statuses(db)
         db.executescript(SCHEMA)
+        create_default_columns(db)
+
+
+def create_default_columns(db: sqlite3.Connection) -> None:
+    """Если колонок ещё нет (новая база), создаёт «Кучу», «В работе» и «Выполнено»."""
+    if db.execute("SELECT COUNT(*) FROM board_columns").fetchone()[0] > 0:
+        return
+    for position, (title, kind) in enumerate(DEFAULT_COLUMNS):
+        db.execute(
+            "INSERT INTO board_columns (title, kind, position) VALUES (?, ?, ?)",
+            (title, kind, position),
+        )
+
+
+def migrate_from_fixed_statuses(db: sqlite3.Connection) -> None:
+    """
+    Раньше колонки были зашиты в код: у карточки было поле status
+    (queue / in_progress / done) и position — место в колонке.
+    Теперь колонки лежат в таблице board_columns, а карточка ссылается на неё
+    через column_id. Порядок в колонке считается по сумме, position не нужен.
+
+    Функция переделывает старую базу один раз. Для новой базы ничего не делает.
+    """
+    card_fields = [row["name"] for row in db.execute("PRAGMA table_info(cards)")]
+    if "status" not in card_fields:
+        return
+
+    # 1. Создаём таблицу колонок с колонками по умолчанию.
+    db.executescript(SCHEMA)
+    create_default_columns(db)
+
+    # 2. Добавляем карточкам новые поля.
+    db.execute("ALTER TABLE cards ADD COLUMN column_id INTEGER REFERENCES board_columns (id)")
+    db.execute("ALTER TABLE cards ADD COLUMN streamer_amount REAL")
+    db.execute("ALTER TABLE cards ADD COLUMN moved_at TEXT NOT NULL DEFAULT ''")
+
+    # 3. Раскладываем карточки по колонкам: старый статус → вид колонки.
+    old_status_to_kind = {"queue": "incoming", "in_progress": "work", "done": "done"}
+    for status, kind in old_status_to_kind.items():
+        db.execute(
+            """
+            UPDATE cards
+            SET column_id = (SELECT id FROM board_columns WHERE kind = ? ORDER BY position LIMIT 1)
+            WHERE status = ?
+            """,
+            (kind, status),
+        )
+
+    # Валюту стримера раньше не знали, поэтому берём сумму как есть.
+    db.execute("UPDATE cards SET streamer_amount = amount, moved_at = updated_at")
+
+    # 4. Убираем старые поля, чтобы они не путали.
+    db.execute("ALTER TABLE cards DROP COLUMN status")
+    db.execute("ALTER TABLE cards DROP COLUMN position")
 
 
 def get_db() -> Iterator[sqlite3.Connection]:

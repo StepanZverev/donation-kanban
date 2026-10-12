@@ -1,80 +1,71 @@
 import { useState, type DragEvent } from 'react'
-import type { Card, CardStatus } from '../../types/card'
+import type { BoardColumn, Card } from '../../types/card'
 import { CardItem } from '../CardItem/CardItem'
 import styles from './Column.module.css'
 
 type ColumnProps = {
-  title: string
-  status: CardStatus
+  column: BoardColumn
   cards: Card[]
   onAddClick: () => void
   onEditCard: (card: Card) => void
   onRemoveCard: (card: Card) => void
-  onDropCard: (cardId: number, status: CardStatus, position: number) => void
+  onDropCard: (cardId: number, columnId: number) => void
+  onClearClick: () => void
 }
 
 export function Column({
-  title,
-  status,
+  column,
   cards,
   onAddClick,
   onEditCard,
   onRemoveCard,
   onDropCard,
+  onClearClick,
 }: ColumnProps) {
-  // Куда встанет карточка, если её сейчас отпустить (0 — самый верх).
-  // null — над этой колонкой сейчас ничего не тащат.
-  const [dropIndex, setDropIndex] = useState<number | null>(null)
+  // Держат ли сейчас карточку над этой колонкой (чтобы подсветить её).
+  const [isDragOver, setIsDragOver] = useState(false)
+  const isDoneColumn = column.kind === 'done'
 
   return (
     <section
-      className={`${styles.column} ${dropIndex !== null ? styles.columnDragOver : ''}`}
+      className={`${styles.column} ${isDragOver ? styles.columnDragOver : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       <header className={styles.header}>
         <h2 className={styles.title}>
-          {title} <span className={styles.count}>{cards.length}</span>
+          {column.title} <span className={styles.count}>{cards.length}</span>
         </h2>
-        <button type="button" onClick={onAddClick}>
-          + Добавить
-        </button>
+
+        {isDoneColumn ? (
+          <button type="button" onClick={handleClearClick} disabled={cards.length === 0}>
+            Очистить
+          </button>
+        ) : (
+          <button type="button" onClick={onAddClick}>
+            + Добавить
+          </button>
+        )}
       </header>
 
       <div className={styles.cards}>
-        {cards.map((card, index) => (
-          <div key={card.id} className={getSlotClassName(index)}>
-            <CardItem card={card} onEdit={onEditCard} onRemove={onRemoveCard} />
-          </div>
+        {cards.map((card) => (
+          <CardItem key={card.id} card={card} onEdit={onEditCard} onRemove={onRemoveCard} />
         ))}
 
         {cards.length === 0 && (
-          <p className={`${styles.empty} ${dropIndex !== null ? styles.emptyDropTarget : ''}`}>
-            Пусто
-          </p>
+          <p className={`${styles.empty} ${isDragOver ? styles.emptyDropTarget : ''}`}>Пусто</p>
         )}
       </div>
     </section>
   )
 
-  // Линию «сюда встанет карточка» рисуем над нужной карточкой (или под последней)
-  // через CSS, чтобы она не сдвигала карточки и не сбивала расчёт позиции.
-  function getSlotClassName(index: number) {
-    if (dropIndex === index) {
-      return `${styles.slot} ${styles.dropBefore}`
-    }
-    if (dropIndex === cards.length && index === cards.length - 1) {
-      return `${styles.slot} ${styles.dropAfter}`
-    }
-    return styles.slot
-  }
-
   // Срабатывает много раз в секунду, пока карточку держат над колонкой.
   function handleDragOver(event: DragEvent<HTMLElement>) {
     // Без preventDefault браузер считает, что сюда бросать нельзя.
     event.preventDefault()
-    setDropIndex(getDropIndex(event))
+    setIsDragOver(true)
   }
 
   function handleDragLeave(event: DragEvent<HTMLElement>) {
@@ -82,44 +73,29 @@ export function Column({
     // Сбрасываем подсветку, только если курсор действительно ушёл из колонки.
     const cursorTarget = event.relatedTarget as Node | null
     if (!event.currentTarget.contains(cursorTarget)) {
-      setDropIndex(null)
+      setIsDragOver(false)
     }
   }
 
+  // Место в колонке не выбираем: бэкенд сам поставит карточку по сумме доната.
   function handleDrop(event: DragEvent<HTMLElement>) {
     event.preventDefault()
+    setIsDragOver(false)
     const cardId = Number(event.dataTransfer.getData('text/plain'))
-    let position = getDropIndex(event)
-    setDropIndex(null)
-
     if (!cardId) {
       return
     }
 
-    // Если карточку двигают вниз внутри этой же колонки, то после того как её
-    // вынут со старого места, всё, что ниже, сдвинется на одну позицию вверх.
-    const currentIndex = cards.findIndex((card) => card.id === cardId)
-    if (currentIndex !== -1 && currentIndex < position) {
-      position -= 1
+    // Бросили в ту же колонку, откуда взяли, — ничего не делаем.
+    const isAlreadyHere = cards.some((card) => card.id === cardId)
+    if (!isAlreadyHere) {
+      onDropCard(cardId, column.id)
     }
-    // Бросили на то же место — ничего не делаем.
-    if (currentIndex === position) {
-      return
-    }
-
-    onDropCard(cardId, status, position)
   }
 
-  // Считает место вставки по высоте курсора: карточка встанет перед первой
-  // карточкой, середина которой ниже курсора.
-  function getDropIndex(event: DragEvent<HTMLElement>) {
-    const cardElements = event.currentTarget.querySelectorAll('[data-card-id]')
-    for (let index = 0; index < cardElements.length; index++) {
-      const rect = cardElements[index].getBoundingClientRect()
-      if (event.clientY < rect.top + rect.height / 2) {
-        return index
-      }
+  function handleClearClick() {
+    if (window.confirm(`Отправить все выполненные карточки (${cards.length}) в историю?`)) {
+      onClearClick()
     }
-    return cardElements.length
   }
 }

@@ -8,7 +8,7 @@
 import sqlite3
 from dataclasses import dataclass
 
-from .board import get_column_ids
+from .board import get_column_id_by_kind
 from .db import now
 
 # Сколько символов сообщения показываем в заголовке карточки
@@ -20,13 +20,15 @@ class Donation:
     id: int  # id доната в DonationAlerts
     username: str
     message: str
-    amount: float
+    amount: float  # сумма в валюте донатера
     currency: str
+    # Та же сумма в валюте стримера. По ней сортируем: 5 USD и 200 RUB иначе не сравнить.
+    streamer_amount: float
 
 
 def add_donation_card(db: sqlite3.Connection, donation: Donation) -> bool:
     """
-    Создаёт карточку в конце колонки «В очереди».
+    Создаёт карточку в «Куче». Место в колонке определит сумма доната.
     Возвращает False, если карточка для этого доната уже есть (защита от дублей).
     """
     title, description = split_message(donation.message)
@@ -36,19 +38,21 @@ def add_donation_card(db: sqlite3.Connection, donation: Donation) -> bool:
     cursor = db.execute(
         """
         INSERT OR IGNORE INTO cards (
-            title, description, status, position, source,
-            donation_id, donor_name, amount, currency, created_at, updated_at
+            title, description, column_id, source, donation_id, donor_name,
+            amount, currency, streamer_amount, created_at, updated_at, moved_at
         )
-        VALUES (?, ?, 'queue', ?, 'donationalerts', ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, 'donationalerts', ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             title,
             description,
-            len(get_column_ids(db, "queue")),
+            get_column_id_by_kind(db, "incoming"),
             donation.id,
             donation.username,
             donation.amount,
             donation.currency,
+            donation.streamer_amount,
+            timestamp,
             timestamp,
             timestamp,
         ),

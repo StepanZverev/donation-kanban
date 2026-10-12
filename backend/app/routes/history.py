@@ -6,7 +6,7 @@ import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..board import get_card, get_column_ids
+from ..board import get_card, get_column_id_by_kind
 from ..db import get_db, now
 from ..realtime import notify_board_changed
 from ..schemas import Card
@@ -32,16 +32,16 @@ def list_history(db: sqlite3.Connection = Depends(get_db)) -> list[Card]:
 
 @router.post("/{card_id}/restore")
 def restore_card(card_id: int, db: sqlite3.Connection = Depends(get_db)) -> Card:
-    """Переоткрывает карточку: возвращает её на доску в конец колонки «В очереди»."""
+    """Переоткрывает карточку: возвращает её на доску в «Кучу»."""
     get_archived_card(db, card_id)
-    position = len(get_column_ids(db, "queue"))
+    timestamp = now()
     db.execute(
         """
         UPDATE cards
-        SET archived_at = NULL, archive_reason = NULL, status = 'queue', position = ?, updated_at = ?
+        SET archived_at = NULL, archive_reason = NULL, column_id = ?, moved_at = ?, updated_at = ?
         WHERE id = ?
         """,
-        (position, now(), card_id),
+        (get_column_id_by_kind(db, "incoming"), timestamp, timestamp, card_id),
     )
     notify_board_changed(db)
     return get_card(db, card_id)

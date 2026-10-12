@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { sendFakeDonation } from '../../api/dev'
 import { useCards } from '../../hooks/useCards'
-import { COLUMNS, type Card, type CardDraft, type CardStatus } from '../../types/card'
+import type { Card, CardDraft } from '../../types/card'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
 import { DonationAlertsStatus } from '../../components/DonationAlertsStatus/DonationAlertsStatus'
 import { Column } from '../../components/Column/Column'
@@ -9,12 +9,22 @@ import styles from './BoardPage.module.css'
 
 // Какую форму сейчас показываем: создание в колонке, редактирование карточки или никакую.
 type FormState =
-  | { mode: 'create'; status: CardStatus }
+  | { mode: 'create'; columnId: number }
   | { mode: 'edit'; card: Card }
   | null
 
 export function BoardPage() {
-  const { isLoading, error, getColumnCards, addCard, editCard, moveCard, removeCard } = useCards()
+  const {
+    isLoading,
+    error,
+    columns,
+    getColumnCards,
+    addCard,
+    editCard,
+    moveCard,
+    removeCard,
+    clearDone,
+  } = useCards()
   const [form, setForm] = useState<FormState>(null)
 
   if (isLoading) {
@@ -34,16 +44,16 @@ export function BoardPage() {
       </div>
 
       <div className={styles.board}>
-        {COLUMNS.map((column) => (
+        {columns.map((column) => (
           <Column
-            key={column.status}
-            title={column.title}
-            status={column.status}
-            cards={getColumnCards(column.status)}
-            onAddClick={() => handleAddClick(column.status)}
+            key={column.id}
+            column={column}
+            cards={getColumnCards(column.id)}
+            onAddClick={() => handleAddClick(column.id)}
             onEditCard={handleEditCard}
             onRemoveCard={handleRemoveCard}
             onDropCard={moveCard}
+            onClearClick={clearDone}
           />
         ))}
       </div>
@@ -63,8 +73,8 @@ export function BoardPage() {
     </>
   )
 
-  function handleAddClick(status: CardStatus) {
-    setForm({ mode: 'create', status })
+  function handleAddClick(columnId: number) {
+    setForm({ mode: 'create', columnId })
   }
 
   function handleEditCard(card: Card) {
@@ -77,7 +87,7 @@ export function BoardPage() {
 
   function handleFormSubmit(draft: CardDraft) {
     if (form?.mode === 'create') {
-      addCard(draft, form.status)
+      addCard(draft, form.columnId)
     }
     if (form?.mode === 'edit') {
       editCard(form.card.id, draft)

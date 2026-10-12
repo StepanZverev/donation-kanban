@@ -1,22 +1,36 @@
-// Типы карточки. Повторяют то, что отдаёт бэкенд (backend/app/schemas.py).
-
-export type CardStatus = 'queue' | 'in_progress' | 'done'
+// Типы карточек и колонок. Повторяют то, что отдаёт бэкенд (backend/app/schemas.py).
 
 export type CardSource = 'manual' | 'donationalerts'
+
+// Вид колонки:
+// incoming — «Куча», куда падают новые донаты (крайняя левая);
+// work — промежуточные колонки, например «В работе»;
+// done — «Выполнено» (крайняя правая).
+export type ColumnKind = 'incoming' | 'work' | 'done'
+
+export type BoardColumn = {
+  id: number
+  title: string
+  kind: ColumnKind
+  position: number
+}
 
 export type Card = {
   id: number
   title: string
   description: string
-  status: CardStatus
-  position: number
+  columnId: number | null
   source: CardSource
   donationId: number | null
   donorName: string | null
   amount: number | null
   currency: string | null
+  // Сумма в валюте стримера: по ней бэкенд сортирует карточки в колонке
+  streamerAmount: number | null
   createdAt: string
   updatedAt: string
+  // Когда карточка попала в текущую колонку
+  movedAt: string
   archivedAt: string | null
   archiveReason: 'done' | 'deleted' | null
 }
@@ -26,10 +40,3 @@ export type CardDraft = {
   title: string
   description: string
 }
-
-// Колонки доски в том порядке, в каком они идут слева направо.
-export const COLUMNS: { status: CardStatus; title: string }[] = [
-  { status: 'queue', title: 'В очереди' },
-  { status: 'in_progress', title: 'В работе' },
-  { status: 'done', title: 'Выполнено' },
-]
