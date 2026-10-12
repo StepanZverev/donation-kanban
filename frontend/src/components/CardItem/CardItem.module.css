@@ -28,8 +28,30 @@
 
 .actions {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
   margin-top: 10px;
+}
+
+/* «Изменить» нужна редко (больше модератору), поэтому она неброская */
+.editButton {
+  border-color: transparent;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+}
+
+.quickActions {
+  display: flex;
+  gap: 6px;
+}
+
+/* Кнопки ▶ ✓ ✕ квадратные и одного размера, чтобы в них было легко попасть */
+.quickActions button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 15px;
 }
 
 .card[draggable='true'] {

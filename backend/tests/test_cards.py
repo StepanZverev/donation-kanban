@@ -209,3 +209,13 @@ def test_old_database_is_migrated(tmp_path, monkeypatch):
         ("Готово", "done", None, "2026-01-02"),
     ]
     assert "status" not in fields and "position" not in fields
+
+
+def test_restore_to_chosen_column(client):
+    """Кнопка «Отменить» возвращает карточку туда, где она была."""
+    ids = columns(client)
+    card = create(client, "A", column_id=ids["work"])
+    client.delete(f"/api/cards/{card['id']}")
+
+    response = client.post(f"/api/history/{card['id']}/restore", json={"column_id": ids["work"]})
+    assert response.json()["column_id"] == ids["work"]

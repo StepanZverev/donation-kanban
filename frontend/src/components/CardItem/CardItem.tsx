@@ -5,10 +5,15 @@ import styles from './CardItem.module.css'
 type CardItemProps = {
   card: Card
   onEdit: (card: Card) => void
-  onRemove: (card: Card) => void
+  // Быстрые действия. Если колбэк не передали, кнопки нет:
+  // например, у карточки в «Выполнено» нет кнопки ✓.
+  onStart?: (card: Card) => void
+  onComplete?: (card: Card) => void
+  onRemove?: (card: Card) => void
 }
 
-export function CardItem({ card, onEdit, onRemove }: CardItemProps) {
+export function CardItem(props: CardItemProps) {
+  const { card, onEdit, onStart, onComplete, onRemove } = props
   const [isDragging, setIsDragging] = useState(false)
   const isDonation = card.source === 'donationalerts'
 
@@ -31,12 +36,27 @@ export function CardItem({ card, onEdit, onRemove }: CardItemProps) {
       {card.description && <p className={styles.description}>{card.description}</p>}
 
       <div className={styles.actions}>
-        <button type="button" onClick={handleEdit}>
+        <button type="button" className={styles.editButton} onClick={handleEdit}>
           Изменить
         </button>
-        <button type="button" onClick={handleRemove}>
-          Убрать
-        </button>
+
+        <div className={styles.quickActions}>
+          {onStart && (
+            <button type="button" title="Взять в работу" onClick={handleStart}>
+              ▶
+            </button>
+          )}
+          {onComplete && (
+            <button type="button" title="Выполнено" onClick={handleComplete}>
+              ✓
+            </button>
+          )}
+          {onRemove && (
+            <button type="button" title="Выкинуть в историю" onClick={handleRemove}>
+              ✕
+            </button>
+          )}
+        </div>
       </div>
     </article>
   )
@@ -56,9 +76,16 @@ export function CardItem({ card, onEdit, onRemove }: CardItemProps) {
     onEdit(card)
   }
 
+  function handleStart() {
+    onStart?.(card)
+  }
+
+  function handleComplete() {
+    onComplete?.(card)
+  }
+
+  // Без окна «Вы уверены?»: если выкинули случайно, есть кнопка «Отменить» внизу.
   function handleRemove() {
-    if (window.confirm(`Убрать «${card.title}» с доски в историю?`)) {
-      onRemove(card)
-    }
+    onRemove?.(card)
   }
 }

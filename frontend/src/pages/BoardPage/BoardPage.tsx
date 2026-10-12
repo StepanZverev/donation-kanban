@@ -5,6 +5,7 @@ import type { Card, CardDraft } from '../../types/card'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
 import { DonationAlertsStatus } from '../../components/DonationAlertsStatus/DonationAlertsStatus'
 import { Column } from '../../components/Column/Column'
+import { UndoToast } from '../../components/UndoToast/UndoToast'
 import styles from './BoardPage.module.css'
 
 // Какую форму сейчас показываем: создание в колонке, редактирование карточки или никакую.
@@ -22,8 +23,13 @@ export function BoardPage() {
     addCard,
     editCard,
     moveCard,
+    startCard,
+    completeCard,
     removeCard,
     clearDone,
+    lastAction,
+    undoLastAction,
+    forgetLastAction,
   } = useCards()
   const [form, setForm] = useState<FormState>(null)
 
@@ -51,12 +57,24 @@ export function BoardPage() {
             cards={getColumnCards(column.id)}
             onAddClick={() => handleAddClick(column.id)}
             onEditCard={handleEditCard}
-            onRemoveCard={handleRemoveCard}
+            onStartCard={startCard}
+            onCompleteCard={completeCard}
+            onRemoveCard={removeCard}
             onDropCard={moveCard}
             onClearClick={clearDone}
           />
         ))}
       </div>
+
+      {lastAction && (
+        <UndoToast
+          // key: новое действие — новая плашка, и её таймер начинается заново
+          key={lastAction.cardIds.join(',')}
+          message={lastAction.message}
+          onUndo={undoLastAction}
+          onClose={forgetLastAction}
+        />
+      )}
 
       {form && (
         <CardFormDialog
@@ -79,10 +97,6 @@ export function BoardPage() {
 
   function handleEditCard(card: Card) {
     setForm({ mode: 'edit', card })
-  }
-
-  function handleRemoveCard(card: Card) {
-    removeCard(card.id)
   }
 
   function handleFormSubmit(draft: CardDraft) {

@@ -1,0 +1,21 @@
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 12px 10px 16px;
+  border-radius: 8px;
+  background-color: var(--color-text);
+  color: var(--color-surface);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 20%);
+}
+
+.undoButton {
+  border-color: transparent;
+  background-color: transparent;
+  color: var(--color-edge-column-border);
+  font-weight: 600;
+}

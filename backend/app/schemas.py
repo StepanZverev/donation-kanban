@@ -51,6 +51,15 @@ class CardMove(BaseModel):
     column_id: int
 
 
+class CardRestore(BaseModel):
+    """
+    Куда вернуть карточку из истории. Если column_id не прислали — в «Кучу».
+    Кнопка «Отменить» присылает колонку, где карточка была до этого.
+    """
+
+    column_id: int | None = None
+
+
 class Card(BaseModel):
     """Карточка в том виде, в каком её получает фронт."""
 
