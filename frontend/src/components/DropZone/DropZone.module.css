@@ -1,0 +1,46 @@
+/* Место под зону есть всегда, а сама зона появляется только во время перетаскивания.
+   Так доска не прыгает, когда зона показывается. */
+.zone {
+  flex: 0 0 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 2px dashed;
+  border-radius: 10px;
+  visibility: hidden;
+}
+
+.visible {
+  visibility: visible;
+}
+
+.delete {
+  border-color: var(--color-error);
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
+.done {
+  border-color: var(--color-success);
+  background-color: var(--color-success-background);
+  color: var(--color-success);
+}
+
+/* Карточку держат прямо над зоной — делаем её ярче */
+.dragOver {
+  border-style: solid;
+  transform: scale(1.04);
+}
+
+.icon {
+  font-size: 24px;
+}
+
+/* Подпись идёт сверху вниз, чтобы поместиться в узкую зону */
+.label {
+  writing-mode: vertical-rl;
+  font-size: 14px;
+  font-weight: 600;
+}

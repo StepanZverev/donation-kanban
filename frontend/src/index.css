@@ -3,13 +3,11 @@
   --color-background: #f6f8fa;
   --color-surface: #ffffff;
   --color-column: #eaeef2;
-  /* «Куча» и «Выполнено» */
-  --color-edge-column: #f3eefc;
-  --color-edge-column-border: #d8c8f5;
   --color-border: #d0d7de;
   --color-text: #1f2328;
   --color-text-secondary: #656d76;
   --color-accent: #8250df;
+  --color-accent-light: #c9b3f5;
   --color-error: #cf222e;
   --color-error-background: #ffebe9;
   --color-success: #1a7f37;
@@ -41,8 +39,20 @@ button:disabled {
   opacity: 0.5;
 }
 
+/* Приложение ровно в высоту окна: у браузера не появляется своя прокрутка,
+   а длинные списки прокручиваются внутри (колонки доски, список истории). */
 .app {
+  box-sizing: border-box;
+  height: 100vh;
   max-width: 1200px;
   margin: 0 auto;
   padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Заголовок и навигация не сжимаются, всё свободное место достаётся странице */
+.app > h1,
+.app > nav {
+  flex-shrink: 0;
 }

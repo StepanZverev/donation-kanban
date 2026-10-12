@@ -1,16 +1,33 @@
-.board {
-  display: grid;
-  /* Колонок может быть разное количество: каждая новая встаёт справа и получает равную ширину */
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
+/* Страница доски занимает всё место под заголовком и навигацией (см. .app в index.css) */
+.page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-/* На узких экранах колонки идут друг под другом */
+/* Доска: зона «Удалить», колонки, зона «Выполнено».
+   Колонки растягиваются до высоты самой длинной из них, но не выше окна:
+   flex-shrink + min-height: 0 разрешают доске стать ниже своего содержимого,
+   а лишние карточки прокручиваются внутри колонки. */
+.board {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 16px;
+}
+
+/* Колонки делят ширину поровну, сколько бы их ни было */
+.board > section {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* На узких экранах колонки идут друг под другом, и прокручивается вся страница доски */
 @media (max-width: 800px) {
   .board {
-    grid-auto-flow: row;
+    flex-direction: column;
+    overflow-y: auto;
   }
 }
 
@@ -22,10 +39,21 @@
 }
 
 .toolbar {
+  flex-shrink: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+.toasts {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }

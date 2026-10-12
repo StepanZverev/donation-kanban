@@ -1,21 +1,28 @@
 .toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
-  padding: 10px 12px 10px 16px;
+  min-width: 280px;
+  max-width: 420px;
+  padding: 8px 8px 8px 16px;
   border-radius: 8px;
   background-color: var(--color-text);
   color: var(--color-surface);
   box-shadow: 0 4px 16px rgb(0 0 0 / 20%);
 }
 
+/* Длинное описание обрезаем многоточием, чтобы плашка не разъезжалась */
+.message {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .undoButton {
+  flex-shrink: 0;
   border-color: transparent;
   background-color: transparent;
-  color: var(--color-edge-column-border);
+  color: var(--color-accent-light);
   font-weight: 600;
 }

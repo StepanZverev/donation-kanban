@@ -219,3 +219,26 @@ def test_restore_to_chosen_column(client):
 
     response = client.post(f"/api/history/{card['id']}/restore", json={"column_id": ids["work"]})
     assert response.json()["column_id"] == ids["work"]
+
+
+def test_archive_with_chosen_reason(client):
+    """Зоны по краям доски: из любой колонки сразу в историю с нужной пометкой."""
+    ids = columns(client)
+    done = create(client, "Сделано из кучи")
+    deleted = create(client, "Выкинуто из работы", column_id=ids["work"])
+
+    client.post(f"/api/cards/{done['id']}/archive", json={"reason": "done"})
+    client.post(f"/api/cards/{deleted['id']}/archive", json={"reason": "deleted"})
+
+    assert client.get("/api/cards").json() == []
+    history = client.get("/api/history").json()
+    assert {card["title"]: card["archive_reason"] for card in history} == {
+        "Сделано из кучи": "done",
+        "Выкинуто из работы": "deleted",
+    }
+
+
+def test_archive_with_unknown_reason_is_rejected(client):
+    card = create(client, "A")
+    response = client.post(f"/api/cards/{card['id']}/archive", json={"reason": "lost"})
+    assert response.status_code == 422

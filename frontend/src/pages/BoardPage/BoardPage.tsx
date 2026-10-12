@@ -5,6 +5,7 @@ import type { Card, CardDraft } from '../../types/card'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
 import { DonationAlertsStatus } from '../../components/DonationAlertsStatus/DonationAlertsStatus'
 import { Column } from '../../components/Column/Column'
+import { DropZone } from '../../components/DropZone/DropZone'
 import { UndoToast } from '../../components/UndoToast/UndoToast'
 import styles from './BoardPage.module.css'
 
@@ -26,19 +27,22 @@ export function BoardPage() {
     startCard,
     completeCard,
     removeCard,
+    archiveCard,
     clearDone,
-    lastAction,
-    undoLastAction,
-    forgetLastAction,
+    undoableActions,
+    undoAction,
+    forgetAction,
   } = useCards()
   const [form, setForm] = useState<FormState>(null)
+  // Тащат ли сейчас какую-нибудь карточку: тогда показываем зоны по краям доски.
+  const [isDragging, setIsDragging] = useState(false)
 
   if (isLoading) {
     return <p>Загружаю карточки…</p>
   }
 
   return (
-    <>
+    <div className={styles.page}>
       {error && <p className={styles.error}>{error}</p>}
 
       <div className={styles.toolbar}>
@@ -49,7 +53,16 @@ export function BoardPage() {
         </button>
       </div>
 
-      <div className={styles.board}>
+      {/* События перетаскивания всплывают от карточек и колонок до доски,
+          поэтому здесь удобно следить, тащат ли что-то прямо сейчас. */}
+      <div
+        className={styles.board}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDrop={handleDragEnd}
+      >
+        <DropZone kind="delete" isVisible={isDragging} onDropCard={handleDropToDelete} />
+
         {columns.map((column) => (
           <Column
             key={column.id}
@@ -64,17 +77,16 @@ export function BoardPage() {
             onClearClick={clearDone}
           />
         ))}
+
+        <DropZone kind="done" isVisible={isDragging} onDropCard={handleDropToDone} />
       </div>
 
-      {lastAction && (
-        <UndoToast
-          // key: новое действие — новая плашка, и её таймер начинается заново
-          key={lastAction.cardIds.join(',')}
-          message={lastAction.message}
-          onUndo={undoLastAction}
-          onClose={forgetLastAction}
-        />
-      )}
+      {/* Плашки «Отменить» стопкой внизу экрана, самая новая — снизу */}
+      <div className={styles.toasts}>
+        {undoableActions.map((action) => (
+          <UndoToast key={action.id} action={action} onUndo={undoAction} onClose={forgetAction} />
+        ))}
+      </div>
 
       {form && (
         <CardFormDialog
@@ -88,8 +100,25 @@ export function BoardPage() {
           onClose={handleFormClose}
         />
       )}
-    </>
+    </div>
   )
+
+  function handleDragStart() {
+    setIsDragging(true)
+  }
+
+  // Карточку отпустили (куда угодно) — прячем зоны.
+  function handleDragEnd() {
+    setIsDragging(false)
+  }
+
+  function handleDropToDelete(cardId: number) {
+    archiveCard(cardId, 'deleted')
+  }
+
+  function handleDropToDone(cardId: number) {
+    archiveCard(cardId, 'done')
+  }
 
   function handleAddClick(columnId: number) {
     setForm({ mode: 'create', columnId })

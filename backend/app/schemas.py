@@ -51,6 +51,15 @@ class CardMove(BaseModel):
     column_id: int
 
 
+class CardArchive(BaseModel):
+    """
+    Убрать карточку в историю с нужной пометкой. Так работают зоны по краям доски:
+    красная («удалено») и зелёная («выполнено»).
+    """
+
+    reason: ArchiveReason
+
+
 class CardRestore(BaseModel):
     """
     Куда вернуть карточку из истории. Если column_id не прислали — в «Кучу».

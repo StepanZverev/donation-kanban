@@ -15,7 +15,7 @@ export function HistoryPage() {
   }
 
   return (
-    <>
+    <div className={styles.page}>
       {error && <p className={styles.error}>{error}</p>}
 
       {cards.length === 0 && <p className={styles.empty}>В истории пока ничего нет</p>}
@@ -49,7 +49,7 @@ export function HistoryPage() {
           </li>
         ))}
       </ul>
-    </>
+    </div>
   )
 
   function handleRestore(card: Card) {
