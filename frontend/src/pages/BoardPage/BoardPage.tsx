@@ -3,6 +3,7 @@ import { sendFakeDonation } from '../../api/dev'
 import { useCards } from '../../hooks/useCards'
 import { COLUMNS, type Card, type CardDraft, type CardStatus } from '../../types/card'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
+import { DonationAlertsStatus } from '../../components/DonationAlertsStatus/DonationAlertsStatus'
 import { Column } from '../../components/Column/Column'
 import styles from './BoardPage.module.css'
 
@@ -25,6 +26,7 @@ export function BoardPage() {
       {error && <p className={styles.error}>{error}</p>}
 
       <div className={styles.toolbar}>
+        <DonationAlertsStatus />
         {/* Карточка появится сама: бэкенд пришлёт обновление через WebSocket */}
         <button type="button" onClick={handleFakeDonationClick}>
           + Тестовый донат

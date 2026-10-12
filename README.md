@@ -45,6 +45,19 @@ npm run dev
 
 Фронт пересылает запросы `/api/*` на бэкенд (см. `frontend/vite.config.ts`). Если на странице написано «Бэкенд: работает», всё связано правильно.
 
+## Подключение DonationAlerts
+
+1. Зайди на https://www.donationalerts.com/application/clients и создай приложение.
+   В поле Redirect URL укажи `http://127.0.0.1:8000/api/auth/callback`
+   (если форма не примет такой адрес, укажи `http://localhost:8000/api/auth/callback`).
+2. Скопируй `backend/.env.example` в `backend/.env` и впиши туда `DA_CLIENT_ID` и `DA_CLIENT_SECRET`.
+   `DA_REDIRECT_URI` должен в точности совпадать с адресом из шага 1.
+   Файл `.env` в git не попадает, ключи никому не отправляй.
+3. Перезапусти бэкенд и нажми «Подключить» в шапке доски. После входа в DonationAlerts тебя вернёт на доску.
+
+Новые донаты сразу появятся в «В очереди». Если бэкенд был выключен, при запуске он доберёт донаты,
+пришедшие за это время. Старые донаты, пришедшие до первого подключения, не загружаются.
+
 ## Тесты бэкенда
 
 ```bash
@@ -68,6 +81,10 @@ pytest
 | `POST /api/history/{id}/restore` | вернуть из истории в «В очереди» |
 | `DELETE /api/history/{id}` | удалить из истории насовсем |
 | `POST /api/dev/fake-donation` | создать карточку из случайного выдуманного доната (для проверки) |
+| `GET /api/auth/status` | подключён ли DonationAlerts и что делает приёмник донатов |
+| `GET /api/auth/login` | перейти на вход в DonationAlerts |
+| `GET /api/auth/callback` | сюда DonationAlerts возвращает после входа |
+| `POST /api/auth/logout` | отключить DonationAlerts |
 | `WS /api/ws` | WebSocket: сервер шлёт `{"type": "board_changed"}` при любом изменении доски |
 
 Статусы: `queue` (в очереди), `in_progress` (в работе), `done` (выполнено).

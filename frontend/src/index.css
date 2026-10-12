@@ -11,6 +11,7 @@
   --color-error-background: #ffebe9;
   --color-success: #1a7f37;
   --color-success-background: #dafbe1;
+  --color-warning: #bf8700;
 
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--color-text);
