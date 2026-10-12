@@ -1,2 +1,8 @@
 fastapi==0.143.0
 uvicorn[standard]==0.54.0
+# HTTP-запросы к API DonationAlerts
+httpx2==2.13.1
+# WebSocket-клиент для получения донатов в реальном времени
+websockets==17.2
+# Чтение ключей из файла .env
+python-dotenv==1.2.4

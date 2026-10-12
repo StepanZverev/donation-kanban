@@ -9,6 +9,7 @@ SQLite — это база данных в одном файле (по умол�
 import os
 import sqlite3
 from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -41,6 +42,13 @@ CREATE TABLE IF NOT EXISTS cards (
     archived_at    TEXT,                               -- когда убрали с доски в историю
     archive_reason TEXT                                -- done | deleted
 );
+
+-- Простое хранилище «ключ — значение» для служебных данных,
+-- например токенов DonationAlerts.
+CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
 """
 
 
@@ -60,10 +68,24 @@ def connect() -> sqlite3.Connection:
     return connection
 
 
+@contextmanager
+def open_db() -> Iterator[sqlite3.Connection]:
+    """
+    Соединение для кода вне эндпоинтов (например, фоновой задачи):
+    with open_db() as db: ... — по выходу изменения сохраняются, соединение закрывается.
+    """
+    connection = connect()
+    try:
+        yield connection
+        connection.commit()
+    finally:
+        connection.close()
+
+
 def init_db() -> None:
-    """Создаёт таблицу, если её ещё нет. Вызывается один раз при старте сервера."""
-    with connect() as connection:
-        connection.executescript(SCHEMA)
+    """Создаёт таблицы, если их ещё нет. Вызывается один раз при старте сервера."""
+    with open_db() as db:
+        db.executescript(SCHEMA)
 
 
 def get_db() -> Iterator[sqlite3.Connection]:
@@ -80,3 +102,17 @@ def get_db() -> Iterator[sqlite3.Connection]:
         connection.commit()
     finally:
         connection.close()
+
+
+def get_setting(db: sqlite3.Connection, key: str) -> str | None:
+    row = db.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+    return row["value"] if row else None
+
+
+def set_setting(db: sqlite3.Connection, key: str, value: str) -> None:
+    # INSERT OR REPLACE: создаст запись или перезапишет существующую
+    db.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value))
+
+
+def delete_setting(db: sqlite3.Connection, key: str) -> None:
+    db.execute("DELETE FROM settings WHERE key = ?", (key,))
