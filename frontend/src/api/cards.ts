@@ -5,7 +5,7 @@ import type { Card, CardDraft, CardStatus } from '../types/card'
 
 // Бэкенд пишет поля в snake_case (donor_name), а во фронте принят camelCase (donorName).
 // Описываем, в каком виде карточка приходит с сервера, и переводим её в наш тип.
-type CardFromApi = {
+export type CardFromApi = {
   id: number
   title: string
   description: string
@@ -22,7 +22,7 @@ type CardFromApi = {
   archive_reason: Card['archiveReason']
 }
 
-function toCard(card: CardFromApi): Card {
+export function toCard(card: CardFromApi): Card {
   return {
     id: card.id,
     title: card.title,
