@@ -1,0 +1,20 @@
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* На узких экранах колонки идут друг под другом */
+@media (max-width: 800px) {
+  .board {
+    grid-template-columns: 1fr;
+  }
+}
+
+.error {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
