@@ -10,10 +10,9 @@ type ColumnProps = {
   cards: Card[]
   onAddClick: () => void
   onEditCard: (card: Card) => void
-  onStartCard: (card: Card) => void
-  onCompleteCard: (card: Card) => void
-  onRemoveCard: (card: Card) => void
+  // В историю с пометкой «удалено» / «выполнено»
   onDeleteCard: (card: Card) => void
+  onFinishCard: (card: Card) => void
   onDropCard: (cardId: number, columnId: number) => void
   onClearClick: () => void
 }
@@ -25,10 +24,8 @@ export function Column(props: ColumnProps) {
     cards,
     onAddClick,
     onEditCard,
-    onStartCard,
-    onCompleteCard,
-    onRemoveCard,
     onDeleteCard,
+    onFinishCard,
     onDropCard,
     onClearClick,
   } = props
@@ -40,6 +37,11 @@ export function Column(props: ColumnProps) {
   const isEdgeColumn = isIncomingColumn || isDoneColumn
   // Куда можно перенести карточку из этой колонки через меню: в любую другую.
   const moveTargets = allColumns.filter((otherColumn) => otherColumn.id !== column.id)
+  // Соседние колонки для стрелок ‹ › на карточке. У крайних колонок соседа нет:
+  // стрелка влево из «Кучи» удаляет карточку, стрелка вправо из «Выполнено» отправляет в историю.
+  const columnIndex = allColumns.findIndex((otherColumn) => otherColumn.id === column.id)
+  const leftColumn = allColumns[columnIndex - 1]
+  const rightColumn = allColumns[columnIndex + 1]
 
   return (
     <section
@@ -77,11 +79,10 @@ export function Column(props: ColumnProps) {
             onEdit={onEditCard}
             onMove={onDropCard}
             onDelete={onDeleteCard}
-            // Какие быстрые кнопки показать, зависит от колонки:
-            // ▶ только в «Куче», ✓ и ✕ везде, кроме «Выполнено».
-            onStart={isIncomingColumn ? onStartCard : undefined}
-            onComplete={isDoneColumn ? undefined : onCompleteCard}
-            onRemove={isDoneColumn ? undefined : onRemoveCard}
+            leftArrow={leftColumn ? 'move' : 'delete'}
+            rightArrow={rightColumn ? 'move' : 'finish'}
+            onLeftClick={handleLeftClick}
+            onRightClick={handleRightClick}
           />
         ))}
 
@@ -91,6 +92,24 @@ export function Column(props: ColumnProps) {
       </div>
     </section>
   )
+
+  // Стрелка влево: в соседнюю колонку слева, а из «Кучи» — удалить.
+  function handleLeftClick(card: Card) {
+    if (leftColumn) {
+      onDropCard(card.id, leftColumn.id)
+    } else {
+      onDeleteCard(card)
+    }
+  }
+
+  // Стрелка вправо: в соседнюю колонку справа, а из «Выполнено» — в историю как выполненную.
+  function handleRightClick(card: Card) {
+    if (rightColumn) {
+      onDropCard(card.id, rightColumn.id)
+    } else {
+      onFinishCard(card)
+    }
+  }
 
   // Срабатывает много раз в секунду, пока карточку держат над колонкой.
   function handleDragOver(event: DragEvent<HTMLElement>) {

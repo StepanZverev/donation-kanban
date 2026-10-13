@@ -12,15 +12,26 @@ type CardItemProps = {
   onEdit: (card: Card) => void
   onMove: (cardId: number, columnId: number) => void
   onDelete: (card: Card) => void
-  // Быстрые действия. Если колбэк не передали, кнопки нет:
-  // например, у карточки в «Выполнено» нет кнопки ✓.
-  onStart?: (card: Card) => void
-  onComplete?: (card: Card) => void
-  onRemove?: (card: Card) => void
+  // Что делают стрелки по бокам карточки:
+  // move — перенос в соседнюю колонку, delete — удалить (красная), finish — в историю выполненной (зелёная)
+  leftArrow: 'move' | 'delete'
+  rightArrow: 'move' | 'finish'
+  onLeftClick: (card: Card) => void
+  onRightClick: (card: Card) => void
 }
 
 export function CardItem(props: CardItemProps) {
-  const { card, moveTargets, onEdit, onMove, onDelete, onStart, onComplete, onRemove } = props
+  const {
+    card,
+    moveTargets,
+    onEdit,
+    onMove,
+    onDelete,
+    leftArrow,
+    rightArrow,
+    onLeftClick,
+    onRightClick,
+  } = props
   const [isDragging, setIsDragging] = useState(false)
   // Длинное сообщение свёрнуто до трёх строк; клик по тексту разворачивает его.
   const [isExpanded, setIsExpanded] = useState(false)
@@ -43,50 +54,50 @@ export function CardItem(props: CardItemProps) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <header className={styles.header}>
-        <h3 className={styles.heading}>{heading}</h3>
-        {card.amount !== null && (
-          <span className={styles.amount}>{formatMoney(card.amount, card.currency)}</span>
+      {/* Стрелки по бокам видны при наведении на карточку */}
+      <button
+        type="button"
+        className={`${styles.arrow} ${styles.arrowLeft} ${leftArrow === 'delete' ? styles.danger : ''}`}
+        title={leftArrow === 'delete' ? 'Удалить' : 'В колонку слева'}
+        onClick={handleLeftClick}
+      >
+        ‹
+      </button>
+
+      <div className={styles.content}>
+        <header className={styles.header}>
+          <h3 className={styles.heading}>{heading}</h3>
+          <div className={styles.menuSlot}>
+            <CardMenu
+              moveTargets={moveTargets}
+              onEdit={handleEdit}
+              onMove={handleMove}
+              onDelete={handleDelete}
+            />
+          </div>
+          {card.amount !== null && (
+            <span className={styles.amount}>{formatMoney(card.amount, card.currency)}</span>
+          )}
+        </header>
+
+        {text && (
+          <p
+            className={`${styles.text} ${isExpanded ? '' : styles.collapsed}`}
+            onClick={handleTextClick}
+          >
+            {text}
+          </p>
         )}
-      </header>
-
-      {text && (
-        <p
-          className={`${styles.text} ${isExpanded ? '' : styles.collapsed}`}
-          onClick={handleTextClick}
-        >
-          {text}
-        </p>
-      )}
-
-      <div className={styles.actions}>
-        <div className={styles.menuSlot}>
-          <CardMenu
-            moveTargets={moveTargets}
-            onEdit={handleEdit}
-            onMove={handleMove}
-            onDelete={handleDelete}
-          />
-        </div>
-
-        <div className={styles.quickActions}>
-          {onStart && (
-            <button type="button" title="Взять в работу" onClick={handleStart}>
-              ▶
-            </button>
-          )}
-          {onComplete && (
-            <button type="button" title="Выполнено" onClick={handleComplete}>
-              ✓
-            </button>
-          )}
-          {onRemove && (
-            <button type="button" title="Выкинуть в историю" onClick={handleRemove}>
-              ✕
-            </button>
-          )}
-        </div>
       </div>
+
+      <button
+        type="button"
+        className={`${styles.arrow} ${styles.arrowRight} ${rightArrow === 'finish' ? styles.success : ''}`}
+        title={rightArrow === 'finish' ? 'Выполнено, убрать в историю' : 'В колонку справа'}
+        onClick={handleRightClick}
+      >
+        ›
+      </button>
     </article>
   )
 
@@ -105,6 +116,14 @@ export function CardItem(props: CardItemProps) {
     setIsExpanded(!isExpanded)
   }
 
+  function handleLeftClick() {
+    onLeftClick(card)
+  }
+
+  function handleRightClick() {
+    onRightClick(card)
+  }
+
   function handleEdit() {
     onEdit(card)
   }
@@ -115,18 +134,5 @@ export function CardItem(props: CardItemProps) {
 
   function handleDelete() {
     onDelete(card)
-  }
-
-  function handleStart() {
-    onStart?.(card)
-  }
-
-  function handleComplete() {
-    onComplete?.(card)
-  }
-
-  // Без окна «Вы уверены?»: если выкинули случайно, есть кнопка «Отменить» внизу.
-  function handleRemove() {
-    onRemove?.(card)
   }
 }

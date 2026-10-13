@@ -1,20 +1,29 @@
-/* Обводка цвета уровня приоритета (--priority-color задаёт CardItem.tsx) */
+/* Обводка цвета уровня приоритета (--priority-color задаёт CardItem.tsx).
+   Карточка — три части в ряд: стрелка ‹, содержимое, стрелка ›. */
 .card {
-  padding: 10px 12px;
+  display: flex;
   border: 2px solid var(--priority-color, var(--color-border));
   border-radius: 8px;
   background-color: var(--color-surface);
+  overflow: hidden;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 4px;
 }
 
 /* Первая строка: ник слева, сумма справа — самое важное для стримера */
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 4px;
 }
 
 .heading {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   font-size: 16px;
   overflow-wrap: anywhere;
@@ -49,33 +58,54 @@
   overflow: hidden;
 }
 
-.actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.quickActions {
-  display: flex;
-  gap: 6px;
-}
-
-/* Кнопки ▶ ✓ ✕ квадратные и одного размера, чтобы в них было легко попасть */
-.quickActions button {
-  width: 32px;
-  height: 32px;
+/* Стрелки ‹ › — узкие полосы во всю высоту карточки.
+   Место под них есть всегда, а видно их только при наведении на карточку. */
+.arrow {
+  flex: 0 0 28px;
   padding: 0;
-  font-size: 15px;
+  border: none;
+  border-radius: 0;
+  background-color: var(--color-column);
+  color: var(--color-text-secondary);
+  font-size: 22px;
+  opacity: 0;
 }
 
-/* Меню «⋯» видно, только когда мышь над карточкой или фокус внутри неё */
+.arrow:hover {
+  background-color: var(--color-border);
+  color: var(--color-text);
+}
+
+/* Крайняя стрелка из «Кучи»: удалить */
+.danger {
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
+.danger:hover {
+  background-color: var(--color-error);
+  color: #ffffff;
+}
+
+/* Крайняя стрелка из «Выполнено»: в историю выполненной */
+.success {
+  background-color: var(--color-success-background);
+  color: var(--color-success);
+}
+
+.success:hover {
+  background-color: var(--color-success);
+  color: #ffffff;
+}
+
+/* Меню «⋯» тоже появляется только при наведении */
 .menuSlot {
   opacity: 0;
 }
 
+.card:hover .arrow,
 .card:hover .menuSlot,
+.card:focus-within .arrow,
 .card:focus-within .menuSlot {
   opacity: 1;
 }
