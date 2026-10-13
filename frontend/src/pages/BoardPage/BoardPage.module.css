@@ -1,10 +1,10 @@
 /* Страница доски — те же три полосы, что и у всего приложения (--layout-columns в index.css):
-   в средней — панель и колонки, в боковых — зоны «Удалить» и «Выполнено».
-   Строки: ошибка, панель, доска. Доска забирает всю оставшуюся высоту экрана. */
+   в средней — колонки, в боковых — зоны «Удалить» и «Выполнено».
+   Строки: ошибка, доска. Доска забирает всю оставшуюся высоту экрана. */
 .page {
   display: grid;
   grid-template-columns: var(--layout-columns);
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   column-gap: var(--side-gap);
 }
 
@@ -17,21 +17,10 @@
   color: var(--color-error);
 }
 
-.toolbar {
-  grid-column: 2;
-  grid-row: 2;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
 /* Колонки во всю высоту доски; лишние карточки прокручиваются внутри колонки */
 .board {
   grid-column: 2;
-  grid-row: 3;
+  grid-row: 2;
   min-height: 0;
   display: flex;
   gap: 16px;

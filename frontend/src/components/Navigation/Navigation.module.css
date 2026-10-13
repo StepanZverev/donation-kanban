@@ -1,21 +1,28 @@
+/* Вкладки — кнопки-«таблетки» в шапке */
 .navigation {
   display: flex;
   gap: 4px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid var(--color-border);
 }
 
 .link {
-  margin-bottom: -1px;
-  padding: 8px 14px;
-  border-bottom: 2px solid transparent;
+  padding: 6px 12px;
+  border-radius: 8px;
   font-size: 14px;
   color: var(--color-text-secondary);
   text-decoration: none;
+  white-space: nowrap;
+}
+
+.link:hover {
+  color: var(--color-text);
 }
 
 .active {
-  border-bottom-color: var(--color-accent);
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
   font-weight: 600;
-  color: var(--color-text);
+}
+
+.active:hover {
+  color: var(--color-accent);
 }

@@ -1,21 +1,93 @@
+/* relative — чтобы выпадашка встала прямо под капсулой */
+.wrapper {
+  position: relative;
+}
+
+/* Капсула в шапке: цветная точка и название. Подробности — в выпадашке */
 .status {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background-color: transparent;
+  white-space: nowrap;
+}
+
+.status:hover,
+.status[aria-expanded='true'] {
+  background-color: var(--color-column);
+}
+
+/* На узком экране название прячем, остаётся точка */
+@media (max-width: 1000px) {
+  .name {
+    display: none;
+  }
+}
+
+/* Выпадашка под капсулой, прижата к её правому краю */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 10;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background-color: var(--color-surface);
+  box-shadow: 0 8px 24px var(--color-shadow);
+}
+
+.heading {
+  display: flex;
   align-items: center;
   gap: 8px;
+  margin: 0;
   font-size: 14px;
+  font-weight: 600;
+}
+
+.description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+/* «Подключить» — ссылка, которая выглядит как главная кнопка */
+.connectButton {
+  padding: 5px 14px;
+  border-radius: 6px;
+  background-color: var(--color-accent);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.disconnectButton {
+  color: var(--color-error);
 }
 
 /* Цветная точка-индикатор */
 .dot {
-  width: 10px;
-  height: 10px;
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background-color: var(--color-text-secondary);
 }
 
 .listening {
   background-color: var(--color-success);
+  box-shadow: 0 0 0 3px var(--color-success-background);
 }
 
 .connecting {
@@ -24,18 +96,4 @@
 
 .error {
   background-color: var(--color-error);
-}
-
-.hint {
-  color: var(--color-text-secondary);
-}
-
-/* Ссылка, которая выглядит как кнопка */
-.button {
-  padding: 4px 10px;
-  border-radius: 6px;
-  background-color: var(--color-accent);
-  color: #ffffff;
-  font-size: 13px;
-  text-decoration: none;
 }
