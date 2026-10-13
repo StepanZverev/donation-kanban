@@ -72,7 +72,12 @@
   font-weight: 600;
 }
 
-.expandButton:hover {
+/* Обрезанный текст кликабельный, а наведение на него подчёркивает ссылку */
+.expandable {
+  cursor: pointer;
+}
+
+.expandable:hover .expandButton {
   text-decoration: underline;
 }
 

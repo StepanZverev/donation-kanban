@@ -99,16 +99,24 @@ export function CardItem(props: CardItemProps) {
           )}
         </header>
 
+        {/* Текст и ссылка под ним работают как одно целое: клик по любому из них
+            раскрывает или сворачивает текст (клик по ссылке доходит сюда же),
+            а наведение на текст подчёркивает ссылку. */}
         {text && (
-          <p ref={textRef} className={`${styles.text} ${isExpanded ? '' : styles.collapsed}`}>
-            {text}
-          </p>
-        )}
+          <div
+            className={isTextCut ? styles.expandable : undefined}
+            onClick={isTextCut ? handleExpandClick : undefined}
+          >
+            <p ref={textRef} className={`${styles.text} ${isExpanded ? '' : styles.collapsed}`}>
+              {text}
+            </p>
 
-        {isTextCut && (
-          <button type="button" className={styles.expandButton} onClick={handleExpandClick}>
-            {isExpanded ? 'Свернуть' : 'Показать полностью'}
-          </button>
+            {isTextCut && (
+              <button type="button" className={styles.expandButton}>
+                {isExpanded ? 'Свернуть' : 'Показать полностью'}
+              </button>
+            )}
+          </div>
         )}
       </div>
 
