@@ -1,7 +1,11 @@
 import { useState, type DragEvent } from 'react'
 import type { BoardColumn, Card } from '../../types/card'
 import type { PriorityLevel } from '../../utils/priority'
+import { formatMoney } from '../../utils/money'
+import { pluralize } from '../../utils/time'
 import { CardItem } from '../CardItem/CardItem'
+import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
+import { BroomIcon, PlusIcon } from '../Icons/Icons'
 import styles from './Column.module.css'
 
 type ColumnProps = {
@@ -24,6 +28,7 @@ type ColumnProps = {
   // Можно ли бросить перетаскиваемую карточку на эту, чтобы объединить, и само объединение
   canMergeOnDrop: (card: Card) => boolean
   onMergeDrop: (card: Card) => void
+  // «Очистить» есть только у «Очереди» и «Выполнено»
   onClearClick: () => void
 }
 
@@ -58,6 +63,9 @@ export function Column(props: ColumnProps) {
   const columnIndex = allColumns.findIndex((otherColumn) => otherColumn.id === column.id)
   const leftColumn = allColumns[columnIndex - 1]
   const rightColumn = allColumns[columnIndex + 1]
+  // Сумма всех карточек колонки в валюте стримера. Ручные карточки без суммы считаются нулём.
+  const columnSum = cards.reduce((sum, card) => sum + (card.streamerAmount ?? 0), 0)
+  const cardsWord = `${cards.length} ${pluralize(cards.length, ['карточку', 'карточки', 'карточек'])}`
 
   return (
     <section
@@ -70,20 +78,43 @@ export function Column(props: ColumnProps) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      {/* Шапка не прокручивается вместе с карточками: кнопки всегда под рукой */}
       <header className={styles.header}>
         <h2 className={styles.title}>
           {column.title} <span className={styles.count}>{cards.length}</span>
         </h2>
+        <p className={styles.sum}>{formatMoney(columnSum, 'RUB')}</p>
 
-        {isDoneColumn ? (
-          <button type="button" onClick={onClearClick} disabled={cards.length === 0}>
-            Очистить
-          </button>
-        ) : (
-          <button type="button" onClick={onAddClick}>
-            + Добавить
-          </button>
-        )}
+        <div className={styles.actions}>
+          {!isDoneColumn && (
+            <button
+              type="button"
+              className={styles.iconButton}
+              title="Добавить вручную"
+              aria-label="Добавить вручную"
+              onClick={onAddClick}
+            >
+              <PlusIcon />
+            </button>
+          )}
+
+          {isEdgeColumn && (
+            <ConfirmButton
+              className={styles.iconButton}
+              title={isIncomingColumn ? 'Очистить очередь' : 'Очистить выполненные'}
+              question={
+                <>
+                  Убрать <b>{cardsWord}</b> {isIncomingColumn ? 'из очереди' : 'из выполненных'} в историю?
+                </>
+              }
+              confirmLabel="Очистить"
+              onConfirm={onClearClick}
+              disabled={cards.length === 0}
+            >
+              <BroomIcon />
+            </ConfirmButton>
+          )}
+        </div>
       </header>
 
       <div className={styles.cards}>
@@ -92,6 +123,7 @@ export function Column(props: ColumnProps) {
             key={card.id}
             card={card}
             priorityLevels={priorityLevels}
+            isMuted={isDoneColumn}
             moveTargets={moveTargets}
             onEdit={onEditCard}
             onMove={onDropCard}

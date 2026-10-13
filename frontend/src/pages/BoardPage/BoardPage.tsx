@@ -30,11 +30,12 @@ export function BoardPage() {
     mergeOnDrop,
     unmergeCard,
     clearDone,
+    clearQueue,
     undoableActions,
     undoAction,
     forgetAction,
   } = useCards()
-  // Уровни приоритета из настроек: от них зависит цвет обводки карточек
+  // Уровни приоритета из настроек: от них зависит цвет полоски и суммы на карточках
   const { levels } = usePriorityLevels()
   const [form, setForm] = useState<FormState>(null)
   // Какую карточку сейчас тащат (null — никакую). Пока тащат, показываем зоны по краям доски,
@@ -76,7 +77,7 @@ export function BoardPage() {
             onUnmerge={unmergeCard}
             canMergeOnDrop={canMergeDraggedOn}
             onMergeDrop={handleMergeDrop}
-            onClearClick={clearDone}
+            onClearClick={column.kind === 'incoming' ? clearQueue : clearDone}
           />
         ))}
       </div>

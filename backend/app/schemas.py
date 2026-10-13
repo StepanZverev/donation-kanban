@@ -142,3 +142,6 @@ class Card(BaseModel):
     archive_reason: ArchiveReason | None
     merge_count: int
     merged_into_id: int | None
+    # Когда пришёл последний донат карточки: у объединённой — самый свежий из слитых.
+    # В базе такого столбца нет, его считает list_cards (board.add_last_donation_times).
+    last_donation_at: str | None = None

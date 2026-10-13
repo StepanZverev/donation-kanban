@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from 'react'
 import type { BoardColumn, Card } from '../../types/card'
+import { useNow } from '../../hooks/useNow'
 import { formatMoney } from '../../utils/money'
 import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
+import { formatTimeAgo, pluralize } from '../../utils/time'
 import { CardMenu } from '../CardMenu/CardMenu'
 import styles from './CardItem.module.css'
 
@@ -9,10 +11,19 @@ import styles from './CardItem.module.css'
 // На карточке вместо неё рисуем пунктирную линию.
 const MERGE_SEPARATOR = '\n⸻\n'
 
+// Сколько секунд после доната карточка светится как свежая
+const FRESH_SECONDS = 60
+
+// Пункт «Разъединить» в меню «⋯» пока спрятан: стримеру он не нужен.
+// Сама функция осталась, чтобы вернуть пункт, достаточно поставить true.
+const SHOW_UNMERGE = false
+
 type CardItemProps = {
   card: Card
-  // Уровни приоритета из настроек: по ним выбирается цвет обводки
+  // Уровни приоритета из настроек: по ним выбирается цвет полоски слева и суммы
   priorityLevels: PriorityLevel[]
+  // Приглушённая карточка — так выглядят карточки в «Выполнено»
+  isMuted: boolean
   // Колонки, в которые карточку можно перенести через меню «⋯»
   moveTargets: BoardColumn[]
   onEdit: (card: Card) => void
@@ -38,6 +49,7 @@ export function CardItem(props: CardItemProps) {
   const {
     card,
     priorityLevels,
+    isMuted,
     moveTargets,
     onEdit,
     onMove,
@@ -61,9 +73,11 @@ export function CardItem(props: CardItemProps) {
   const [isTextCut, setIsTextCut] = useState(false)
   // Ссылка на абзац с текстом, чтобы померить его высоту
   const textRef = useRef<HTMLDivElement>(null)
+  // Текущее время раз в 5 секунд — чтобы «40 сек назад» обновлялось само
+  const now = useNow(5000)
 
   const isDonation = card.source === 'donationalerts'
-  // Цвет обводки зависит от суммы доната. Ручные карточки считаются суммой 0.
+  // Цвет полоски и суммы зависит от суммы доната. Ручные карточки считаются суммой 0.
   const priority = getPriorityLevel(card.streamerAmount ?? 0, priorityLevels)
   // У доната заголовок — это обрезанное начало сообщения, а целиком оно лежит в описании.
   // Показываем сообщение один раз: описание, а если его нет — заголовок.
@@ -75,6 +89,15 @@ export function CardItem(props: CardItemProps) {
   const showMergeDrop = isDragOver && canMergeOnDrop
   // В карточку слиты другие донаты
   const isMerged = card.mergeCount > 1
+  // Когда пришёл последний донат: у ручной карточки — когда её создали
+  const lastDonationAt = card.lastDonationAt ?? card.createdAt
+  // Свежий донат подсвечиваем, чтобы стример его заметил. В «Выполнено» не нужно.
+  const isFresh = !isMuted && now - new Date(lastDonationAt).getTime() < FRESH_SECONDS * 1000
+  // Подпись внизу: «3 мин назад · 2 доната»
+  const donationsWord = `${card.mergeCount} ${pluralize(card.mergeCount, ['донат', 'доната', 'донатов'])}`
+  const meta = isDonation
+    ? `${formatTimeAgo(lastDonationAt, now)} · ${donationsWord}`
+    : formatTimeAgo(lastDonationAt, now)
 
   // Меряем, обрезан ли текст. Делаем это, пока он свёрнут: у обрезанного полная высота
   // (scrollHeight) больше видимой (clientHeight). ResizeObserver перемеряет,
@@ -97,8 +120,10 @@ export function CardItem(props: CardItemProps) {
         styles.card,
         isDragging ? styles.dragging : '',
         showMergeDrop ? styles.mergeDrop : '',
+        isFresh ? styles.fresh : '',
+        isMuted ? styles.muted : '',
       ].join(' ')}
-      // CSS-переменная с цветом уровня, её использует .card в CardItem.module.css
+      // CSS-переменная с цветом уровня: ей красятся полоска слева и сумма (CardItem.module.css)
       style={{ '--priority-color': priority.color } as CSSProperties}
       data-card-id={card.id}
       draggable
@@ -123,12 +148,6 @@ export function CardItem(props: CardItemProps) {
           <h3 className={styles.heading} title={heading ?? undefined}>
             {heading}
           </h3>
-          {/* «+2» — в карточку слиты ещё два доната */}
-          {isMerged && (
-            <span className={styles.mergedMark} title="Сколько донатов слито в эту карточку">
-              +{card.mergeCount - 1}
-            </span>
-          )}
           <div className={styles.menuSlot}>
             <CardMenu
               moveTargets={moveTargets}
@@ -136,7 +155,7 @@ export function CardItem(props: CardItemProps) {
               onMove={handleMove}
               onDelete={handleDelete}
               onMergeAll={canMergeAll ? handleMergeAll : undefined}
-              onUnmerge={isMerged ? handleUnmerge : undefined}
+              onUnmerge={SHOW_UNMERGE && isMerged ? handleUnmerge : undefined}
             />
           </div>
           {card.amount !== null && (
@@ -169,6 +188,9 @@ export function CardItem(props: CardItemProps) {
             )}
           </div>
         )}
+
+        {/* В «Выполнено» время уже не важно */}
+        {!isMuted && <p className={styles.meta}>{meta}</p>}
       </div>
 
       <button

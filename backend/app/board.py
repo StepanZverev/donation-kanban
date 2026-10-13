@@ -77,3 +77,31 @@ def return_to_board(db: sqlite3.Connection, card_id: int, column_id: int) -> Non
         """,
         (column_id, timestamp, timestamp, card_id),
     )
+
+
+def add_last_donation_times(db: sqlite3.Connection, cards: list[Card]) -> None:
+    """
+    Заполняет у карточек last_donation_at — когда пришёл их последний донат.
+
+    У обычной карточки это время её создания. У объединённой — самое позднее время
+    среди неё самой и всех слитых в неё карточек (они лежат в истории с пометкой merged
+    и ссылкой merged_into_id). Слитая карточка могла и сама быть объединённой,
+    поэтому идём по ссылкам вглубь.
+    """
+    rows = db.execute(
+        "SELECT id, merged_into_id, created_at FROM cards WHERE archive_reason = 'merged'"
+    ).fetchall()
+    # Для каждой карточки — список слитых в неё: id основной → [(id слитой, время создания)]
+    merged_into: dict[int, list[tuple[int, str]]] = {}
+    for row in rows:
+        merged_into.setdefault(row["merged_into_id"], []).append((row["id"], row["created_at"]))
+
+    def latest(card_id: int, created_at: str) -> str:
+        times = [created_at]
+        for child_id, child_created_at in merged_into.get(card_id, []):
+            times.append(latest(child_id, child_created_at))
+        # Время записано строкой в одном формате (ISO), поэтому строки сравниваются как время
+        return max(times)
+
+    for card in cards:
+        card.last_donation_at = latest(card.id, card.created_at)

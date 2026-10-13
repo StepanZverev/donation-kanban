@@ -241,3 +241,16 @@ def test_auto_merge_skips_done(client):
     client.post(f"/api/cards/{first['id']}/move", json={"column_id": columns(client)["done"]})
     donate("Вася", 300, "Второй")
     assert len(board(client)) == 2
+
+
+def test_last_donation_time_is_newest_of_merged(client):
+    donate("Вася", 100, "Первый")
+    donate("Вася", 200, "Второй")
+    first = card_by_message(client, "Первый")
+    second = card_by_message(client, "Второй")
+    assert first["last_donation_at"] == first["created_at"]
+
+    merge(client, first, second)
+
+    merged = card_by_message(client, "Первый")
+    assert merged["last_donation_at"] == second["created_at"]

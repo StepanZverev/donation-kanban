@@ -17,20 +17,64 @@
 
 .header {
   flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  display: grid;
+  /* Слева заголовок и сумма под ним, справа кнопки-иконки */
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+  align-items: start;
+  padding-left: 4px;
 }
 
 .title {
+  grid-column: 1;
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .count {
+  margin-left: 2px;
   font-weight: 400;
   color: var(--color-text-secondary);
+}
+
+/* Сумма карточек колонки под заголовком */
+.sum {
+  grid-column: 1;
+  margin: 2px 0 0;
+  font-family: var(--font-numbers);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Кнопки-иконки в правом верхнем углу */
+.actions {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  gap: 2px;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 7px;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+}
+
+.iconButton:hover:not(:disabled),
+.iconButton[aria-expanded='true'] {
+  background-color: var(--color-surface);
+  color: var(--color-text);
 }
 
 /* Если карточек больше, чем помещается, они прокручиваются внутри колонки */
@@ -41,6 +85,9 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* Запас по краям, чтобы прокрутка не обрезала свечение свежей карточки */
+  margin: -6px;
+  padding: 6px;
 }
 
 .empty {
