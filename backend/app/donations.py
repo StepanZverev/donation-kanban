@@ -28,7 +28,7 @@ class Donation:
 
 def add_donation_card(db: sqlite3.Connection, donation: Donation) -> bool:
     """
-    Создаёт карточку в «Куче». Место в колонке определит сумма доната.
+    Создаёт карточку в «Очереди». Место в колонке определит сумма доната.
     Возвращает False, если карточка для этого доната уже есть (защита от дублей).
     """
     title, description = split_message(donation.message)

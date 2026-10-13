@@ -1,7 +1,7 @@
 """
 Эндпоинты колонок доски.
 
-«Куча» и «Выполнено» есть всегда и стоят по краям. Настраиваются только
+«Очередь» и «Выполнено» есть всегда и стоят по краям. Настраиваются только
 промежуточные колонки (kind = 'work'): их можно переименовать, добавить,
 удалить и переставить. Их всегда от 1 до 3.
 """
@@ -24,7 +24,7 @@ MAX_WORK_COLUMNS = 3
 
 @router.get("")
 def list_columns(db: sqlite3.Connection = Depends(get_db)) -> list[BoardColumn]:
-    """Все колонки доски слева направо: «Куча», промежуточные, «Выполнено»."""
+    """Все колонки доски слева направо: «Очередь», промежуточные, «Выполнено»."""
     return get_columns(db)
 
 
@@ -69,7 +69,7 @@ def rename_column(column_id: int, data: ColumnUpdate, db: sqlite3.Connection = D
 @router.delete("/{column_id}", status_code=204)
 def delete_column(column_id: int, db: sqlite3.Connection = Depends(get_db)) -> None:
     """
-    Удаляет промежуточную колонку. Её карточки не пропадают, а возвращаются в «Кучу».
+    Удаляет промежуточную колонку. Её карточки не пропадают, а возвращаются в «Очередь».
     Последнюю промежуточную колонку удалить нельзя.
     """
     get_work_column(db, column_id)
@@ -77,7 +77,7 @@ def delete_column(column_id: int, db: sqlite3.Connection = Depends(get_db)) -> N
     if len(work_ids) <= MIN_WORK_COLUMNS:
         raise HTTPException(status_code=400, detail="Нужна хотя бы одна промежуточная колонка")
 
-    # Все карточки колонки (и с доски, и из истории) переезжают в «Кучу»,
+    # Все карточки колонки (и с доски, и из истории) переезжают в «Очередь»,
     # чтобы ни одна не ссылалась на удалённую колонку.
     incoming_id = get_column_id_by_kind(db, "incoming")
     db.execute(
@@ -91,10 +91,10 @@ def delete_column(column_id: int, db: sqlite3.Connection = Depends(get_db)) -> N
 
 
 def get_work_column(db: sqlite3.Connection, column_id: int) -> BoardColumn:
-    """Находит колонку и проверяет, что она промежуточная: «Кучу» и «Выполнено» менять нельзя."""
+    """Находит колонку и проверяет, что она промежуточная: «Очередь» и «Выполнено» менять нельзя."""
     column = get_column(db, column_id)
     if column.kind != "work":
-        raise HTTPException(status_code=400, detail="«Кучу» и «Выполнено» настраивать нельзя")
+        raise HTTPException(status_code=400, detail="«Очередь» и «Выполнено» настраивать нельзя")
     return column
 
 
@@ -105,7 +105,7 @@ def get_work_column_ids(db: sqlite3.Connection) -> list[int]:
 
 def put_columns_in_order(db: sqlite3.Connection, work_ids: list[int]) -> None:
     """
-    Заново нумерует колонки слева направо: «Куча» — 0, потом промежуточные
+    Заново нумерует колонки слева направо: «Очередь» — 0, потом промежуточные
     в порядке work_ids, «Выполнено» — последней.
     """
     ordered_ids = [get_column_id_by_kind(db, "incoming"), *work_ids, get_column_id_by_kind(db, "done")]

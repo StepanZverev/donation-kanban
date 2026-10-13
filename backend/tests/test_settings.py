@@ -19,7 +19,7 @@ def add_column(client, title):
 
 def test_new_column_goes_before_done(client):
     assert add_column(client, "Отложено").status_code == 201
-    assert titles(client) == ["Куча", "В работе", "Отложено", "Выполнено"]
+    assert titles(client) == ["Очередь", "В работе", "Отложено", "Выполнено"]
 
 
 def test_no_more_than_three_work_columns(client):
@@ -27,18 +27,18 @@ def test_no_more_than_three_work_columns(client):
     add_column(client, "Третья")
     response = add_column(client, "Четвёртая")
     assert response.status_code == 400
-    assert titles(client) == ["Куча", "В работе", "Вторая", "Третья", "Выполнено"]
+    assert titles(client) == ["Очередь", "В работе", "Вторая", "Третья", "Выполнено"]
 
 
 def test_rename_column(client):
     work = column_id(client, "В работе")
     response = client.patch(f"/api/columns/{work}", json={"title": "Делаю"})
     assert response.json()["title"] == "Делаю"
-    assert titles(client) == ["Куча", "Делаю", "Выполнено"]
+    assert titles(client) == ["Очередь", "Делаю", "Выполнено"]
 
 
 def test_edge_columns_cannot_be_changed(client):
-    incoming = column_id(client, "Куча")
+    incoming = column_id(client, "Очередь")
     done = column_id(client, "Выполнено")
     assert client.patch(f"/api/columns/{incoming}", json={"title": "X"}).status_code == 400
     assert client.delete(f"/api/columns/{done}").status_code == 400
@@ -48,7 +48,7 @@ def test_reorder_columns(client):
     add_column(client, "Отложено")
     ids = [column_id(client, "Отложено"), column_id(client, "В работе")]
     assert client.put("/api/columns/order", json={"column_ids": ids}).status_code == 200
-    assert titles(client) == ["Куча", "Отложено", "В работе", "Выполнено"]
+    assert titles(client) == ["Очередь", "Отложено", "В работе", "Выполнено"]
 
 
 def test_reorder_needs_all_work_columns(client):
@@ -64,9 +64,9 @@ def test_delete_column_returns_cards_to_incoming(client):
 
     assert client.delete(f"/api/columns/{postponed}").status_code == 204
 
-    assert titles(client) == ["Куча", "В работе", "Выполнено"]
+    assert titles(client) == ["Очередь", "В работе", "Выполнено"]
     cards = client.get("/api/cards").json()
-    assert [(c["id"], c["column_id"]) for c in cards] == [(card["id"], column_id(client, "Куча"))]
+    assert [(c["id"], c["column_id"]) for c in cards] == [(card["id"], column_id(client, "Очередь"))]
 
 
 def test_last_work_column_cannot_be_deleted(client):
@@ -114,3 +114,13 @@ def test_priority_levels_no_same_amount(client):
 def test_priority_level_color_must_be_hex(client):
     levels = [{"min_amount": 0, "name": "А", "color": "red"}]
     assert client.put("/api/settings/priority-levels", json=levels).status_code == 422
+
+
+def test_old_pile_title_is_renamed_to_queue(client):
+    """В старых базах первая колонка называлась «Куча» — при запуске она становится «Очередью»."""
+    from app.db import init_db, open_db
+
+    with open_db() as db:
+        db.execute("UPDATE board_columns SET title = 'Куча' WHERE kind = 'incoming'")
+    init_db()
+    assert titles(client)[0] == "Очередь"

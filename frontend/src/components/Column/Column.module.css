@@ -9,7 +9,7 @@
   border-radius: 10px;
 }
 
-/* «Куча» и «Выполнено» по краям — с заливкой */
+/* «Очередь» и «Выполнено» по краям — с заливкой */
 .edgeColumn {
   border-color: transparent;
   background-color: var(--color-column);

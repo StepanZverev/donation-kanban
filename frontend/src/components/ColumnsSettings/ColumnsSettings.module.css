@@ -41,7 +41,7 @@
   background-color: var(--color-surface);
 }
 
-/* «Куча» и «Выполнено» — серые, их не настроить */
+/* «Очередь» и «Выполнено» — серые, их не настроить */
 .fixedRow {
   padding: 10px 12px;
   border-color: transparent;

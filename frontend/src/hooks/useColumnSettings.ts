@@ -31,7 +31,7 @@ export function useColumnSettings() {
   // Колонки могли поменять в другой вкладке
   useBoardUpdates(reload)
 
-  // Только промежуточные колонки, слева направо. «Куча» и «Выполнено» здесь не настраиваются.
+  // Только промежуточные колонки, слева направо. «Очередь» и «Выполнено» здесь не настраиваются.
   const workColumns = columns.filter((column) => column.kind === 'work')
 
   async function runAndReload(action: () => Promise<unknown>) {

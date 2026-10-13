@@ -21,9 +21,9 @@ export function ColumnsSettings() {
     <section className={styles.section}>
       <h2 className={styles.title}>Колонки доски</h2>
       <p className={styles.hint}>
-        «{incomingColumn?.title ?? 'Куча'}» и «{doneColumn?.title ?? 'Выполнено'}» есть всегда.
+        «{incomingColumn?.title ?? 'Очередь'}» и «{doneColumn?.title ?? 'Выполнено'}» есть всегда.
         Между ними от {MIN_WORK_COLUMNS} до {MAX_WORK_COLUMNS} колонок. Если удалить колонку,
-        её карточки вернутся в первую колонку.
+        её карточки вернутся в «{incomingColumn?.title ?? 'Очередь'}».
       </p>
 
       {error && <p className={styles.error}>{error}</p>}
@@ -73,7 +73,7 @@ export function ColumnsSettings() {
   }
 
   function handleRemove(column: BoardColumn) {
-    const question = `Удалить колонку «${column.title}»? Её карточки вернутся в первую колонку.`
+    const question = `Удалить колонку «${column.title}»? Её карточки вернутся в «${incomingColumn?.title ?? 'Очередь'}».`
     if (window.confirm(question)) {
       removeColumn(column.id)
     }
@@ -85,7 +85,7 @@ type FixedColumnRowProps = {
   note: string
 }
 
-// «Куча» и «Выполнено»: просто строка с названием, менять нечего
+// «Очередь» и «Выполнено»: просто строка с названием, менять нечего
 function FixedColumnRow(props: FixedColumnRowProps) {
   const { column, note } = props
 

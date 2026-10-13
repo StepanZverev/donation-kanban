@@ -11,7 +11,7 @@ export async function getColumns(): Promise<BoardColumn[]> {
 }
 
 // Ниже — настройка промежуточных колонок на странице «Настройки».
-// «Кучу» и «Выполнено» менять нельзя, бэкенд ответит ошибкой.
+// «Очередь» и «Выполнено» менять нельзя, бэкенд ответит ошибкой.
 
 export async function createColumn(title: string): Promise<BoardColumn> {
   const response = await fetch('/api/columns', {
@@ -37,7 +37,7 @@ export async function renameColumn(id: number, title: string): Promise<BoardColu
   return response.json()
 }
 
-// Карточки удалённой колонки бэкенд вернёт в «Кучу»
+// Карточки удалённой колонки бэкенд вернёт в «Очередь»
 export async function deleteColumn(id: number): Promise<void> {
   const response = await fetch(`/api/columns/${id}`, { method: 'DELETE' })
   if (!response.ok) {

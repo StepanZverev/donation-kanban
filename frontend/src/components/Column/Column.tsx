@@ -37,12 +37,12 @@ export function Column(props: ColumnProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const isIncomingColumn = column.kind === 'incoming'
   const isDoneColumn = column.kind === 'done'
-  // «Куча» и «Выполнено» стоят по краям и выглядят иначе, чем промежуточные колонки.
+  // «Очередь» и «Выполнено» стоят по краям и выглядят иначе, чем промежуточные колонки.
   const isEdgeColumn = isIncomingColumn || isDoneColumn
   // Куда можно перенести карточку из этой колонки через меню: в любую другую.
   const moveTargets = allColumns.filter((otherColumn) => otherColumn.id !== column.id)
   // Соседние колонки для стрелок ‹ › на карточке. У крайних колонок соседа нет:
-  // стрелка влево из «Кучи» удаляет карточку, стрелка вправо из «Выполнено» отправляет в историю.
+  // стрелка влево из «Очереди» удаляет карточку, стрелка вправо из «Выполнено» отправляет в историю.
   const columnIndex = allColumns.findIndex((otherColumn) => otherColumn.id === column.id)
   const leftColumn = allColumns[columnIndex - 1]
   const rightColumn = allColumns[columnIndex + 1]
@@ -98,7 +98,7 @@ export function Column(props: ColumnProps) {
     </section>
   )
 
-  // Стрелка влево: в соседнюю колонку слева, а из «Кучи» — удалить.
+  // Стрелка влево: в соседнюю колонку слева, а из «Очереди» — удалить.
   function handleLeftClick(card: Card) {
     if (leftColumn) {
       onDropCard(card.id, leftColumn.id)

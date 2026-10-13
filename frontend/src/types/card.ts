@@ -3,7 +3,7 @@
 export type CardSource = 'manual' | 'donationalerts'
 
 // Вид колонки:
-// incoming — «Куча», куда падают новые донаты (крайняя левая);
+// incoming — «Очередь», куда падают новые донаты (крайняя левая);
 // work — промежуточные колонки, например «В работе»;
 // done — «Выполнено» (крайняя правая).
 export type ColumnKind = 'incoming' | 'work' | 'done'

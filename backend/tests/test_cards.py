@@ -42,7 +42,7 @@ def donate(username, amount, message, donation_id, streamer_amount=None):
 
 def test_default_columns(client):
     titles = [(column["title"], column["kind"]) for column in client.get("/api/columns").json()]
-    assert titles == [("Куча", "incoming"), ("В работе", "work"), ("Выполнено", "done")]
+    assert titles == [("Очередь", "incoming"), ("В работе", "work"), ("Выполнено", "done")]
 
 
 def test_create_goes_to_incoming_by_default(client):
@@ -90,11 +90,11 @@ def test_move_to_any_column(client):
     ids = columns(client)
     card = create(client, "A")
 
-    # Из «Кучи» сразу в «Выполнено», минуя «В работе»
+    # Из «Очереди» сразу в «Выполнено», минуя «В работе»
     move(client, card, ids["done"])
     assert column(client, ids["done"]) == ["A"]
 
-    # И обратно в «Кучу»
+    # И обратно в «Очередь»
     move(client, card, ids["incoming"])
     assert column(client, ids["incoming"]) == ["A"]
     assert column(client, ids["done"]) == []

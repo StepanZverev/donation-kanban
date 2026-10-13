@@ -103,7 +103,7 @@
   color: var(--color-text);
 }
 
-/* Крайняя стрелка из «Кучи»: удалить */
+/* Крайняя стрелка из «Очереди»: удалить */
 .danger {
   background-color: var(--color-error-background);
   color: var(--color-error);

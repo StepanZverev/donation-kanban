@@ -23,7 +23,7 @@ def get_database_path() -> str:
 
 
 # Колонки доски. Их три вида (поле kind):
-#   incoming — «Куча», куда падают новые донаты (всегда одна, крайняя левая);
+#   incoming — «Очередь», куда падают новые донаты (всегда одна, крайняя левая);
 #   work     — промежуточные колонки, например «В работе» (их может быть несколько);
 #   done     — «Выполнено» (всегда одна, крайняя правая).
 #
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS settings (
 
 # Колонки, с которыми доска создаётся впервые.
 DEFAULT_COLUMNS = [
-    ("Куча", "incoming"),
+    ("Очередь", "incoming"),
     ("В работе", "work"),
     ("Выполнено", "done"),
 ]
@@ -115,10 +115,19 @@ def init_db() -> None:
         migrate_from_fixed_statuses(db)
         db.executescript(SCHEMA)
         create_default_columns(db)
+        rename_pile_to_queue(db)
+
+
+def rename_pile_to_queue(db: sqlite3.Connection) -> None:
+    """
+    Первая колонка раньше называлась «Куча», теперь «Очередь».
+    Переименовываем её в старых базах, но только если название ещё старое.
+    """
+    db.execute("UPDATE board_columns SET title = 'Очередь' WHERE kind = 'incoming' AND title = 'Куча'")
 
 
 def create_default_columns(db: sqlite3.Connection) -> None:
-    """Если колонок ещё нет (новая база), создаёт «Кучу», «В работе» и «Выполнено»."""
+    """Если колонок ещё нет (новая база), создаёт «Очередь», «В работе» и «Выполнено»."""
     if db.execute("SELECT COUNT(*) FROM board_columns").fetchone()[0] > 0:
         return
     for position, (title, kind) in enumerate(DEFAULT_COLUMNS):
