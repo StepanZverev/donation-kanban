@@ -6,6 +6,7 @@ import * as cardsApi from '../api/cards'
 import * as columnsApi from '../api/columns'
 import * as historyApi from '../api/history'
 import type { BoardColumn, Card, CardDraft } from '../types/card'
+import { formatMoney } from '../utils/money'
 import { useBoardUpdates } from './useBoardUpdates'
 
 // Действие, которое можно отменить кнопкой «Отменить»:
@@ -51,8 +52,7 @@ export function useCards() {
   // Изменения от других вкладок и новые донаты.
   useBoardUpdates(reload)
 
-  // Колонки особого вида. Промежуточных может быть несколько, «В работу» кладём в первую.
-  const firstWorkColumn = columns.find((column) => column.kind === 'work')
+  // Колонка «Выполнено» — для кнопки «Очистить»
   const doneColumn = columns.find((column) => column.kind === 'done')
 
   // После каждого изменения заново забираем карточки с сервера.
@@ -78,27 +78,8 @@ export function useCards() {
     return runAndReload(() => cardsApi.moveCard(id, columnId))
   }
 
-  // ▶ — взять в работу (в первую промежуточную колонку).
-  function startCard(card: Card) {
-    if (firstWorkColumn) {
-      return moveCard(card.id, firstWorkColumn.id)
-    }
-  }
-
-  // ✓ — выполнено.
-  function completeCard(card: Card) {
-    if (doneColumn) {
-      return moveCard(card.id, doneColumn.id)
-    }
-  }
-
-  // ✕ — выкинуть в историю. Запоминаем колонку, чтобы «Отменить» вернул карточку туда же.
-  function removeCard(card: Card) {
-    rememberAction(`Выкинута: ${describeCard(card)}`, [card], card.columnId)
-    return runAndReload(() => cardsApi.removeCard(card.id))
-  }
-
-  // Перетащили в зону по краю доски: сразу в историю как «выполнено» или «удалено».
+  // Сразу в историю как «выполнено» или «удалено»: зоны по краям доски,
+  // крайние стрелки на карточке и «Удалить» в меню.
   function archiveCard(cardId: number, reason: 'done' | 'deleted') {
     const card = cards.find((boardCard) => boardCard.id === cardId)
     if (!card) {
@@ -161,9 +142,6 @@ export function useCards() {
     addCard,
     editCard,
     moveCard,
-    startCard,
-    completeCard,
-    removeCard,
     archiveCard,
     clearDone,
     undoableActions,
@@ -174,8 +152,8 @@ export function useCards() {
 
 // Короткое описание карточки для плашки «Отменить»: чтобы было понятно, что именно отменяешь.
 function describeCard(card: Card) {
-  if (card.donorName) {
-    return `${card.donorName} · ${card.amount} ${card.currency}`
+  if (card.donorName && card.amount !== null) {
+    return `${card.donorName} · ${formatMoney(card.amount, card.currency)}`
   }
   const maxLength = 40
   return card.title.length > maxLength ? `«${card.title.slice(0, maxLength)}…»` : `«${card.title}»`

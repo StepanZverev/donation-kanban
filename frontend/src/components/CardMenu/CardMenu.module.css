@@ -1,0 +1,54 @@
+.menu {
+  position: relative;
+}
+
+/* Кнопка «⋯» неброская: без рамки и фона */
+.toggle {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-color: transparent;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.toggle:hover {
+  background-color: var(--color-column);
+}
+
+/* Выпадающий список поверх всего. Координаты задаёт CardMenu.tsx (style). */
+.dropdown {
+  position: fixed;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 12%);
+}
+
+.dropdown button {
+  border-color: transparent;
+  text-align: left;
+  font-size: 14px;
+}
+
+.dropdown button:hover {
+  background-color: var(--color-column);
+}
+
+.groupTitle {
+  margin: 6px 10px 2px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.danger {
+  margin-top: 4px;
+  color: var(--color-error);
+}
