@@ -14,6 +14,13 @@
   --color-success-background: #dafbe1;
   --color-warning: #bf8700;
 
+  /* Зоны «Удалить» и «Выполнено» у левого и правого края экрана */
+  --drop-zone-width: 64px;
+  /* Отступ зоны от края экрана и от рабочей области */
+  --drop-zone-gap: 16px;
+  /* Сколько места оставляем сбоку под зону, чтобы она никогда не закрывала колонки */
+  --drop-zone-space: calc(var(--drop-zone-width) + 2 * var(--drop-zone-gap));
+
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--color-text);
   background-color: var(--color-background);
@@ -44,9 +51,10 @@ button:disabled {
 .app {
   box-sizing: border-box;
   height: 100vh;
-  max-width: 1200px;
+  /* Рабочая область до 1200px плюс место под зоны по бокам */
+  max-width: calc(1200px + 2 * var(--drop-zone-space));
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 24px var(--drop-zone-space);
   display: flex;
   flex-direction: column;
 }

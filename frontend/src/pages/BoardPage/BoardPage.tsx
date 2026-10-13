@@ -61,8 +61,6 @@ export function BoardPage() {
         onDragEnd={handleDragEnd}
         onDrop={handleDragEnd}
       >
-        <DropZone kind="delete" isVisible={isDragging} onDropCard={handleDropToDelete} />
-
         {columns.map((column) => (
           <Column
             key={column.id}
@@ -77,9 +75,11 @@ export function BoardPage() {
             onClearClick={clearDone}
           />
         ))}
-
-        <DropZone kind="done" isVisible={isDragging} onDropCard={handleDropToDone} />
       </div>
+
+      {/* Зоны у левого и правого края экрана: бросил карточку — она ушла в историю */}
+      <DropZone kind="delete" isVisible={isDragging} onDropCard={handleDropToDelete} />
+      <DropZone kind="done" isVisible={isDragging} onDropCard={handleDropToDone} />
 
       {/* Плашки «Отменить» стопкой внизу экрана, самая новая — снизу */}
       <div className={styles.toasts}>
@@ -113,10 +113,12 @@ export function BoardPage() {
   }
 
   function handleDropToDelete(cardId: number) {
+    setIsDragging(false)
     archiveCard(cardId, 'deleted')
   }
 
   function handleDropToDone(cardId: number) {
+    setIsDragging(false)
     archiveCard(cardId, 'done')
   }
 

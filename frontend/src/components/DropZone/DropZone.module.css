@@ -1,7 +1,12 @@
-/* Место под зону есть всегда, а сама зона появляется только во время перетаскивания.
-   Так доска не прыгает, когда зона показывается. */
+/* Зона прибита к краю экрана, за пределами рабочей области с колонками.
+   Место под неё оставлено отступами .app (см. index.css), поэтому она не закрывает колонки.
+   Видна зона только во время перетаскивания. */
 .zone {
-  flex: 0 0 64px;
+  position: fixed;
+  top: 24px;
+  bottom: 24px;
+  box-sizing: border-box;
+  width: var(--drop-zone-width);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -17,12 +22,14 @@
 }
 
 .delete {
+  left: var(--drop-zone-gap);
   border-color: var(--color-error);
   background-color: var(--color-error-background);
   color: var(--color-error);
 }
 
 .done {
+  right: var(--drop-zone-gap);
   border-color: var(--color-success);
   background-color: var(--color-success-background);
   color: var(--color-success);
