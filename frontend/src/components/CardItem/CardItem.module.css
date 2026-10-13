@@ -1,29 +1,47 @@
+/* Обводка цвета уровня приоритета (--priority-color задаёт CardItem.tsx) */
 .card {
-  padding: 12px;
-  border: 1px solid var(--color-border);
+  padding: 10px 12px;
+  border: 2px solid var(--priority-color, var(--color-border));
   border-radius: 8px;
   background-color: var(--color-surface);
 }
 
-.donation {
-  margin: 0 0 4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-accent);
+/* Первая строка: ник слева, сумма справа — самое важное для стримера */
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.title {
+.heading {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   overflow-wrap: anywhere;
 }
 
-.description {
+.amount {
+  flex-shrink: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.text {
   margin: 6px 0 0;
   font-size: 14px;
   color: var(--color-text-secondary);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+/* Свёрнутый текст: не больше трёх строк, дальше многоточие */
+.collapsed {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
 }
 
 .actions {
@@ -31,14 +49,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-top: 10px;
-}
-
-/* «Изменить» нужна редко (больше модератору), поэтому она неброская */
-.editButton {
-  border-color: transparent;
-  background-color: transparent;
-  color: var(--color-text-secondary);
+  margin-top: 8px;
 }
 
 .quickActions {
@@ -52,6 +63,16 @@
   height: 32px;
   padding: 0;
   font-size: 15px;
+}
+
+/* Меню «⋯» видно, только когда мышь над карточкой или фокус внутри неё */
+.menuSlot {
+  opacity: 0;
+}
+
+.card:hover .menuSlot,
+.card:focus-within .menuSlot {
+  opacity: 1;
 }
 
 .card[draggable='true'] {

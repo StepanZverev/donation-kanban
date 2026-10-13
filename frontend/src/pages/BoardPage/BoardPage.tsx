@@ -66,12 +66,14 @@ export function BoardPage() {
           <Column
             key={column.id}
             column={column}
+            allColumns={columns}
             cards={getColumnCards(column.id)}
             onAddClick={() => handleAddClick(column.id)}
             onEditCard={handleEditCard}
             onStartCard={startCard}
             onCompleteCard={completeCard}
             onRemoveCard={removeCard}
+            onDeleteCard={handleDeleteCard}
             onDropCard={moveCard}
             onClearClick={clearDone}
           />
@@ -111,6 +113,11 @@ export function BoardPage() {
   // Карточку отпустили (куда угодно) — прячем зоны.
   function handleDragEnd() {
     setIsDragging(false)
+  }
+
+  // «Удалить» из меню карточки: в историю с пометкой «удалено», из любой колонки.
+  function handleDeleteCard(card: Card) {
+    archiveCard(card.id, 'deleted')
   }
 
   function handleDropToDelete(cardId: number) {

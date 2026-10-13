@@ -5,12 +5,15 @@ import styles from './Column.module.css'
 
 type ColumnProps = {
   column: BoardColumn
+  // Все колонки доски — для пункта «Переместить в…» в меню карточки
+  allColumns: BoardColumn[]
   cards: Card[]
   onAddClick: () => void
   onEditCard: (card: Card) => void
   onStartCard: (card: Card) => void
   onCompleteCard: (card: Card) => void
   onRemoveCard: (card: Card) => void
+  onDeleteCard: (card: Card) => void
   onDropCard: (cardId: number, columnId: number) => void
   onClearClick: () => void
 }
@@ -18,12 +21,14 @@ type ColumnProps = {
 export function Column(props: ColumnProps) {
   const {
     column,
+    allColumns,
     cards,
     onAddClick,
     onEditCard,
     onStartCard,
     onCompleteCard,
     onRemoveCard,
+    onDeleteCard,
     onDropCard,
     onClearClick,
   } = props
@@ -33,6 +38,8 @@ export function Column(props: ColumnProps) {
   const isDoneColumn = column.kind === 'done'
   // «Куча» и «Выполнено» стоят по краям и выглядят иначе, чем промежуточные колонки.
   const isEdgeColumn = isIncomingColumn || isDoneColumn
+  // Куда можно перенести карточку из этой колонки через меню: в любую другую.
+  const moveTargets = allColumns.filter((otherColumn) => otherColumn.id !== column.id)
 
   return (
     <section
@@ -66,7 +73,10 @@ export function Column(props: ColumnProps) {
           <CardItem
             key={card.id}
             card={card}
+            moveTargets={moveTargets}
             onEdit={onEditCard}
+            onMove={onDropCard}
+            onDelete={onDeleteCard}
             // Какие быстрые кнопки показать, зависит от колонки:
             // ▶ только в «Куче», ✓ и ✕ везде, кроме «Выполнено».
             onStart={isIncomingColumn ? onStartCard : undefined}

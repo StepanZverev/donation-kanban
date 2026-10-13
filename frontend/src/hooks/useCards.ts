@@ -6,6 +6,7 @@ import * as cardsApi from '../api/cards'
 import * as columnsApi from '../api/columns'
 import * as historyApi from '../api/history'
 import type { BoardColumn, Card, CardDraft } from '../types/card'
+import { formatMoney } from '../utils/money'
 import { useBoardUpdates } from './useBoardUpdates'
 
 // Действие, которое можно отменить кнопкой «Отменить»:
@@ -174,8 +175,8 @@ export function useCards() {
 
 // Короткое описание карточки для плашки «Отменить»: чтобы было понятно, что именно отменяешь.
 function describeCard(card: Card) {
-  if (card.donorName) {
-    return `${card.donorName} · ${card.amount} ${card.currency}`
+  if (card.donorName && card.amount !== null) {
+    return `${card.donorName} · ${formatMoney(card.amount, card.currency)}`
   }
   const maxLength = 40
   return card.title.length > maxLength ? `«${card.title.slice(0, maxLength)}…»` : `«${card.title}»`
