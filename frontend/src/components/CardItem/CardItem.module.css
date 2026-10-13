@@ -158,11 +158,12 @@
   border-top: 1px dashed color-mix(in srgb, var(--color-text-secondary) 45%, transparent);
 }
 
-/* Значок объединённой карточки рядом с ником: виден всегда, но неяркий */
+/* «+2» рядом с ником: сколько донатов слито в карточку. Просто текст цвета обводки. */
 .mergedMark {
   flex-shrink: 0;
-  display: flex;
-  color: var(--color-text-secondary);
+  color: var(--priority-color, var(--color-text-secondary));
+  font-size: 14px;
+  font-weight: 700;
 }
 
 /* Над карточкой держат другую, и их можно объединить: пунктирная обводка акцентным цветом */

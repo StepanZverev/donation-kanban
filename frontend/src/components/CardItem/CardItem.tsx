@@ -3,7 +3,6 @@ import type { BoardColumn, Card } from '../../types/card'
 import { formatMoney } from '../../utils/money'
 import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
 import { CardMenu } from '../CardMenu/CardMenu'
-import { MergedIcon } from '../Icons/Icons'
 import styles from './CardItem.module.css'
 
 // Этой строкой бэкенд разделяет тексты объединённых донатов (MERGE_SEPARATOR в merging.py).
@@ -124,9 +123,10 @@ export function CardItem(props: CardItemProps) {
           <h3 className={styles.heading} title={heading ?? undefined}>
             {heading}
           </h3>
+          {/* «+2» — в карточку слиты ещё два доната */}
           {isMerged && (
-            <span className={styles.mergedMark} title="Объединённая карточка: в ней несколько донатов">
-              <MergedIcon />
+            <span className={styles.mergedMark} title="Сколько донатов слито в эту карточку">
+              +{card.mergeCount - 1}
             </span>
           )}
           <div className={styles.menuSlot}>

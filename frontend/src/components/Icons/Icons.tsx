@@ -31,17 +31,3 @@ export function TrashIcon() {
   )
 }
 
-// Две карточки стопкой — «объединённая карточка, в ней несколько донатов»
-export function MergedIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <rect x="2" y="5" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M5 2.5h7a1.5 1.5 0 0 1 1.5 1.5v7"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
