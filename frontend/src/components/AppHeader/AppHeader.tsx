@@ -19,7 +19,7 @@ export function AppHeader() {
               <rect x="11" y="3" width="3" height="4" rx="1" />
             </svg>
           </span>
-          Менеджер донатов
+          Донатная доска
         </div>
 
         <Navigation />
