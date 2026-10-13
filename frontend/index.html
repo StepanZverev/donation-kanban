@@ -5,6 +5,25 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Менеджер донатов</title>
+
+    <!-- Шрифты: Onest для текста, Unbounded для заголовков, JetBrains Mono для сумм -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap"
+    />
+
+    <!-- Включаем тему до загрузки приложения, чтобы страница не мигала светлым фоном.
+         Логика та же, что в src/utils/theme.ts -->
+    <script>
+      {
+        const saved = localStorage.getItem('theme')
+        const systemIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        const isDark = saved === 'dark' || (saved !== 'light' && systemIsDark)
+        document.documentElement.dataset.theme = isDark ? 'dark' : 'light'
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

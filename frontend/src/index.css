@@ -1,18 +1,31 @@
-/* Цвета в одном месте, чтобы их было легко менять */
+/* Цвета в одном месте, чтобы их было легко менять.
+   Здесь светлая тема, а ниже в блоке [data-theme='dark'] — тёмная.
+   Какая тема сейчас, решает src/theme.ts: он ставит <html data-theme="light"> или "dark". */
 :root {
-  --color-background: #f6f8fa;
+  --color-background: #f4f3f8;
   --color-surface: #ffffff;
-  --color-column: #eaeef2;
-  --color-border: #d0d7de;
-  --color-text: #1f2328;
-  --color-text-secondary: #656d76;
-  --color-accent: #8250df;
-  --color-accent-light: #c9b3f5;
-  --color-error: #cf222e;
-  --color-error-background: #ffebe9;
-  --color-success: #1a7f37;
-  --color-success-background: #dafbe1;
-  --color-warning: #bf8700;
+  --color-column: #ebe9f3;
+  --color-border: #d9d6e6;
+  --color-text: #1d1b26;
+  --color-text-secondary: #6a6680;
+  --color-accent: #7c4dff;
+  --color-accent-light: #ece5ff;
+  --color-error: #d23045;
+  --color-error-background: #fde4e7;
+  --color-success: #1f8a4c;
+  --color-success-background: #dcf5e6;
+  --color-warning: #c98a00;
+  /* Тень у всплывающих окошек: меню «⋯», плашки «Отменить» */
+  --color-shadow: rgb(29 27 38 / 14%);
+  /* Затемнение страницы под окном формы */
+  --color-backdrop: rgb(29 27 38 / 40%);
+
+  /* Шрифты подключены в index.html с Google Fonts.
+     Если шрифт не загрузился, браузер возьмёт следующий из списка. */
+  --font-body: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Unbounded', var(--font-body);
+  /* Моноширинный: у всех цифр одинаковая ширина, суммы стоят ровно */
+  --font-numbers: 'JetBrains Mono', ui-monospace, Consolas, monospace;
 
   /* Раскладка страницы — три полосы слева направо:
      | поле слева | рабочая область (до 1200px) | поле справа |
@@ -25,9 +38,32 @@
   --layout-columns: minmax(var(--side-min-width), 1fr) minmax(0, var(--content-max-width))
     minmax(var(--side-min-width), 1fr);
 
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body);
   color: var(--color-text);
   background-color: var(--color-background);
+  /* Подсказка браузеру: полосы прокрутки и встроенные поля рисовать в светлых цветах */
+  color-scheme: light;
+}
+
+/* Тёмная тема: те же переменные, другие значения */
+:root[data-theme='dark'] {
+  --color-background: #121118;
+  --color-surface: #1d1b26;
+  --color-column: #17161f;
+  --color-border: #2f2c3d;
+  --color-text: #ece9f7;
+  --color-text-secondary: #9a95b3;
+  --color-accent: #9b78ff;
+  --color-accent-light: #2c2348;
+  --color-error: #ff5c72;
+  --color-error-background: #3a1820;
+  --color-success: #4cc47f;
+  --color-success-background: #173326;
+  --color-warning: #f0b429;
+  --color-shadow: rgb(0 0 0 / 45%);
+  --color-backdrop: rgb(0 0 0 / 60%);
+
+  color-scheme: dark;
 }
 
 body {
@@ -43,6 +79,22 @@ button {
   background-color: var(--color-surface);
   color: inherit;
   cursor: pointer;
+}
+
+/* Поля ввода по умолчанию берут цвета темы, а не белый фон браузера */
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  background-color: var(--color-surface);
+}
+
+/* Крупные заголовки — фирменным шрифтом */
+h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 button:disabled {
