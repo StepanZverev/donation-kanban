@@ -1,3 +1,4 @@
+import { RestoreIcon, TrashIcon } from '../../components/Icons/Icons'
 import { useHistoryCards } from '../../hooks/useHistoryCards'
 import type { Card } from '../../types/card'
 import styles from './HistoryPage.module.css'
@@ -38,12 +39,25 @@ export function HistoryPage() {
               {card.description && <p className={styles.description}>{card.description}</p>}
             </div>
 
+            {/* Кнопки-иконки; подпись видна во всплывающей подсказке (title) */}
             <div className={styles.actions}>
-              <button type="button" onClick={() => handleRestore(card)}>
-                Переоткрыть
+              <button
+                type="button"
+                className={styles.iconButton}
+                title="Переоткрыть"
+                aria-label="Переоткрыть"
+                onClick={() => handleRestore(card)}
+              >
+                <RestoreIcon />
               </button>
-              <button type="button" onClick={() => handleDeleteForever(card)}>
-                Удалить навсегда
+              <button
+                type="button"
+                className={`${styles.iconButton} ${styles.dangerButton}`}
+                title="Удалить навсегда"
+                aria-label="Удалить навсегда"
+                onClick={() => handleDeleteForever(card)}
+              >
+                <TrashIcon />
               </button>
             </div>
           </li>
