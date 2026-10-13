@@ -3,7 +3,7 @@ import { LOGIN_URL, type ListenerStatus } from '../../api/auth'
 import { useDonationAlertsStatus } from '../../hooks/useDonationAlertsStatus'
 import styles from './DonationAlertsStatus.module.css'
 
-// Коротко — рядом с названием в шапке (только когда что-то не так)
+// Коротко — в заголовке выпадашки и во всплывающей подсказке
 const shortLabels: Record<ListenerStatus, string> = {
   not_configured: 'не настроен',
   not_connected: 'не подключён',
@@ -22,7 +22,8 @@ const descriptions: Record<ListenerStatus, string> = {
   error: 'Связь с DonationAlerts прервалась. Переподключаюсь сам, нажимать ничего не нужно.',
 }
 
-// Статус DonationAlerts в шапке: капсула с точкой, по клику — выпадашка
+// Статус DonationAlerts в шапке: капсула с цветной точкой (серая — не подключён,
+// жёлтая — подключаюсь, красная — нет связи, зелёная — всё работает). По клику — выпадашка
 // с описанием состояния и кнопкой «Подключить» или «Отключить».
 export function DonationAlertsStatus() {
   const { status, disconnect } = useDonationAlertsStatus()
@@ -32,9 +33,6 @@ export function DonationAlertsStatus() {
   if (status === null) {
     return null
   }
-
-  // Пока всё хорошо (донаты слушаются), в капсуле только точка и название
-  const isListening = status.listener === 'listening'
 
   return (
     // onBlur на обёртке: фокус ушёл за пределы выпадашки (кликнули мимо) — закрываем
@@ -48,7 +46,6 @@ export function DonationAlertsStatus() {
       >
         <span className={`${styles.dot} ${styles[status.listener]}`} />
         <span className={styles.name}>DonationAlerts</span>
-        {!isListening && <span className={styles.state}>{shortLabels[status.listener]}</span>}
       </button>
 
       {isOpen && (
