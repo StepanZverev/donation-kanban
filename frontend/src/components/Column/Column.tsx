@@ -17,9 +17,10 @@ type ColumnProps = {
   onDeleteCard: (card: Card) => void
   onFinishCard: (card: Card) => void
   onDropCard: (cardId: number, columnId: number) => void
-  // Можно ли объединить карточку с другой карточкой того же донатера, и само объединение
-  canMerge: (card: Card) => boolean
-  onMergeCard: (card: Card) => void
+  // Есть ли на доске другие карточки того же донатера, и «Объединить все донаты в эту карточку»
+  canMergeAll: (card: Card) => boolean
+  onMergeAll: (card: Card) => void
+  onUnmerge: (card: Card) => void
   // Можно ли бросить перетаскиваемую карточку на эту, чтобы объединить, и само объединение
   canMergeOnDrop: (card: Card) => boolean
   onMergeDrop: (card: Card) => void
@@ -37,8 +38,9 @@ export function Column(props: ColumnProps) {
     onDeleteCard,
     onFinishCard,
     onDropCard,
-    canMerge,
-    onMergeCard,
+    canMergeAll,
+    onMergeAll,
+    onUnmerge,
     canMergeOnDrop,
     onMergeDrop,
     onClearClick,
@@ -94,8 +96,9 @@ export function Column(props: ColumnProps) {
             onEdit={onEditCard}
             onMove={onDropCard}
             onDelete={onDeleteCard}
-            canMerge={canMerge(card)}
-            onMerge={onMergeCard}
+            canMergeAll={canMergeAll(card)}
+            onMergeAll={onMergeAll}
+            onUnmerge={onUnmerge}
             canMergeOnDrop={canMergeOnDrop(card)}
             onMergeDrop={onMergeDrop}
             leftArrow={leftColumn ? 'move' : 'delete'}

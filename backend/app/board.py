@@ -64,3 +64,16 @@ def archive_card(db: sqlite3.Connection, card_id: int, reason: str) -> None:
         "UPDATE cards SET archived_at = ?, archive_reason = ?, updated_at = ? WHERE id = ?",
         (timestamp, reason, timestamp, card_id),
     )
+
+
+def return_to_board(db: sqlite3.Connection, card_id: int, column_id: int) -> None:
+    """Возвращает карточку из истории на доску в колонку column_id."""
+    timestamp = now()
+    db.execute(
+        """
+        UPDATE cards
+        SET archived_at = NULL, archive_reason = NULL, column_id = ?, moved_at = ?, updated_at = ?
+        WHERE id = ?
+        """,
+        (column_id, timestamp, timestamp, card_id),
+    )

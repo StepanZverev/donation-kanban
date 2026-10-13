@@ -26,9 +26,11 @@ export function BoardPage() {
     editCard,
     moveCard,
     archiveCard,
-    canMerge,
-    getMergeOnDrop,
-    mergeCard,
+    getMergeableCards,
+    canMergeOnDrop,
+    mergeAllInto,
+    mergeOnDrop,
+    unmergeCard,
     clearDone,
     undoableActions,
     undoAction,
@@ -79,9 +81,10 @@ export function BoardPage() {
             onDeleteCard={handleDeleteCard}
             onFinishCard={handleFinishCard}
             onDropCard={moveCard}
-            canMerge={canMerge}
-            onMergeCard={mergeCard}
-            canMergeOnDrop={canMergeOnDrop}
+            canMergeAll={(card) => getMergeableCards(card).length > 0}
+            onMergeAll={mergeAllInto}
+            onUnmerge={unmergeCard}
+            canMergeOnDrop={canMergeDraggedOn}
             onMergeDrop={handleMergeDrop}
             onClearClick={clearDone}
           />
@@ -124,17 +127,17 @@ export function BoardPage() {
     setDraggedCardId(null)
   }
 
-  function canMergeOnDrop(card: Card) {
-    return draggedCardId !== null && getMergeOnDrop(draggedCardId, card) !== null
+  // Можно ли бросить перетаскиваемую карточку на card, чтобы объединить их
+  function canMergeDraggedOn(card: Card) {
+    return draggedCardId !== null && canMergeOnDrop(draggedCardId, card)
   }
 
-  // Карточку бросили на другую карточку того же донатера — объединяем
+  // Карточку бросили на другую карточку того же донатера — сливаем её в ту, на которую бросили
   function handleMergeDrop(card: Card) {
-    const cardToMerge = draggedCardId === null ? null : getMergeOnDrop(draggedCardId, card)
-    setDraggedCardId(null)
-    if (cardToMerge) {
-      mergeCard(cardToMerge)
+    if (draggedCardId !== null) {
+      mergeOnDrop(draggedCardId, card)
     }
+    setDraggedCardId(null)
   }
 
   // «Удалить» из меню карточки: в историю с пометкой «удалено», из любой колонки.

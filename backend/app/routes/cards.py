@@ -7,7 +7,7 @@
 
 import sqlite3
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from ..board import (
     archive_card,
@@ -18,9 +18,17 @@ from ..board import (
     sort_column_cards,
 )
 from ..db import get_db, now
-from ..merging import merge_card
+from ..merging import merge_cards, split_cards
 from ..realtime import notify_board_changed
-from ..schemas import Card, CardArchive, CardCreate, CardMove, CardUpdate
+from ..schemas import (
+    Card,
+    CardArchive,
+    CardCreate,
+    CardMerge,
+    CardMove,
+    CardUnmerge,
+    CardUpdate,
+)
 
 router = APIRouter(prefix="/api/cards", tags=["Карточки"])
 
@@ -124,18 +132,28 @@ def archive(card_id: int, data: CardArchive, db: sqlite3.Connection = Depends(ge
 
 
 @router.post("/{card_id}/merge")
-def merge(card_id: int, db: sqlite3.Connection = Depends(get_db)) -> Card:
+def merge(card_id: int, data: CardMerge, db: sqlite3.Connection = Depends(get_db)) -> Card:
     """
-    Кнопка «Объединить» на карточке в «Очереди»: сливает её в основную карточку
-    того же донатера (правило — в merging.py). Возвращает основную карточку.
+    Сливает карточки data.card_ids в эту карточку. Все они должны быть от того же донатера.
+    Так работают «Объединить все донаты в эту карточку» и перетаскивание карточки на карточку.
     """
-    card = get_card(db, card_id)
-    if card.archived_at is not None:
-        raise HTTPException(status_code=400, detail="Карточка уже в истории")
-    target = merge_card(db, card)
+    target = merge_cards(db, get_card(db, card_id), data.card_ids)
 
     notify_board_changed(db)
     return target
+
+
+@router.post("/{card_id}/unmerge")
+def unmerge(card_id: int, data: CardUnmerge, db: sqlite3.Connection = Depends(get_db)) -> list[Card]:
+    """
+    «Разъединить»: возвращает слитые в эту карточку карточки на доску, туда, где они были.
+    Если card_ids прислали — только эти (так работает «Отменить» после объединения).
+    Возвращает вернувшиеся карточки.
+    """
+    restored = split_cards(db, get_card(db, card_id), data.card_ids)
+
+    notify_board_changed(db)
+    return restored
 
 
 @router.delete("/{card_id}")

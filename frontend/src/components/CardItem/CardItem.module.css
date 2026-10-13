@@ -158,21 +158,11 @@
   border-top: 1px dashed color-mix(in srgb, var(--color-text-secondary) 45%, transparent);
 }
 
-/* Только что слили донат: карточка подкрашена, сверху надпись «+300 ₽ от Васи».
-   Подкрашиваем фон, а не рисуем тень снаружи: тень обрезала бы колонка с прокруткой. */
-.justMerged {
-  background-color: color-mix(in srgb, var(--color-accent-light) 25%, var(--color-surface));
-}
-
-.mergeNote {
-  display: inline-block;
-  margin: 6px 0 0;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background-color: var(--color-accent-light);
-  color: var(--color-text);
-  font-size: 13px;
-  font-weight: 600;
+/* Значок объединённой карточки рядом с ником: виден всегда, но неяркий */
+.mergedMark {
+  flex-shrink: 0;
+  display: flex;
+  color: var(--color-text-secondary);
 }
 
 /* Над карточкой держат другую, и их можно объединить: пунктирная обводка акцентным цветом */

@@ -101,6 +101,18 @@ class CardArchive(BaseModel):
     reason: Literal["done", "deleted"]
 
 
+class CardMerge(BaseModel):
+    """Какие карточки слить в эту."""
+
+    card_ids: list[int] = Field(min_length=1)
+
+
+class CardUnmerge(BaseModel):
+    """Какие слитые карточки вернуть на доску. None — все."""
+
+    card_ids: list[int] | None = None
+
+
 class CardRestore(BaseModel):
     """
     Куда вернуть карточку из истории. Если column_id не прислали — в «Очередь».
@@ -130,5 +142,3 @@ class Card(BaseModel):
     archive_reason: ArchiveReason | None
     merge_count: int
     merged_into_id: int | None
-    last_merged_at: str | None
-    last_merge_note: str | None

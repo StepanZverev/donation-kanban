@@ -1,21 +1,29 @@
 """
 Объединение карточек одного донатера.
 
-Ситуация: Вася задонатил с задачей, потом задонатил ещё раз. Вторую карточку
-можно слить в первую: суммы сложатся, текст второго доната допишется в конец
-через строку-разделитель (фронт рисует её пунктиром), а сама вторая карточка уйдёт в историю с пометкой «объединена».
+Ситуация: Вася задонатил с задачей, потом задонатил ещё раз. Карточки Васи можно
+слить в одну: суммы сложатся, тексты допишутся в конец через строку-разделитель
+(фронт рисует её пунктиром), а слитые карточки уйдут в историю с пометкой «объединена».
 
-Куда сливаем (основная карточка):
-- если у донатера есть карточка в промежуточной колонке (например, «В работе») — в неё;
-- иначе в его самую старую карточку в «Очереди».
-Сливать можно только карточку из «Очереди». «Выполнено» и история не участвуют.
+Объединять можно любые карточки на доске с одинаковым ником (без учёта регистра),
+в какой бы колонке они ни лежали. История не участвует.
+
+«Разъединить» возвращает слитые карточки на доску, в те колонки, где они были,
+и вычитает их суммы и тексты из основной карточки.
 """
 
 import sqlite3
 
 from fastapi import HTTPException
 
-from .board import EMPTY_MESSAGE_TITLE, archive_card, get_card, get_columns
+from .board import (
+    EMPTY_MESSAGE_TITLE,
+    archive_card,
+    get_card,
+    get_column_id_by_kind,
+    get_columns,
+    return_to_board,
+)
 from .db import get_setting, now
 from .schemas import Card
 
@@ -31,52 +39,68 @@ STREAMER_CURRENCY = "RUB"
 # Символ редкий, чтобы случайно не встретился в обычном тексте.
 MERGE_SEPARATOR = "⸻"
 
-# Значки валют для подписи «+300 ₽ от Васи»
-CURRENCY_SIGNS = {"RUB": "₽", "USD": "$", "EUR": "€"}
-
 
 def is_auto_merge_enabled(db: sqlite3.Connection) -> bool:
     return get_setting(db, AUTO_MERGE_KEY) == "1"
 
 
-def find_merge_target(db: sqlite3.Connection, card: Card) -> Card | None:
+def is_same_donor(card: Card, other: Card) -> bool:
     """
-    Находит карточку, в которую можно слить card, или None, если сливать некуда.
-    Это же правило повторяет фронт (utils/merging.ts), чтобы знать, показывать ли кнопку.
+    Один ли донатер у двух карточек. Ник сравниваем без учёта регистра: «Вася» = «вася».
+    Делаем это в Python, а не в SQL: LOWER() в SQLite понимает только латиницу.
+    Это же правило повторяет фронт (utils/merging.ts).
     """
-    kinds = {column.id: column.kind for column in get_columns(db)}
-    if card.donor_name is None or kinds.get(card.column_id) != "incoming":
-        return None
+    if card.donor_name is None or other.donor_name is None:
+        return False
+    return card.donor_name.casefold() == other.donor_name.casefold()
 
-    # Карточки того же донатера на доске, от старых к новым.
-    # Ник сравниваем без учёта регистра: «Вася» = «вася». Делаем это в Python, а не в SQL:
-    # LOWER() в SQLite понимает только латиницу.
+
+def find_same_donor_cards(db: sqlite3.Connection, card: Card) -> list[Card]:
+    """Другие карточки того же донатера на доске, от старых к новым."""
     rows = db.execute(
         "SELECT * FROM cards WHERE archived_at IS NULL AND id != ? ORDER BY created_at, id",
         (card.id,),
     ).fetchall()
-    donor = card.donor_name.casefold()
-    same_donor = [Card(**row) for row in rows if (row["donor_name"] or "").casefold() == donor]
+    return [Card(**row) for row in rows if is_same_donor(card, Card(**row))]
 
-    # 1. Карточка в промежуточной колонке — самая старая из таких
-    for other in same_donor:
-        if kinds.get(other.column_id) == "work":
-            return other
 
-    # 2. Самая старая карточка в «Очереди», если она старше нашей
-    for other in same_donor:
-        if kinds.get(other.column_id) == "incoming" and (other.created_at, other.id) < (card.created_at, card.id):
-            return other
-
+def find_auto_merge_target(db: sqlite3.Connection, card: Card) -> Card | None:
+    """
+    Куда автоматически слить новый донат, или None, если некуда:
+    - в карточку донатера в промежуточной колонке (например, «В работе»), самую старую из таких;
+    - иначе в его самую старую карточку в «Очереди».
+    В «Выполнено» не сливаем: иначе новая просьба затерялась бы среди сделанного.
+    """
+    kinds = {column.id: column.kind for column in get_columns(db)}
+    same_donor = find_same_donor_cards(db, card)
+    for kind in ("work", "incoming"):
+        for other in same_donor:
+            if kinds.get(other.column_id) == kind:
+                return other
     return None
 
 
-def merge_card(db: sqlite3.Connection, card: Card) -> Card:
-    """Сливает card в основную карточку донатера. Возвращает основную карточку после слияния."""
-    target = find_merge_target(db, card)
-    if target is None:
-        raise HTTPException(status_code=400, detail="Эту карточку не с чем объединить")
+def merge_cards(db: sqlite3.Connection, target: Card, card_ids: list[int]) -> Card:
+    """
+    Сливает карточки card_ids в target. Все они должны быть на доске и от того же донатера.
+    Возвращает target после слияния.
+    """
+    cards = [get_card(db, card_id) for card_id in card_ids]
+    for card in [target, *cards]:
+        if card.archived_at is not None:
+            raise HTTPException(status_code=400, detail="Карточка уже в истории")
+    for card in cards:
+        if card.id == target.id or not is_same_donor(card, target):
+            raise HTTPException(status_code=400, detail="Объединять можно только карточки одного донатера")
 
+    # Сливаем от старых к новым, чтобы тексты шли по порядку
+    for card in sorted(cards, key=lambda card: (card.created_at, card.id)):
+        merge_one(db, get_card(db, target.id), card)
+    return get_card(db, target.id)
+
+
+def merge_one(db: sqlite3.Connection, target: Card, card: Card) -> None:
+    """Сливает одну карточку card в target."""
     # Сумма. Валюта та же — просто складываем. Разные — переходим на валюту стримера.
     if target.currency == card.currency:
         amount = (target.amount or 0) + (card.amount or 0)
@@ -90,40 +114,58 @@ def merge_card(db: sqlite3.Connection, card: Card) -> Card:
     # Если у одного из донатов текста нет, разделитель не нужен.
     description = join_texts(card_text(target), card_text(card))
 
-    added_money = format_money(card.amount or 0, card.currency)
-    timestamp = now()
     db.execute(
         """
         UPDATE cards
         SET amount = ?, currency = ?, streamer_amount = ?, description = ?,
-            merge_count = merge_count + ?, last_merged_at = ?, last_merge_note = ?, updated_at = ?
+            merge_count = merge_count + ?, updated_at = ?
         WHERE id = ?
         """,
-        (
-            amount,
-            currency,
-            streamer_amount,
-            description,
-            card.merge_count,
-            timestamp,
-            f"+{added_money} от {card.donor_name}",
-            timestamp,
-            target.id,
-        ),
+        (amount, currency, streamer_amount, description, card.merge_count, now(), target.id),
     )
 
-    # Вторая карточка уходит в историю со ссылкой на основную — ничего не теряется
+    # Слитая карточка уходит в историю со ссылкой на основную — ничего не теряется.
+    # Колонку она запоминает: «Разъединить» вернёт её туда же.
     archive_card(db, card.id, "merged")
     db.execute("UPDATE cards SET merged_into_id = ? WHERE id = ?", (target.id, card.id))
-    return get_card(db, target.id)
+
+
+def split_cards(db: sqlite3.Connection, target: Card, card_ids: list[int] | None) -> list[Card]:
+    """
+    «Разъединить»: возвращает на доску карточки, слитые в target.
+    card_ids — какие именно (так работает «Отменить» сразу после объединения),
+    None — все. Возвращает вернувшиеся карточки.
+    """
+    rows = db.execute(
+        """
+        SELECT * FROM cards
+        WHERE merged_into_id = ? AND archive_reason = 'merged'
+        ORDER BY archived_at DESC, id DESC
+        """,
+        (target.id,),
+    ).fetchall()
+    merged = [Card(**row) for row in rows if card_ids is None or row["id"] in card_ids]
+    if not merged:
+        raise HTTPException(status_code=400, detail="Карточка ни с чем не объединена")
+
+    column_ids = {column.id for column in get_columns(db)}
+    for card in merged:
+        unmerge_card(db, card)
+        # Колонку, где карточка была, могли удалить — тогда в «Очередь»
+        if card.column_id in column_ids:
+            column_id = card.column_id
+        else:
+            column_id = get_column_id_by_kind(db, "incoming")
+        return_to_board(db, card.id, column_id)
+    return [get_card(db, card.id) for card in merged]
 
 
 def unmerge_card(db: sqlite3.Connection, card: Card) -> None:
     """
-    Отменяет объединение: вычитает сумму card из основной карточки и убирает
-    дописанный текст. Саму card на доску возвращает тот, кто вызвал (restore в истории).
+    Отменяет слияние card: вычитает её сумму из основной карточки и убирает её текст.
+    Саму card на доску возвращает тот, кто вызвал.
 
-    Если основную карточку успели отредактировать и дописанного текста в конце уже нет,
+    Если основную карточку успели отредактировать и текста card в ней уже нет,
     текст не трогаем — вычитаем только сумму.
     """
     row = db.execute("SELECT * FROM cards WHERE id = ?", (card.merged_into_id,)).fetchone()
@@ -136,30 +178,19 @@ def unmerge_card(db: sqlite3.Connection, card: Card) -> None:
     if target.currency == card.currency:
         amount = (target.amount or 0) - (card.amount or 0)
     else:
-        # Основная карточка уже в валюте стримера (см. merge_card)
+        # Основная карточка уже в валюте стримера (см. merge_one)
         amount = (target.amount or 0) - (card.streamer_amount or 0)
     streamer_amount = (target.streamer_amount or 0) - (card.streamer_amount or 0)
 
-    description = target.description
-    added_text = card_text(card)
-    added_part = f"\n{MERGE_SEPARATOR}\n{added_text}"
-    if added_text == "":
-        # Второй донат был без текста — к описанию ничего не дописывали
-        pass
-    elif description == added_text:
-        # У основной карточки текста не было, описание целиком от второго доната
+    description = remove_text(target.description, card_text(card))
+    # Если остался только заголовок карточки, значит описание было пустым
+    if description == target.title:
         description = ""
-    elif description.endswith(added_part):
-        description = description.removesuffix(added_part)
-        # Если остался только заголовок карточки, значит описание было пустым
-        if description == target.title:
-            description = ""
 
     db.execute(
         """
         UPDATE cards
-        SET amount = ?, streamer_amount = ?, description = ?, merge_count = merge_count - ?,
-            last_merged_at = NULL, last_merge_note = NULL, updated_at = ?
+        SET amount = ?, streamer_amount = ?, description = ?, merge_count = merge_count - ?, updated_at = ?
         WHERE id = ?
         """,
         (amount, streamer_amount, description, card.merge_count, now(), target.id),
@@ -192,9 +223,21 @@ def join_texts(base_text: str, added_text: str) -> str:
     return base_text or added_text
 
 
-def format_money(amount: float, currency: str | None) -> str:
-    """1500 и RUB → «1 500 ₽». Как formatMoney на фронте, только попроще."""
-    number = f"{amount:,.0f}" if amount == int(amount) else f"{amount:,.2f}"
-    number = number.replace(",", " ")
-    sign = CURRENCY_SIGNS.get(currency or STREAMER_CURRENCY, currency)
-    return f"{number} {sign}"
+def remove_text(description: str, text: str) -> str:
+    """
+    Убирает из склеенного описания кусок text — обратное к join_texts.
+    Описание режем по разделителям на части и ищем text среди них с конца:
+    так он найдётся, даже если после него успели дописать другие донаты.
+    Не нашли (описание отредактировали) — возвращаем описание как было.
+    """
+    if not text:
+        return description
+    parts = description.split(f"\n{MERGE_SEPARATOR}\n")
+    # Текст сам может быть склеенным (слили карточку, в которую до этого что-то слили)
+    text_parts = text.split(f"\n{MERGE_SEPARATOR}\n")
+    size = len(text_parts)
+    for start in range(len(parts) - size, -1, -1):
+        if parts[start : start + size] == text_parts:
+            rest = parts[:start] + parts[start + size :]
+            return f"\n{MERGE_SEPARATOR}\n".join(rest)
+    return description

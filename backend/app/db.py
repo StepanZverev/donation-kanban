@@ -54,10 +54,8 @@ CREATE TABLE IF NOT EXISTS cards (
     moved_at        TEXT    NOT NULL,                   -- когда карточка попала в текущую колонку
     archived_at     TEXT,                               -- когда убрали с доски в историю
     archive_reason  TEXT,                               -- done | deleted | merged
-    merge_count     INTEGER NOT NULL DEFAULT 1,         -- сколько донатов слито в карточку (значок «×2»)
-    merged_into_id  INTEGER,                            -- в какую карточку слили эту (если reason = merged)
-    last_merged_at  TEXT,                               -- когда в карточку последний раз что-то слили
-    last_merge_note TEXT                                -- что слили, например «+300 ₽ от Васи»
+    merge_count     INTEGER NOT NULL DEFAULT 1,         -- сколько донатов слито в карточку (1 — не объединена)
+    merged_into_id  INTEGER                             -- в какую карточку слили эту (если reason = merged)
 );
 
 -- Простое хранилище «ключ — значение» для служебных данных,
@@ -140,8 +138,6 @@ def add_merge_fields(db: sqlite3.Connection) -> None:
     new_fields = {
         "merge_count": "INTEGER NOT NULL DEFAULT 1",
         "merged_into_id": "INTEGER",
-        "last_merged_at": "TEXT",
-        "last_merge_note": "TEXT",
     }
     for name, field_type in new_fields.items():
         if name not in card_fields:

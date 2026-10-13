@@ -23,8 +23,6 @@ export type CardFromApi = {
   archive_reason: Card['archiveReason']
   merge_count: number
   merged_into_id: number | null
-  last_merged_at: string | null
-  last_merge_note: string | null
 }
 
 export function toCard(card: CardFromApi): Card {
@@ -46,8 +44,6 @@ export function toCard(card: CardFromApi): Card {
     archiveReason: card.archive_reason,
     mergeCount: card.merge_count,
     mergedIntoId: card.merged_into_id,
-    lastMergedAt: card.last_merged_at,
-    lastMergeNote: card.last_merge_note,
   }
 }
 
@@ -101,11 +97,20 @@ export async function archiveCard(id: number, reason: 'done' | 'deleted'): Promi
   return toCard(card)
 }
 
-// Кнопка «Объединить»: сливает карточку в основную карточку того же донатера.
-// Какую именно — решает бэкенд (то же правило, что в utils/merging.ts). Возвращает основную карточку.
-export async function mergeCard(id: number): Promise<Card> {
-  const card = await request<CardFromApi>('POST', `/api/cards/${id}/merge`)
+// Сливает карточки cardIds в карточку targetId (все — от одного донатера).
+// Возвращает карточку targetId после слияния.
+export async function mergeCards(targetId: number, cardIds: number[]): Promise<Card> {
+  const card = await request<CardFromApi>('POST', `/api/cards/${targetId}/merge`, { card_ids: cardIds })
   return toCard(card)
+}
+
+// «Разъединить»: слитые в targetId карточки возвращаются на доску, туда, где были.
+// cardIds — только эти (для «Отменить» после объединения), null — все.
+export async function unmergeCards(targetId: number, cardIds: number[] | null): Promise<Card[]> {
+  const cards = await request<CardFromApi[]>('POST', `/api/cards/${targetId}/unmerge`, {
+    card_ids: cardIds,
+  })
+  return cards.map(toCard)
 }
 
 // Кнопка «Очистить»: все карточки из «Выполнено» уходят в историю.

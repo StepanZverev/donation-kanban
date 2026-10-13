@@ -10,7 +10,7 @@ from dataclasses import dataclass
 
 from .board import EMPTY_MESSAGE_TITLE, get_card, get_column_id_by_kind
 from .db import now
-from .merging import find_merge_target, is_auto_merge_enabled, merge_card
+from .merging import find_auto_merge_target, is_auto_merge_enabled, merge_cards
 
 # Сколько символов сообщения показываем в заголовке карточки
 TITLE_LENGTH = 80
@@ -66,8 +66,9 @@ def add_donation_card(db: sqlite3.Connection, donation: Donation) -> bool:
 
     if is_auto_merge_enabled(db):
         card = get_card(db, cursor.lastrowid)
-        if find_merge_target(db, card) is not None:
-            merge_card(db, card)
+        target = find_auto_merge_target(db, card)
+        if target is not None:
+            merge_cards(db, target, [card.id])
     return True
 
 

@@ -3,10 +3,8 @@ import type { BoardColumn, Card } from '../../types/card'
 import { formatMoney } from '../../utils/money'
 import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
 import { CardMenu } from '../CardMenu/CardMenu'
+import { MergedIcon } from '../Icons/Icons'
 import styles from './CardItem.module.css'
-
-// Сколько подсвечивать карточку, в которую только что слили донат
-const MERGE_HIGHLIGHT_MS = 6000
 
 // Этой строкой бэкенд разделяет тексты объединённых донатов (MERGE_SEPARATOR в merging.py).
 // На карточке вместо неё рисуем пунктирную линию.
@@ -21,9 +19,11 @@ type CardItemProps = {
   onEdit: (card: Card) => void
   onMove: (cardId: number, columnId: number) => void
   onDelete: (card: Card) => void
-  // Есть ли у донатера другая карточка, с которой эту можно объединить
-  canMerge: boolean
-  onMerge: (card: Card) => void
+  // Есть ли у донатера другие карточки, которые можно слить в эту
+  canMergeAll: boolean
+  onMergeAll: (card: Card) => void
+  // «Разъединить»: вернуть слитые донаты на доску
+  onUnmerge: (card: Card) => void
   // Можно ли бросить на эту карточку ту, которую сейчас тащат, чтобы объединить их
   canMergeOnDrop: boolean
   onMergeDrop: (card: Card) => void
@@ -43,8 +43,9 @@ export function CardItem(props: CardItemProps) {
     onEdit,
     onMove,
     onDelete,
-    canMerge,
-    onMerge,
+    canMergeAll,
+    onMergeAll,
+    onUnmerge,
     canMergeOnDrop,
     onMergeDrop,
     leftArrow,
@@ -61,8 +62,6 @@ export function CardItem(props: CardItemProps) {
   const [isTextCut, setIsTextCut] = useState(false)
   // Ссылка на абзац с текстом, чтобы померить его высоту
   const textRef = useRef<HTMLDivElement>(null)
-  // Время слияния, подсветка которого уже погасла (его выставляет таймер ниже)
-  const [expiredMergeAt, setExpiredMergeAt] = useState<string | null>(null)
 
   const isDonation = card.source === 'donationalerts'
   // Цвет обводки зависит от суммы доната. Ручные карточки считаются суммой 0.
@@ -75,6 +74,8 @@ export function CardItem(props: CardItemProps) {
   const textParts = text.split(MERGE_SEPARATOR)
   // Обводку «+ Объединить» показываем, только пока над карточкой держат подходящую
   const showMergeDrop = isDragOver && canMergeOnDrop
+  // В карточку слиты другие донаты
+  const isMerged = card.mergeCount > 1
 
   // Меряем, обрезан ли текст. Делаем это, пока он свёрнут: у обрезанного полная высота
   // (scrollHeight) больше видимой (clientHeight). ResizeObserver перемеряет,
@@ -91,32 +92,11 @@ export function CardItem(props: CardItemProps) {
     return () => observer.disconnect()
   }, [isExpanded, text])
 
-  // В карточку только что слили донат: несколько секунд подсвечиваем её и показываем «+300 ₽ от Васи»
-  const isJustMerged =
-    card.lastMergedAt !== null &&
-    card.lastMergedAt !== expiredMergeAt &&
-    getMsSince(card.lastMergedAt) < MERGE_HIGHLIGHT_MS
-
-  // Гасим подсветку, когда пройдёт MERGE_HIGHLIGHT_MS с момента слияния
-  useEffect(() => {
-    const mergedAt = card.lastMergedAt
-    if (!mergedAt) {
-      return
-    }
-    const timeLeftMs = MERGE_HIGHLIGHT_MS - getMsSince(mergedAt)
-    if (timeLeftMs <= 0) {
-      return
-    }
-    const timer = window.setTimeout(() => setExpiredMergeAt(mergedAt), timeLeftMs)
-    return () => window.clearTimeout(timer)
-  }, [card.lastMergedAt])
-
   return (
     <article
       className={[
         styles.card,
         isDragging ? styles.dragging : '',
-        isJustMerged ? styles.justMerged : '',
         showMergeDrop ? styles.mergeDrop : '',
       ].join(' ')}
       // CSS-переменная с цветом уровня, её использует .card в CardItem.module.css
@@ -144,21 +124,25 @@ export function CardItem(props: CardItemProps) {
           <h3 className={styles.heading} title={heading ?? undefined}>
             {heading}
           </h3>
+          {isMerged && (
+            <span className={styles.mergedMark} title="Объединённая карточка: в ней несколько донатов">
+              <MergedIcon />
+            </span>
+          )}
           <div className={styles.menuSlot}>
             <CardMenu
               moveTargets={moveTargets}
               onEdit={handleEdit}
               onMove={handleMove}
               onDelete={handleDelete}
-              onMerge={canMerge ? handleMergeClick : undefined}
+              onMergeAll={canMergeAll ? handleMergeAll : undefined}
+              onUnmerge={isMerged ? handleUnmerge : undefined}
             />
           </div>
           {card.amount !== null && (
             <span className={styles.amount}>{formatMoney(card.amount, card.currency)}</span>
           )}
         </header>
-
-        {isJustMerged && card.lastMergeNote && <p className={styles.mergeNote}>{card.lastMergeNote}</p>}
 
         {/* Текст и ссылка под ним работают как одно целое: клик по любому из них
             раскрывает или сворачивает текст (клик по ссылке доходит сюда же),
@@ -252,8 +236,12 @@ export function CardItem(props: CardItemProps) {
     setIsExpanded(!isExpanded)
   }
 
-  function handleMergeClick() {
-    onMerge(card)
+  function handleMergeAll() {
+    onMergeAll(card)
+  }
+
+  function handleUnmerge() {
+    onUnmerge(card)
   }
 
   function handleLeftClick() {
@@ -275,9 +263,4 @@ export function CardItem(props: CardItemProps) {
   function handleDelete() {
     onDelete(card)
   }
-}
-
-// Сколько миллисекунд прошло с момента isoDate (например, '2026-10-13T12:00:00.000+00:00')
-function getMsSince(isoDate: string) {
-  return Date.now() - Date.parse(isoDate)
 }

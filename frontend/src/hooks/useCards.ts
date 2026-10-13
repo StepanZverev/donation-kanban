@@ -6,17 +6,16 @@ import * as cardsApi from '../api/cards'
 import * as columnsApi from '../api/columns'
 import * as historyApi from '../api/history'
 import type { BoardColumn, Card, CardDraft } from '../types/card'
-import { findMergeTarget } from '../utils/merging'
+import { findSameDonorCards, isSameDonor } from '../utils/merging'
 import { formatMoney } from '../utils/money'
 import { useBoardUpdates } from './useBoardUpdates'
 
 // Действие, которое можно отменить кнопкой «Отменить»:
-// какие карточки вернуть из истории и в какую колонку.
+// текст плашки и функция, которая откатывает действие.
 export type UndoableAction = {
   id: number
   message: string
-  cardIds: number[]
-  columnId: number
+  undo: () => Promise<unknown>
 }
 
 // Сколько последних действий можно отменить. Более старые просто забываются.
@@ -87,69 +86,82 @@ export function useCards() {
       return
     }
     const verb = reason === 'done' ? 'Выполнена' : 'Удалена'
-    rememberAction(`${verb}: ${describeCard(card)}`, [card], card.columnId)
+    rememberRestore(`${verb}: ${describeCard(card)}`, [card], card.columnId)
     return runAndReload(() => cardsApi.archiveCard(card.id, reason))
   }
 
-  // Есть ли у карточки «пара» того же донатера, с которой её можно объединить
-  function canMerge(card: Card) {
-    return findMergeTarget(card, cards, columns) !== null
+  // Другие карточки того же донатера, которые можно слить в эту
+  function getMergeableCards(card: Card) {
+    return findSameDonorCards(card, cards)
   }
 
-  // Какую карточку объединить, если бросить карточку draggedId на overCard. null — эти две не объединяются.
-  // Тащить можно в обе стороны: новую на старую и старую на новую. В историю всё равно
-  // уйдёт та, что сливается в другую по правилу (findMergeTarget), — как и через меню.
-  function getMergeOnDrop(draggedId: number, overCard: Card) {
+  // Можно ли бросить карточку draggedId на card, чтобы объединить их
+  function canMergeOnDrop(draggedId: number, card: Card) {
+    const draggedCard = cards.find((boardCard) => boardCard.id === draggedId)
+    return draggedCard !== undefined && draggedCard.id !== card.id && isSameDonor(draggedCard, card)
+  }
+
+  // Сливает cardsToMerge в target. Слитые карточки уходят в историю,
+  // «Отменить» вернёт их на доску — бэкенд при этом вычтет их суммы и тексты.
+  function mergeCards(target: Card, cardsToMerge: Card[], message: string) {
+    const cardIds = cardsToMerge.map((card) => card.id)
+    rememberAction(message, () => cardsApi.unmergeCards(target.id, cardIds))
+    return runAndReload(() => cardsApi.mergeCards(target.id, cardIds))
+  }
+
+  // «Объединить все донаты в эту карточку» в меню «⋯»
+  function mergeAllInto(target: Card) {
+    const cardsToMerge = getMergeableCards(target)
+    return mergeCards(target, cardsToMerge, `Объединено донатов: ${cardsToMerge.length + 1} · ${target.donorName}`)
+  }
+
+  // Карточку draggedId бросили на target
+  function mergeOnDrop(draggedId: number, target: Card) {
     const draggedCard = cards.find((card) => card.id === draggedId)
-    if (!draggedCard) {
-      return null
+    if (draggedCard && canMergeOnDrop(draggedId, target)) {
+      return mergeCards(target, [draggedCard], `Объединена: ${describeCard(draggedCard)}`)
     }
-    if (findMergeTarget(draggedCard, cards, columns)?.id === overCard.id) {
-      return draggedCard
-    }
-    if (findMergeTarget(overCard, cards, columns)?.id === draggedCard.id) {
-      return overCard
-    }
-    return null
   }
 
-  // «Объединить»: карточка сливается в основную карточку донатера, а сама уходит в историю.
-  // «Отменить» вернёт её из истории в ту же колонку — бэкенд при этом вычтет её сумму и текст.
-  function mergeCard(card: Card) {
-    rememberAction(`Объединена: ${describeCard(card)}`, [card], card.columnId)
-    return runAndReload(() => cardsApi.mergeCard(card.id))
+  // «Разъединить» в меню «⋯»: все слитые в карточку донаты возвращаются на доску.
+  // «Отменить» сольёт их обратно.
+  function unmergeCard(target: Card) {
+    return runAndReload(async () => {
+      const restoredCards = await cardsApi.unmergeCards(target.id, null)
+      const cardIds = restoredCards.map((card) => card.id)
+      rememberAction(`Разъединено: ${target.donorName}`, () => cardsApi.mergeCards(target.id, cardIds))
+    })
   }
 
   // «Очистить» — все выполненные в историю.
   function clearDone() {
     if (doneColumn) {
       const doneCards = getColumnCards(doneColumn.id)
-      rememberAction(`Очищено выполненных: ${doneCards.length}`, doneCards, doneColumn.id)
+      rememberRestore(`Очищено выполненных: ${doneCards.length}`, doneCards, doneColumn.id)
     }
     return runAndReload(() => cardsApi.clearDone())
   }
 
-  // Кладёт действие в стопку для «Отменить».
-  function rememberAction(message: string, actionCards: Card[], columnId: number | null) {
-    if (columnId === null) {
-      return
-    }
-    const action: UndoableAction = {
-      id: nextActionId.current,
-      message,
-      cardIds: actionCards.map((card) => card.id),
-      columnId,
-    }
+  // Кладёт действие в стопку для «Отменить». undo — как его откатить.
+  function rememberAction(message: string, undo: () => Promise<unknown>) {
+    const action: UndoableAction = { id: nextActionId.current, message, undo }
     nextActionId.current += 1
     setUndoableActions((actions) => [...actions, action].slice(-MAX_UNDOABLE_ACTIONS))
   }
 
-  // «Отменить» у конкретного действия — возвращаем его карточки из истории туда, где они были.
+  // Действие, которое отменяется возвратом карточек из истории в колонку columnId
+  function rememberRestore(message: string, actionCards: Card[], columnId: number | null) {
+    if (columnId === null) {
+      return
+    }
+    const cardIds = actionCards.map((card) => card.id)
+    rememberAction(message, () => Promise.all(cardIds.map((id) => historyApi.restoreCard(id, columnId))))
+  }
+
+  // «Отменить» у конкретного действия
   function undoAction(action: UndoableAction) {
     forgetAction(action.id)
-    return runAndReload(() =>
-      Promise.all(action.cardIds.map((id) => historyApi.restoreCard(id, action.columnId))),
-    )
+    return runAndReload(action.undo)
   }
 
   // Убирает действие из стопки (плашка закрылась сама или его отменили).
@@ -173,9 +185,11 @@ export function useCards() {
     editCard,
     moveCard,
     archiveCard,
-    canMerge,
-    getMergeOnDrop,
-    mergeCard,
+    getMergeableCards,
+    canMergeOnDrop,
+    mergeAllInto,
+    mergeOnDrop,
+    unmergeCard,
     clearDone,
     undoableActions,
     undoAction,
