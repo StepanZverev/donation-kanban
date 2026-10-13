@@ -1,16 +1,37 @@
-/* Страница доски занимает всё место под заголовком и навигацией (см. .app в index.css) */
+/* Страница доски — те же три полосы, что и у всего приложения (--layout-columns в index.css):
+   в средней — панель и колонки, в боковых — зоны «Удалить» и «Выполнено».
+   Строки: ошибка, панель, доска. Доска забирает всю оставшуюся высоту экрана. */
 .page {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: var(--layout-columns);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  column-gap: var(--side-gap);
 }
 
-/* Доска с колонками. Колонки растягиваются до высоты самой длинной из них, но не выше окна:
-   flex-shrink + min-height: 0 разрешают доске стать ниже своего содержимого,
-   а лишние карточки прокручиваются внутри колонки. */
+.error {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
+.toolbar {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* Колонки во всю высоту доски; лишние карточки прокручиваются внутри колонки */
 .board {
-  flex: 0 1 auto;
+  grid-column: 2;
+  grid-row: 3;
   min-height: 0;
   display: flex;
   gap: 16px;
@@ -22,29 +43,12 @@
   min-width: 0;
 }
 
-/* На узких экранах колонки идут друг под другом, и прокручивается вся страница доски */
+/* На узких экранах колонки идут друг под другом, и прокручивается вся доска */
 @media (max-width: 800px) {
   .board {
     flex-direction: column;
     overflow-y: auto;
   }
-}
-
-.error {
-  padding: 8px 12px;
-  border-radius: 6px;
-  background-color: var(--color-error-background);
-  color: var(--color-error);
-}
-
-.toolbar {
-  flex-shrink: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
 }
 
 .toasts {

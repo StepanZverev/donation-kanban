@@ -14,12 +14,16 @@
   --color-success-background: #dafbe1;
   --color-warning: #bf8700;
 
-  /* Зоны «Удалить» и «Выполнено» у левого и правого края экрана */
-  --drop-zone-width: 64px;
-  /* Отступ зоны от края экрана и от рабочей области */
-  --drop-zone-gap: 16px;
-  /* Сколько места оставляем сбоку под зону, чтобы она никогда не закрывала колонки */
-  --drop-zone-space: calc(var(--drop-zone-width) + 2 * var(--drop-zone-gap));
+  /* Раскладка страницы — три полосы слева направо:
+     | поле слева | рабочая область (до 1200px) | поле справа |
+     В боковых полях доски живут зоны «Удалить» и «Выполнено».
+     Поля забирают всё место, что осталось от рабочей области, но не уже минимума. */
+  --side-min-width: 72px;
+  --content-max-width: 1200px;
+  /* Расстояние между полем и рабочей областью, одинаковое на любой ширине экрана */
+  --side-gap: 16px;
+  --layout-columns: minmax(var(--side-min-width), 1fr) minmax(0, var(--content-max-width))
+    minmax(var(--side-min-width), 1fr);
 
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--color-text);
@@ -47,20 +51,24 @@ button:disabled {
 }
 
 /* Приложение ровно в высоту окна: у браузера не появляется своя прокрутка,
-   а длинные списки прокручиваются внутри (колонки доски, список истории). */
+   а длинные списки прокручиваются внутри (колонки доски, список истории).
+   Строки сверху вниз: заголовок, навигация, страница (забирает всю оставшуюся высоту). */
 .app {
   box-sizing: border-box;
   height: 100vh;
-  /* Рабочая область до 1200px плюс место под зоны по бокам */
-  max-width: calc(1200px + 2 * var(--drop-zone-space));
-  margin: 0 auto;
-  padding: 24px var(--drop-zone-space);
-  display: flex;
-  flex-direction: column;
+  padding: 24px 0;
+  display: grid;
+  grid-template-columns: var(--layout-columns);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  column-gap: var(--side-gap);
 }
 
-/* Заголовок и навигация не сжимаются, всё свободное место достаётся странице */
-.app > h1,
-.app > nav {
-  flex-shrink: 0;
+/* Всё содержимое — в средней полосе (рабочей области) */
+.app > * {
+  grid-column: 2;
+}
+
+/* Страница, которой нужны и боковые поля (доска с зонами), занимает всю ширину */
+.app > .full-width {
+  grid-column: 1 / -1;
 }

@@ -42,7 +42,8 @@ export function BoardPage() {
   }
 
   return (
-    <div className={styles.page}>
+    // full-width: доске нужны боковые поля экрана под зоны «Удалить» и «Выполнено» (см. index.css)
+    <div className={`${styles.page} full-width`}>
       {error && <p className={styles.error}>{error}</p>}
 
       <div className={styles.toolbar}>
