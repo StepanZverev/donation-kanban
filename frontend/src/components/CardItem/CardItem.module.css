@@ -9,7 +9,7 @@
 /* Первая строка: ник слева, сумма справа — самое важное для стримера */
 .header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
@@ -20,9 +20,14 @@
   overflow-wrap: anywhere;
 }
 
+/* Сумма в бейдже с заливкой цвета уровня — того же, что и обводка */
 .amount {
   flex-shrink: 0;
-  font-size: 18px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background-color: var(--priority-color, var(--color-border));
+  color: #ffffff;
+  font-size: 16px;
   font-weight: 700;
 }
 

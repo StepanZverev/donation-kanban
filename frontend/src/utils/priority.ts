@@ -10,7 +10,7 @@ export type PriorityLevel = {
 }
 
 export const DEFAULT_PRIORITY_LEVELS: PriorityLevel[] = [
-  { minAmount: 0, name: 'Низкий', color: '#afb8c1' },
+  { minAmount: 0, name: 'Низкий', color: '#8c959f' },
   { minAmount: 100, name: 'Средний', color: '#d4a72c' },
   { minAmount: 500, name: 'Высокий', color: '#cf222e' },
 ]
