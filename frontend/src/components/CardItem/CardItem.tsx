@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type DragEvent } from 'react'
+import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from 'react'
 import type { BoardColumn, Card } from '../../types/card'
 import { formatMoney } from '../../utils/money'
 import { getPriorityLevel } from '../../utils/priority'
@@ -33,8 +33,12 @@ export function CardItem(props: CardItemProps) {
     onRightClick,
   } = props
   const [isDragging, setIsDragging] = useState(false)
-  // Длинное сообщение свёрнуто до трёх строк; клик по тексту разворачивает его.
+  // Длинное сообщение свёрнуто до трёх строк; «Показать полностью» разворачивает его.
   const [isExpanded, setIsExpanded] = useState(false)
+  // Не влез ли текст в три строки — тогда под ним нужна ссылка «Показать полностью».
+  const [isTextCut, setIsTextCut] = useState(false)
+  // Ссылка на абзац с текстом, чтобы померить его высоту
+  const textRef = useRef<HTMLParagraphElement>(null)
 
   const isDonation = card.source === 'donationalerts'
   // Цвет обводки зависит от суммы доната. Ручные карточки считаются суммой 0.
@@ -43,6 +47,21 @@ export function CardItem(props: CardItemProps) {
   // Показываем сообщение один раз: описание, а если его нет — заголовок.
   const heading = isDonation ? card.donorName : card.title
   const text = isDonation ? card.description || card.title : card.description
+
+  // Меряем, обрезан ли текст. Делаем это, пока он свёрнут: у обрезанного полная высота
+  // (scrollHeight) больше видимой (clientHeight). ResizeObserver перемеряет,
+  // когда меняется ширина колонки, например при изменении размера окна.
+  useEffect(() => {
+    const element = textRef.current
+    if (!element || isExpanded) {
+      return
+    }
+    const observer = new ResizeObserver(() => {
+      setIsTextCut(element.scrollHeight > element.clientHeight)
+    })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [isExpanded, text])
 
   return (
     <article
@@ -81,12 +100,15 @@ export function CardItem(props: CardItemProps) {
         </header>
 
         {text && (
-          <p
-            className={`${styles.text} ${isExpanded ? '' : styles.collapsed}`}
-            onClick={handleTextClick}
-          >
+          <p ref={textRef} className={`${styles.text} ${isExpanded ? '' : styles.collapsed}`}>
             {text}
           </p>
+        )}
+
+        {isTextCut && (
+          <button type="button" className={styles.expandButton} onClick={handleExpandClick}>
+            {isExpanded ? 'Свернуть' : 'Показать полностью'}
+          </button>
         )}
       </div>
 
@@ -112,7 +134,7 @@ export function CardItem(props: CardItemProps) {
     setIsDragging(false)
   }
 
-  function handleTextClick() {
+  function handleExpandClick() {
     setIsExpanded(!isExpanded)
   }
 

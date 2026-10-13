@@ -50,7 +50,6 @@
   color: var(--color-text-secondary);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  cursor: pointer;
 }
 
 /* Свёрнутый текст: не больше трёх строк, дальше многоточие */
@@ -60,6 +59,21 @@
   -webkit-line-clamp: 3;
   line-clamp: 3;
   overflow: hidden;
+}
+
+/* Ссылка «Показать полностью» / «Свернуть» под длинным текстом */
+.expandButton {
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.expandButton:hover {
+  text-decoration: underline;
 }
 
 /* Стрелки ‹ › — узкие полосы во всю высоту карточки.
