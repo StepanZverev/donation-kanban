@@ -6,10 +6,10 @@ import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..board import get_card, get_column_id_by_kind
+from ..board import get_card, get_column, get_column_id_by_kind
 from ..db import get_db, now
 from ..realtime import notify_board_changed
-from ..schemas import Card
+from ..schemas import Card, CardRestore
 
 router = APIRouter(prefix="/api/history", tags=["История"])
 
@@ -31,9 +31,18 @@ def list_history(db: sqlite3.Connection = Depends(get_db)) -> list[Card]:
 
 
 @router.post("/{card_id}/restore")
-def restore_card(card_id: int, db: sqlite3.Connection = Depends(get_db)) -> Card:
-    """Переоткрывает карточку: возвращает её на доску в «Кучу»."""
+def restore_card(
+    card_id: int,
+    data: CardRestore | None = None,
+    db: sqlite3.Connection = Depends(get_db),
+) -> Card:
+    """Переоткрывает карточку: возвращает её на доску в указанную колонку или в «Кучу»."""
     get_archived_card(db, card_id)
+    if data is None or data.column_id is None:
+        column_id = get_column_id_by_kind(db, "incoming")
+    else:
+        column_id = get_column(db, data.column_id).id
+
     timestamp = now()
     db.execute(
         """
@@ -41,7 +50,7 @@ def restore_card(card_id: int, db: sqlite3.Connection = Depends(get_db)) -> Card
         SET archived_at = NULL, archive_reason = NULL, column_id = ?, moved_at = ?, updated_at = ?
         WHERE id = ?
         """,
-        (get_column_id_by_kind(db, "incoming"), timestamp, timestamp, card_id),
+        (column_id, timestamp, timestamp, card_id),
     )
     notify_board_changed(db)
     return get_card(db, card_id)

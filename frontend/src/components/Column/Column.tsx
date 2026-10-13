@@ -8,27 +8,39 @@ type ColumnProps = {
   cards: Card[]
   onAddClick: () => void
   onEditCard: (card: Card) => void
+  onStartCard: (card: Card) => void
+  onCompleteCard: (card: Card) => void
   onRemoveCard: (card: Card) => void
   onDropCard: (cardId: number, columnId: number) => void
   onClearClick: () => void
 }
 
-export function Column({
-  column,
-  cards,
-  onAddClick,
-  onEditCard,
-  onRemoveCard,
-  onDropCard,
-  onClearClick,
-}: ColumnProps) {
+export function Column(props: ColumnProps) {
+  const {
+    column,
+    cards,
+    onAddClick,
+    onEditCard,
+    onStartCard,
+    onCompleteCard,
+    onRemoveCard,
+    onDropCard,
+    onClearClick,
+  } = props
   // Держат ли сейчас карточку над этой колонкой (чтобы подсветить её).
   const [isDragOver, setIsDragOver] = useState(false)
+  const isIncomingColumn = column.kind === 'incoming'
   const isDoneColumn = column.kind === 'done'
+  // «Куча» и «Выполнено» стоят по краям и выглядят иначе, чем промежуточные колонки.
+  const isEdgeColumn = isIncomingColumn || isDoneColumn
 
   return (
     <section
-      className={`${styles.column} ${isDragOver ? styles.columnDragOver : ''}`}
+      className={[
+        styles.column,
+        isEdgeColumn ? styles.edgeColumn : '',
+        isDragOver ? styles.columnDragOver : '',
+      ].join(' ')}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -39,7 +51,7 @@ export function Column({
         </h2>
 
         {isDoneColumn ? (
-          <button type="button" onClick={handleClearClick} disabled={cards.length === 0}>
+          <button type="button" onClick={onClearClick} disabled={cards.length === 0}>
             Очистить
           </button>
         ) : (
@@ -51,7 +63,16 @@ export function Column({
 
       <div className={styles.cards}>
         {cards.map((card) => (
-          <CardItem key={card.id} card={card} onEdit={onEditCard} onRemove={onRemoveCard} />
+          <CardItem
+            key={card.id}
+            card={card}
+            onEdit={onEditCard}
+            // Какие быстрые кнопки показать, зависит от колонки:
+            // ▶ только в «Куче», ✓ и ✕ везде, кроме «Выполнено».
+            onStart={isIncomingColumn ? onStartCard : undefined}
+            onComplete={isDoneColumn ? undefined : onCompleteCard}
+            onRemove={isDoneColumn ? undefined : onRemoveCard}
+          />
         ))}
 
         {cards.length === 0 && (
@@ -90,12 +111,6 @@ export function Column({
     const isAlreadyHere = cards.some((card) => card.id === cardId)
     if (!isAlreadyHere) {
       onDropCard(cardId, column.id)
-    }
-  }
-
-  function handleClearClick() {
-    if (window.confirm(`Отправить все выполненные карточки (${cards.length}) в историю?`)) {
-      onClearClick()
     }
   }
 }

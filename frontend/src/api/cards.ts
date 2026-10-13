@@ -87,6 +87,12 @@ export async function removeCard(id: number): Promise<Card> {
   return toCard(card)
 }
 
+// Убирает карточку в историю с явной пометкой — так работают зоны по краям доски.
+export async function archiveCard(id: number, reason: 'done' | 'deleted'): Promise<Card> {
+  const card = await request<CardFromApi>('POST', `/api/cards/${id}/archive`, { reason })
+  return toCard(card)
+}
+
 // Кнопка «Очистить»: все карточки из «Выполнено» уходят в историю.
 export async function clearDone(): Promise<void> {
   await request('POST', '/api/cards/clear-done')

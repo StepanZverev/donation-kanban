@@ -12,9 +12,13 @@ export async function getHistory(): Promise<Card[]> {
   return cards.map(toCard)
 }
 
-// Возвращает карточку на доску в конец колонки «В очереди».
-export async function restoreCard(id: number): Promise<void> {
-  const response = await fetch(`/api/history/${id}/restore`, { method: 'POST' })
+// Возвращает карточку на доску: в указанную колонку, а если её не указали — в «Кучу».
+export async function restoreCard(id: number, columnId?: number): Promise<void> {
+  const response = await fetch(`/api/history/${id}/restore`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ column_id: columnId ?? null }),
+  })
   if (!response.ok) {
     throw new Error(`Не удалось переоткрыть карточку: ${response.status}`)
   }

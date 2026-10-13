@@ -1,3 +1,9 @@
+/* История занимает всё место под навигацией и прокручивается внутри, а не всей страницей */
+.page {
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .list {
   display: flex;
   flex-direction: column;

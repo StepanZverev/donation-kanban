@@ -19,7 +19,7 @@ from ..board import (
 )
 from ..db import get_db, now
 from ..realtime import notify_board_changed
-from ..schemas import Card, CardCreate, CardMove, CardUpdate
+from ..schemas import Card, CardArchive, CardCreate, CardMove, CardUpdate
 
 router = APIRouter(prefix="/api/cards", tags=["Карточки"])
 
@@ -105,6 +105,19 @@ def move_card(card_id: int, data: CardMove, db: sqlite3.Connection = Depends(get
         "UPDATE cards SET column_id = ?, moved_at = ?, updated_at = ? WHERE id = ?",
         (column.id, timestamp, timestamp, card_id),
     )
+    notify_board_changed(db)
+    return get_card(db, card_id)
+
+
+@router.post("/{card_id}/archive")
+def archive(card_id: int, data: CardArchive, db: sqlite3.Connection = Depends(get_db)) -> Card:
+    """
+    Убирает карточку в историю с явной пометкой: «выполнено» или «удалено»,
+    из какой бы колонки её ни взяли. Это перетаскивание в зоны по краям доски.
+    """
+    get_card(db, card_id)
+    archive_card(db, card_id, data.reason)
+
     notify_board_changed(db)
     return get_card(db, card_id)
 

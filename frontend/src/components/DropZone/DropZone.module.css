@@ -1,0 +1,62 @@
+/* Зона стоит в боковом поле доски (см. .page в BoardPage.module.css): от края экрана
+   до рабочей области и по высоте как колонки. Видна только во время перетаскивания. */
+.zone {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 2px dashed;
+  visibility: hidden;
+}
+
+.visible {
+  visibility: visible;
+}
+
+/* Левая зона: прижата к левому краю экрана, скруглена только справа */
+.delete {
+  grid-column: 1;
+  grid-row: 3;
+  border-left: none;
+  border-radius: 0 10px 10px 0;
+  border-color: var(--color-error);
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
+/* Правая зона: прижата к правому краю экрана, скруглена только слева */
+.done {
+  grid-column: 3;
+  grid-row: 3;
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  border-color: var(--color-success);
+  background-color: var(--color-success-background);
+  color: var(--color-success);
+}
+
+/* Карточку держат прямо над зоной — делаем её ярче */
+.dragOver {
+  border-style: solid;
+  filter: saturate(2);
+}
+
+.icon {
+  font-size: 24px;
+}
+
+/* Подпись идёт сверху вниз, чтобы поместиться в узкую зону */
+.label {
+  writing-mode: vertical-rl;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* На широких экранах зоны широкие, и подпись можно писать обычной строкой */
+@media (min-width: 1500px) {
+  .label {
+    writing-mode: horizontal-tb;
+  }
+}

@@ -7,11 +7,23 @@
   --color-text: #1f2328;
   --color-text-secondary: #656d76;
   --color-accent: #8250df;
+  --color-accent-light: #c9b3f5;
   --color-error: #cf222e;
   --color-error-background: #ffebe9;
   --color-success: #1a7f37;
   --color-success-background: #dafbe1;
   --color-warning: #bf8700;
+
+  /* Раскладка страницы — три полосы слева направо:
+     | поле слева | рабочая область (до 1200px) | поле справа |
+     В боковых полях доски живут зоны «Удалить» и «Выполнено».
+     Поля забирают всё место, что осталось от рабочей области, но не уже минимума. */
+  --side-min-width: 72px;
+  --content-max-width: 1200px;
+  /* Расстояние между полем и рабочей областью, одинаковое на любой ширине экрана */
+  --side-gap: 16px;
+  --layout-columns: minmax(var(--side-min-width), 1fr) minmax(0, var(--content-max-width))
+    minmax(var(--side-min-width), 1fr);
 
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   color: var(--color-text);
@@ -38,8 +50,25 @@ button:disabled {
   opacity: 0.5;
 }
 
+/* Приложение ровно в высоту окна: у браузера не появляется своя прокрутка,
+   а длинные списки прокручиваются внутри (колонки доски, список истории).
+   Строки сверху вниз: заголовок, навигация, страница (забирает всю оставшуюся высоту). */
 .app {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px 16px;
+  box-sizing: border-box;
+  height: 100vh;
+  padding: 24px 0;
+  display: grid;
+  grid-template-columns: var(--layout-columns);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  column-gap: var(--side-gap);
+}
+
+/* Всё содержимое — в средней полосе (рабочей области) */
+.app > * {
+  grid-column: 2;
+}
+
+/* Страница, которой нужны и боковые поля (доска с зонами), занимает всю ширину */
+.app > .full-width {
+  grid-column: 1 / -1;
 }

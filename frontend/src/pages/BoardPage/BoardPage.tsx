@@ -5,6 +5,8 @@ import type { Card, CardDraft } from '../../types/card'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
 import { DonationAlertsStatus } from '../../components/DonationAlertsStatus/DonationAlertsStatus'
 import { Column } from '../../components/Column/Column'
+import { DropZone } from '../../components/DropZone/DropZone'
+import { UndoToast } from '../../components/UndoToast/UndoToast'
 import styles from './BoardPage.module.css'
 
 // Какую форму сейчас показываем: создание в колонке, редактирование карточки или никакую.
@@ -22,17 +24,26 @@ export function BoardPage() {
     addCard,
     editCard,
     moveCard,
+    startCard,
+    completeCard,
     removeCard,
+    archiveCard,
     clearDone,
+    undoableActions,
+    undoAction,
+    forgetAction,
   } = useCards()
   const [form, setForm] = useState<FormState>(null)
+  // Тащат ли сейчас какую-нибудь карточку: тогда показываем зоны по краям доски.
+  const [isDragging, setIsDragging] = useState(false)
 
   if (isLoading) {
     return <p>Загружаю карточки…</p>
   }
 
   return (
-    <>
+    // full-width: доске нужны боковые поля экрана под зоны «Удалить» и «Выполнено» (см. index.css)
+    <div className={`${styles.page} full-width`}>
       {error && <p className={styles.error}>{error}</p>}
 
       <div className={styles.toolbar}>
@@ -43,7 +54,14 @@ export function BoardPage() {
         </button>
       </div>
 
-      <div className={styles.board}>
+      {/* События перетаскивания всплывают от карточек и колонок до доски,
+          поэтому здесь удобно следить, тащат ли что-то прямо сейчас. */}
+      <div
+        className={styles.board}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDrop={handleDragEnd}
+      >
         {columns.map((column) => (
           <Column
             key={column.id}
@@ -51,10 +69,23 @@ export function BoardPage() {
             cards={getColumnCards(column.id)}
             onAddClick={() => handleAddClick(column.id)}
             onEditCard={handleEditCard}
-            onRemoveCard={handleRemoveCard}
+            onStartCard={startCard}
+            onCompleteCard={completeCard}
+            onRemoveCard={removeCard}
             onDropCard={moveCard}
             onClearClick={clearDone}
           />
+        ))}
+      </div>
+
+      {/* Зоны у левого и правого края экрана: бросил карточку — она ушла в историю */}
+      <DropZone kind="delete" isVisible={isDragging} onDropCard={handleDropToDelete} />
+      <DropZone kind="done" isVisible={isDragging} onDropCard={handleDropToDone} />
+
+      {/* Плашки «Отменить» стопкой внизу экрана, самая новая — снизу */}
+      <div className={styles.toasts}>
+        {undoableActions.map((action) => (
+          <UndoToast key={action.id} action={action} onUndo={undoAction} onClose={forgetAction} />
         ))}
       </div>
 
@@ -70,8 +101,27 @@ export function BoardPage() {
           onClose={handleFormClose}
         />
       )}
-    </>
+    </div>
   )
+
+  function handleDragStart() {
+    setIsDragging(true)
+  }
+
+  // Карточку отпустили (куда угодно) — прячем зоны.
+  function handleDragEnd() {
+    setIsDragging(false)
+  }
+
+  function handleDropToDelete(cardId: number) {
+    setIsDragging(false)
+    archiveCard(cardId, 'deleted')
+  }
+
+  function handleDropToDone(cardId: number) {
+    setIsDragging(false)
+    archiveCard(cardId, 'done')
+  }
 
   function handleAddClick(columnId: number) {
     setForm({ mode: 'create', columnId })
@@ -79,10 +129,6 @@ export function BoardPage() {
 
   function handleEditCard(card: Card) {
     setForm({ mode: 'edit', card })
-  }
-
-  function handleRemoveCard(card: Card) {
-    removeCard(card.id)
   }
 
   function handleFormSubmit(draft: CardDraft) {

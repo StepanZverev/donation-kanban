@@ -1,20 +1,16 @@
-.board {
+/* Страница доски — те же три полосы, что и у всего приложения (--layout-columns в index.css):
+   в средней — панель и колонки, в боковых — зоны «Удалить» и «Выполнено».
+   Строки: ошибка, панель, доска. Доска забирает всю оставшуюся высоту экрана. */
+.page {
   display: grid;
-  /* Колонок может быть разное количество: каждая новая встаёт справа и получает равную ширину */
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-}
-
-/* На узких экранах колонки идут друг под другом */
-@media (max-width: 800px) {
-  .board {
-    grid-auto-flow: row;
-  }
+  grid-template-columns: var(--layout-columns);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  column-gap: var(--side-gap);
 }
 
 .error {
+  grid-column: 2;
+  grid-row: 1;
   padding: 8px 12px;
   border-radius: 6px;
   background-color: var(--color-error-background);
@@ -22,10 +18,45 @@
 }
 
 .toolbar {
+  grid-column: 2;
+  grid-row: 2;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   margin-bottom: 12px;
+}
+
+/* Колонки во всю высоту доски; лишние карточки прокручиваются внутри колонки */
+.board {
+  grid-column: 2;
+  grid-row: 3;
+  min-height: 0;
+  display: flex;
+  gap: 16px;
+}
+
+/* Колонки делят ширину поровну, сколько бы их ни было */
+.board > section {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* На узких экранах колонки идут друг под другом, и прокручивается вся доска */
+@media (max-width: 800px) {
+  .board {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+}
+
+.toasts {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
