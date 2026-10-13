@@ -18,7 +18,7 @@
 /* Левая зона: прижата к левому краю экрана, скруглена только справа */
 .delete {
   grid-column: 1;
-  grid-row: 3;
+  grid-row: 2;
   border-left: none;
   border-radius: 0 10px 10px 0;
   border-color: var(--color-error);
@@ -29,7 +29,7 @@
 /* Правая зона: прижата к правому краю экрана, скруглена только слева */
 .done {
   grid-column: 3;
-  grid-row: 3;
+  grid-row: 2;
   border-right: none;
   border-radius: 10px 0 0 10px;
   border-color: var(--color-success);

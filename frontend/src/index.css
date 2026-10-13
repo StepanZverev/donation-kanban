@@ -104,14 +104,15 @@ button:disabled {
 
 /* Приложение ровно в высоту окна: у браузера не появляется своя прокрутка,
    а длинные списки прокручиваются внутри (колонки доски, список истории).
-   Строки сверху вниз: заголовок, навигация, страница (забирает всю оставшуюся высоту). */
+   Строки сверху вниз: шапка, страница (забирает всю оставшуюся высоту). */
 .app {
   box-sizing: border-box;
   height: 100vh;
-  padding: 24px 0;
+  padding-bottom: 24px;
   display: grid;
   grid-template-columns: var(--layout-columns);
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  row-gap: 16px;
   column-gap: var(--side-gap);
 }
 

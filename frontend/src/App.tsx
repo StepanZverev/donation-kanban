@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router'
-import { Navigation } from './components/Navigation/Navigation'
+import { AppHeader } from './components/AppHeader/AppHeader'
 import { BoardPage } from './pages/BoardPage/BoardPage'
 import { HistoryPage } from './pages/HistoryPage/HistoryPage'
 import { SettingsPage } from './pages/SettingsPage/SettingsPage'
@@ -7,8 +7,7 @@ import { SettingsPage } from './pages/SettingsPage/SettingsPage'
 function App() {
   return (
     <main className="app">
-      <h1>Менеджер донатов</h1>
-      <Navigation />
+      <AppHeader />
 
       {/* Какую страницу показать, зависит от адреса в браузере */}
       <Routes>

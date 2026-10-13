@@ -1,0 +1,80 @@
+/* Полоса шапки во всю ширину окна. Внутри — те же три полосы, что у страницы
+   (--layout-columns в index.css), чтобы содержимое стояло ровно над доской. */
+.header {
+  display: grid;
+  grid-template-columns: var(--layout-columns);
+  column-gap: var(--side-gap);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+/* Логотип, вкладки и правая часть в одну строку */
+.content {
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 56px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.logoMark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background-color: var(--color-accent);
+}
+
+.logoMark svg {
+  width: 16px;
+  height: 16px;
+  fill: #ffffff;
+}
+
+/* Правая часть прижата к правому краю */
+.right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+/* Кнопка для проверки без настоящих донатов — неброская */
+.fakeButton {
+  white-space: nowrap;
+  border-style: dashed;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+}
+
+.fakeButton:hover {
+  color: var(--color-text);
+}
+
+/* На узком экране (например, окно на половину монитора рядом с игрой)
+   прячем подписи: от логотипа остаётся значок, от тестового доната — «+» */
+@media (max-width: 1000px) {
+  .content {
+    gap: 12px;
+  }
+
+  .logo {
+    font-size: 0;
+  }
+
+  .wideOnly {
+    display: none;
+  }
+}

@@ -1,10 +1,8 @@
 import { useState, type DragEvent } from 'react'
-import { sendFakeDonation } from '../../api/dev'
 import { useCards } from '../../hooks/useCards'
 import { usePriorityLevels } from '../../hooks/usePriorityLevels'
 import type { Card, CardDraft } from '../../types/card'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
-import { DonationAlertsStatus } from '../../components/DonationAlertsStatus/DonationAlertsStatus'
 import { Column } from '../../components/Column/Column'
 import { DropZone } from '../../components/DropZone/DropZone'
 import { UndoToast } from '../../components/UndoToast/UndoToast'
@@ -52,14 +50,6 @@ export function BoardPage() {
     // full-width: доске нужны боковые поля экрана под зоны «Удалить» и «Выполнено» (см. index.css)
     <div className={`${styles.page} full-width`}>
       {error && <p className={styles.error}>{error}</p>}
-
-      <div className={styles.toolbar}>
-        <DonationAlertsStatus />
-        {/* Карточка появится сама: бэкенд пришлёт обновление через WebSocket */}
-        <button type="button" onClick={handleFakeDonationClick}>
-          + Тестовый донат
-        </button>
-      </div>
 
       {/* События перетаскивания всплывают от карточек и колонок до доски,
           поэтому здесь удобно следить, тащат ли что-то прямо сейчас. */}
@@ -178,9 +168,6 @@ export function BoardPage() {
     setForm(null)
   }
 
-  function handleFakeDonationClick() {
-    sendFakeDonation().catch(() => window.alert('Не удалось создать тестовый донат'))
-  }
 
   function handleFormClose() {
     setForm(null)

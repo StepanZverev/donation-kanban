@@ -1,21 +1,67 @@
+/* Капсула в шапке: слева статус, справа через черту действие («Подключить» / «Отключить») */
 .status {
   display: flex;
-  flex-wrap: wrap;
+  align-items: stretch;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.label {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 6px;
+  padding: 4px 12px;
+}
+
+/* На узком экране название прячем: точка и пояснение остаются */
+@media (max-width: 1000px) {
+  .name {
+    display: none;
+  }
+}
+
+/* «не настроен», «подключаюсь…» и т. п. — серым после названия */
+.state {
+  color: var(--color-text-secondary);
+}
+
+/* Правая часть капсулы, отделена чертой */
+.part {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  border: none;
+  border-left: 1px solid var(--color-border);
+  border-radius: 0 999px 999px 0;
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+button.part:hover {
+  color: var(--color-text);
+}
+
+/* «Подключить» — главное действие, поэтому акцентным цветом */
+.connect {
+  color: var(--color-accent);
+  font-weight: 600;
 }
 
 /* Цветная точка-индикатор */
 .dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background-color: var(--color-text-secondary);
 }
 
 .listening {
   background-color: var(--color-success);
+  box-shadow: 0 0 0 3px var(--color-success-background);
 }
 
 .connecting {
@@ -24,18 +70,4 @@
 
 .error {
   background-color: var(--color-error);
-}
-
-.hint {
-  color: var(--color-text-secondary);
-}
-
-/* Ссылка, которая выглядит как кнопка */
-.button {
-  padding: 4px 10px;
-  border-radius: 6px;
-  background-color: var(--color-accent);
-  color: #ffffff;
-  font-size: 13px;
-  text-decoration: none;
 }
