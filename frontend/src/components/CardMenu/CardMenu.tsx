@@ -8,6 +8,8 @@ type CardMenuProps = {
   onEdit: () => void
   onMove: (columnId: number) => void
   onDelete: () => void
+  // «Объединить с прошлым донатом». Не передали — пункта в меню нет.
+  onMerge?: () => void
 }
 
 // Если под кнопкой меньше места, чем столько пикселей, меню открывается вверх
@@ -15,7 +17,7 @@ const DROPDOWN_HEIGHT_GUESS = 240
 
 // Маленькое меню «⋯» на карточке: редкие действия, которые нужны больше модератору.
 export function CardMenu(props: CardMenuProps) {
-  const { moveTargets, onEdit, onMove, onDelete } = props
+  const { moveTargets, onEdit, onMove, onDelete, onMerge } = props
   // Где показать открытое меню (координаты на экране). null — меню закрыто.
   const [dropdownPosition, setDropdownPosition] = useState<CSSProperties | null>(null)
   const isOpen = dropdownPosition !== null
@@ -38,6 +40,16 @@ export function CardMenu(props: CardMenuProps) {
           <button type="button" onClick={handleEdit}>
             Изменить
           </button>
+
+          {onMerge && (
+            <button
+              type="button"
+              title="Суммы сложатся, текст этого доната допишется в конец прошлой карточки"
+              onClick={handleMerge}
+            >
+              Объединить с прошлым донатом
+            </button>
+          )}
 
           <p className={styles.groupTitle}>Переместить в</p>
           {moveTargets.map((column) => (
@@ -80,6 +92,11 @@ export function CardMenu(props: CardMenuProps) {
   function handleEdit() {
     setDropdownPosition(null)
     onEdit()
+  }
+
+  function handleMerge() {
+    setDropdownPosition(null)
+    onMerge?.()
   }
 
   function handleMove(columnId: number) {

@@ -3,7 +3,7 @@
 
 Ситуация: Вася задонатил с задачей, потом задонатил ещё раз. Вторую карточку
 можно слить в первую: суммы сложатся, текст второго доната допишется в конец
-через разделитель, а сама вторая карточка уйдёт в историю с пометкой «объединена».
+через строку-разделитель (фронт рисует её пунктиром), а сама вторая карточка уйдёт в историю с пометкой «объединена».
 
 Куда сливаем (основная карточка):
 - если у донатера есть карточка в промежуточной колонке (например, «В работе») — в неё;
@@ -26,7 +26,12 @@ AUTO_MERGE_KEY = "auto_merge"
 # Пока считаем, что стример получает рубли — как в DonationAlerts по умолчанию.
 STREAMER_CURRENCY = "RUB"
 
-# Значки валют для разделителя «─── +300 ₽ ───»
+# Строка-разделитель между текстами объединённых донатов.
+# Фронт находит её в описании и рисует вместо неё пунктирную линию (CardItem).
+# Символ редкий, чтобы случайно не встретился в обычном тексте.
+MERGE_SEPARATOR = "⸻"
+
+# Значки валют для подписи «+300 ₽ от Васи»
 CURRENCY_SIGNS = {"RUB": "₽", "USD": "$", "EUR": "€"}
 
 
@@ -81,10 +86,9 @@ def merge_card(db: sqlite3.Connection, card: Card) -> Card:
         currency = STREAMER_CURRENCY
     streamer_amount = (target.streamer_amount or 0) + (card.streamer_amount or 0)
 
-    # Текст: старый текст основной карточки, ниже разделитель и текст второго доната
-    base_text = card_text(target)
-    added_text = merged_text(card)
-    description = f"{base_text}\n{added_text}" if base_text else added_text
+    # Текст: старый текст основной карточки, ниже разделитель и текст второго доната.
+    # Если у одного из донатов текста нет, разделитель не нужен.
+    description = join_texts(card_text(target), card_text(card))
 
     added_money = format_money(card.amount or 0, card.currency)
     timestamp = now()
@@ -137,11 +141,16 @@ def unmerge_card(db: sqlite3.Connection, card: Card) -> None:
     streamer_amount = (target.streamer_amount or 0) - (card.streamer_amount or 0)
 
     description = target.description
-    added_text = merged_text(card)
-    if description == added_text:
+    added_text = card_text(card)
+    added_part = f"\n{MERGE_SEPARATOR}\n{added_text}"
+    if added_text == "":
+        # Второй донат был без текста — к описанию ничего не дописывали
+        pass
+    elif description == added_text:
+        # У основной карточки текста не было, описание целиком от второго доната
         description = ""
-    elif description.endswith("\n" + added_text):
-        description = description.removesuffix("\n" + added_text)
+    elif description.endswith(added_part):
+        description = description.removesuffix(added_part)
         # Если остался только заголовок карточки, значит описание было пустым
         if description == target.title:
             description = ""
@@ -170,15 +179,17 @@ def card_text(card: Card) -> str:
     return card.title
 
 
-def merged_text(card: Card) -> str:
+def join_texts(base_text: str, added_text: str) -> str:
     """
-    Что дописывается к основной карточке при слиянии card:
-        ─── +300 ₽ ───
-        текст второго доната
+    Склеивает тексты двух донатов:
+        текст первого
+        ⸻
+        текст второго
+    Если один из текстов пустой, разделитель не ставим — остаётся только другой текст.
     """
-    separator = f"─── +{format_money(card.amount or 0, card.currency)} ───"
-    text = card_text(card)
-    return f"{separator}\n{text}" if text else separator
+    if base_text and added_text:
+        return f"{base_text}\n{MERGE_SEPARATOR}\n{added_text}"
+    return base_text or added_text
 
 
 def format_money(amount: float, currency: str | None) -> str:

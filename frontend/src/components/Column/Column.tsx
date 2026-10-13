@@ -20,6 +20,9 @@ type ColumnProps = {
   // Можно ли объединить карточку с другой карточкой того же донатера, и само объединение
   canMerge: (card: Card) => boolean
   onMergeCard: (card: Card) => void
+  // Можно ли бросить перетаскиваемую карточку на эту, чтобы объединить, и само объединение
+  canMergeOnDrop: (card: Card) => boolean
+  onMergeDrop: (card: Card) => void
   onClearClick: () => void
 }
 
@@ -36,6 +39,8 @@ export function Column(props: ColumnProps) {
     onDropCard,
     canMerge,
     onMergeCard,
+    canMergeOnDrop,
+    onMergeDrop,
     onClearClick,
   } = props
   // Держат ли сейчас карточку над этой колонкой (чтобы подсветить её).
@@ -91,6 +96,8 @@ export function Column(props: ColumnProps) {
             onDelete={onDeleteCard}
             canMerge={canMerge(card)}
             onMerge={onMergeCard}
+            canMergeOnDrop={canMergeOnDrop(card)}
+            onMergeDrop={onMergeDrop}
             leftArrow={leftColumn ? 'move' : 'delete'}
             rightArrow={rightColumn ? 'move' : 'finish'}
             onLeftClick={handleLeftClick}
@@ -125,6 +132,12 @@ export function Column(props: ColumnProps) {
 
   // Срабатывает много раз в секунду, пока карточку держат над колонкой.
   function handleDragOver(event: DragEvent<HTMLElement>) {
+    // Карточку держат над другой карточкой, и та уже приняла её для объединения
+    // (см. handleDragOver в CardItem). Тогда колонку не подсвечиваем.
+    if (event.defaultPrevented) {
+      setIsDragOver(false)
+      return
+    }
     // Без preventDefault браузер считает, что сюда бросать нельзя.
     event.preventDefault()
     setIsDragOver(true)

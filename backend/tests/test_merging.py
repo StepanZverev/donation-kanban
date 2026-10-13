@@ -49,7 +49,7 @@ def test_merge_two_cards_in_queue_into_older(client):
     assert merged["amount"] == 500
     assert merged["streamer_amount"] == 500
     assert merged["merge_count"] == 2
-    assert merged["description"] == "Расскажи, как ты начал стримить\n─── +300 ₽ ───\nИ про первый стрим тоже!"
+    assert merged["description"] == "Расскажи, как ты начал стримить\n⸻\nИ про первый стрим тоже!"
     assert merged["last_merge_note"] == "+300 ₽ от вася"
 
     history = client.get("/api/history").json()
@@ -101,11 +101,26 @@ def test_undo_merge_returns_everything_back(client):
     assert client.get("/api/history").json() == []
 
 
-def test_donation_without_message(client):
+def test_donation_without_message_has_no_separator(client):
+    """Если у одного из донатов нет текста, разделитель не ставим."""
     donate("Вася", 200, "")
     donate("Вася", 300, "Теперь с текстом")
-    merge(client, card_by_message(client, "Теперь с текстом"))
-    assert board(client)[0]["description"] == "─── +300 ₽ ───\nТеперь с текстом"
+    second = card_by_message(client, "Теперь с текстом")
+    merge(client, second)
+    assert board(client)[0]["description"] == "Теперь с текстом"
+
+    # Отмена тоже работает: описание снова пустое
+    client.post(f"/api/history/{second['id']}/restore", json={"column_id": columns(client)["incoming"]})
+    first = next(card for card in board(client) if card["id"] != second["id"])
+    assert first["description"] == ""
+
+
+def test_new_donation_without_message_keeps_text(client):
+    donate("Вася", 200, "Текст первого")
+    donate("Вася", 300, "")
+    second = next(card for card in board(client) if card["amount"] == 300)
+    merge(client, second)
+    assert board(client)[0]["description"] == "Текст первого"
 
 
 def test_different_currencies_use_streamer_currency(client):
@@ -115,7 +130,8 @@ def test_different_currencies_use_streamer_currency(client):
 
     card = board(client)[0]
     assert (card["amount"], card["currency"], card["streamer_amount"]) == (650, "RUB", 650)
-    assert "─── +5 $ ───" in card["description"]
+    assert card["description"] == "Рубли\n⸻\nДоллары"
+    assert card["last_merge_note"] == "+5 $ от John"
 
 
 def test_auto_merge(client):

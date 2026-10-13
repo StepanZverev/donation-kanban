@@ -96,6 +96,23 @@ export function useCards() {
     return findMergeTarget(card, cards, columns) !== null
   }
 
+  // Какую карточку объединить, если бросить карточку draggedId на overCard. null — эти две не объединяются.
+  // Тащить можно в обе стороны: новую на старую и старую на новую. В историю всё равно
+  // уйдёт та, что сливается в другую по правилу (findMergeTarget), — как и через меню.
+  function getMergeOnDrop(draggedId: number, overCard: Card) {
+    const draggedCard = cards.find((card) => card.id === draggedId)
+    if (!draggedCard) {
+      return null
+    }
+    if (findMergeTarget(draggedCard, cards, columns)?.id === overCard.id) {
+      return draggedCard
+    }
+    if (findMergeTarget(overCard, cards, columns)?.id === draggedCard.id) {
+      return overCard
+    }
+    return null
+  }
+
   // «Объединить»: карточка сливается в основную карточку донатера, а сама уходит в историю.
   // «Отменить» вернёт её из истории в ту же колонку — бэкенд при этом вычтет её сумму и текст.
   function mergeCard(card: Card) {
@@ -157,6 +174,7 @@ export function useCards() {
     moveCard,
     archiveCard,
     canMerge,
+    getMergeOnDrop,
     mergeCard,
     clearDone,
     undoableActions,
