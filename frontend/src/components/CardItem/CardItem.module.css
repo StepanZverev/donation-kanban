@@ -1,7 +1,11 @@
 /* Обводка цвета уровня приоритета (--priority-color задаёт CardItem.tsx).
    Карточка — три части в ряд: стрелка ‹, содержимое, стрелка ›. */
 .card {
+  /* relative — чтобы подсказка «+ Объединить» легла поверх карточки */
+  position: relative;
   display: flex;
+  /* Не сжиматься, когда карточек больше, чем влезает в колонку: колонка прокручивается */
+  flex-shrink: 0;
   border: 2px solid var(--priority-color, var(--color-border));
   border-radius: 8px;
   background-color: var(--color-surface);
@@ -144,4 +148,55 @@
 /* Карточка, которую сейчас тащат, остаётся на месте полупрозрачной */
 .dragging {
   opacity: 0.4;
+}
+
+/* Пунктир между текстами объединённых донатов: во всю ширину текста, бледный,
+   с воздухом сверху и снизу */
+.separator {
+  display: block;
+  margin: 10px 0;
+  border-top: 1px dashed color-mix(in srgb, var(--color-text-secondary) 45%, transparent);
+}
+
+/* «+2» рядом с ником: сколько донатов слито в карточку. Просто текст цвета обводки. */
+.mergedMark {
+  flex-shrink: 0;
+  color: var(--priority-color, var(--color-text-secondary));
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Над карточкой держат другую, и их можно объединить: пунктирная обводка акцентным цветом */
+.mergeDrop {
+  border-style: dashed;
+  border-color: var(--color-accent);
+}
+
+/* Подсказка «+ Объединить» поверх всей карточки.
+   pointer-events: none — чтобы она не перехватывала курсор и перетаскивание не «мигало». */
+.mergeDropHint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: color-mix(in srgb, var(--color-surface) 80%, transparent);
+  color: var(--color-accent);
+  font-size: 15px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.mergeDropPlus {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  color: #ffffff;
+  font-size: 20px;
+  line-height: 1;
 }

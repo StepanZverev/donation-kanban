@@ -5,6 +5,10 @@ import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
 import { CardMenu } from '../CardMenu/CardMenu'
 import styles from './CardItem.module.css'
 
+// Этой строкой бэкенд разделяет тексты объединённых донатов (MERGE_SEPARATOR в merging.py).
+// На карточке вместо неё рисуем пунктирную линию.
+const MERGE_SEPARATOR = '\n⸻\n'
+
 type CardItemProps = {
   card: Card
   // Уровни приоритета из настроек: по ним выбирается цвет обводки
@@ -14,6 +18,14 @@ type CardItemProps = {
   onEdit: (card: Card) => void
   onMove: (cardId: number, columnId: number) => void
   onDelete: (card: Card) => void
+  // Есть ли у донатера другие карточки, которые можно слить в эту
+  canMergeAll: boolean
+  onMergeAll: (card: Card) => void
+  // «Разъединить»: вернуть слитые донаты на доску
+  onUnmerge: (card: Card) => void
+  // Можно ли бросить на эту карточку ту, которую сейчас тащат, чтобы объединить их
+  canMergeOnDrop: boolean
+  onMergeDrop: (card: Card) => void
   // Что делают стрелки по бокам карточки:
   // move — перенос в соседнюю колонку, delete — удалить (красная), finish — в историю выполненной (зелёная)
   leftArrow: 'move' | 'delete'
@@ -30,18 +42,25 @@ export function CardItem(props: CardItemProps) {
     onEdit,
     onMove,
     onDelete,
+    canMergeAll,
+    onMergeAll,
+    onUnmerge,
+    canMergeOnDrop,
+    onMergeDrop,
     leftArrow,
     rightArrow,
     onLeftClick,
     onRightClick,
   } = props
   const [isDragging, setIsDragging] = useState(false)
+  // Держат ли над этой карточкой другую (чтобы показать «+ Объединить»)
+  const [isDragOver, setIsDragOver] = useState(false)
   // Длинное сообщение свёрнуто до трёх строк; «Показать полностью» разворачивает его.
   const [isExpanded, setIsExpanded] = useState(false)
   // Не влез ли текст в три строки — тогда под ним нужна ссылка «Показать полностью».
   const [isTextCut, setIsTextCut] = useState(false)
   // Ссылка на абзац с текстом, чтобы померить его высоту
-  const textRef = useRef<HTMLParagraphElement>(null)
+  const textRef = useRef<HTMLDivElement>(null)
 
   const isDonation = card.source === 'donationalerts'
   // Цвет обводки зависит от суммы доната. Ручные карточки считаются суммой 0.
@@ -50,6 +69,12 @@ export function CardItem(props: CardItemProps) {
   // Показываем сообщение один раз: описание, а если его нет — заголовок.
   const heading = isDonation ? card.donorName : card.title
   const text = isDonation ? card.description || card.title : card.description
+  // Тексты объединённых донатов по отдельности: между ними нарисуем пунктир
+  const textParts = text.split(MERGE_SEPARATOR)
+  // Обводку «+ Объединить» показываем, только пока над карточкой держат подходящую
+  const showMergeDrop = isDragOver && canMergeOnDrop
+  // В карточку слиты другие донаты
+  const isMerged = card.mergeCount > 1
 
   // Меряем, обрезан ли текст. Делаем это, пока он свёрнут: у обрезанного полная высота
   // (scrollHeight) больше видимой (clientHeight). ResizeObserver перемеряет,
@@ -68,13 +93,20 @@ export function CardItem(props: CardItemProps) {
 
   return (
     <article
-      className={`${styles.card} ${isDragging ? styles.dragging : ''}`}
+      className={[
+        styles.card,
+        isDragging ? styles.dragging : '',
+        showMergeDrop ? styles.mergeDrop : '',
+      ].join(' ')}
       // CSS-переменная с цветом уровня, её использует .card в CardItem.module.css
       style={{ '--priority-color': priority.color } as CSSProperties}
       data-card-id={card.id}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       {/* Стрелки по бокам видны при наведении на карточку */}
       <button
@@ -91,12 +123,20 @@ export function CardItem(props: CardItemProps) {
           <h3 className={styles.heading} title={heading ?? undefined}>
             {heading}
           </h3>
+          {/* «+2» — в карточку слиты ещё два доната */}
+          {isMerged && (
+            <span className={styles.mergedMark} title="Сколько донатов слито в эту карточку">
+              +{card.mergeCount - 1}
+            </span>
+          )}
           <div className={styles.menuSlot}>
             <CardMenu
               moveTargets={moveTargets}
               onEdit={handleEdit}
               onMove={handleMove}
               onDelete={handleDelete}
+              onMergeAll={canMergeAll ? handleMergeAll : undefined}
+              onUnmerge={isMerged ? handleUnmerge : undefined}
             />
           </div>
           {card.amount !== null && (
@@ -112,9 +152,15 @@ export function CardItem(props: CardItemProps) {
             className={isTextCut ? styles.expandable : undefined}
             onClick={isTextCut ? handleExpandClick : undefined}
           >
-            <p ref={textRef} className={`${styles.text} ${isExpanded ? '' : styles.collapsed}`}>
-              {text}
-            </p>
+            <div ref={textRef} className={`${styles.text} ${isExpanded ? '' : styles.collapsed}`}>
+              {textParts.map((part, index) => (
+                // Индекс как key подходит: части не переставляются, только дописываются в конец
+                <span key={index}>
+                  {index > 0 && <span className={styles.separator} />}
+                  {part}
+                </span>
+              ))}
+            </div>
 
             {isTextCut && (
               <button type="button" className={styles.expandButton}>
@@ -133,6 +179,14 @@ export function CardItem(props: CardItemProps) {
       >
         ›
       </button>
+
+      {/* Подсказка поверх карточки: отпустишь — объединятся */}
+      {showMergeDrop && (
+        <div className={styles.mergeDropHint}>
+          <span className={styles.mergeDropPlus}>+</span>
+          Объединить
+        </div>
+      )}
     </article>
   )
 
@@ -147,8 +201,47 @@ export function CardItem(props: CardItemProps) {
     setIsDragging(false)
   }
 
+  // Над карточкой держат другую. Если их можно объединить — разрешаем бросить сюда
+  // (preventDefault) и показываем «+ Объединить». Колонка видит defaultPrevented
+  // и не подсвечивает себя: бросают не в неё, а на карточку.
+  function handleDragOver(event: DragEvent<HTMLElement>) {
+    if (!canMergeOnDrop) {
+      return
+    }
+    event.preventDefault()
+    setIsDragOver(true)
+  }
+
+  function handleDragLeave(event: DragEvent<HTMLElement>) {
+    // Как в колонке: переход курсора на дочерний элемент — ещё не уход с карточки
+    const cursorTarget = event.relatedTarget as Node | null
+    if (!event.currentTarget.contains(cursorTarget)) {
+      setIsDragOver(false)
+    }
+  }
+
+  // Отпустили карточку на эту — объединяем. stopPropagation: чтобы колонка
+  // не приняла бросок как перенос карточки к себе.
+  function handleDrop(event: DragEvent<HTMLElement>) {
+    setIsDragOver(false)
+    if (!canMergeOnDrop) {
+      return
+    }
+    event.preventDefault()
+    event.stopPropagation()
+    onMergeDrop(card)
+  }
+
   function handleExpandClick() {
     setIsExpanded(!isExpanded)
+  }
+
+  function handleMergeAll() {
+    onMergeAll(card)
+  }
+
+  function handleUnmerge() {
+    onUnmerge(card)
   }
 
   function handleLeftClick() {

@@ -18,8 +18,17 @@ from ..board import (
     sort_column_cards,
 )
 from ..db import get_db, now
+from ..merging import merge_cards, split_cards
 from ..realtime import notify_board_changed
-from ..schemas import Card, CardArchive, CardCreate, CardMove, CardUpdate
+from ..schemas import (
+    Card,
+    CardArchive,
+    CardCreate,
+    CardMerge,
+    CardMove,
+    CardUnmerge,
+    CardUpdate,
+)
 
 router = APIRouter(prefix="/api/cards", tags=["Карточки"])
 
@@ -120,6 +129,31 @@ def archive(card_id: int, data: CardArchive, db: sqlite3.Connection = Depends(ge
 
     notify_board_changed(db)
     return get_card(db, card_id)
+
+
+@router.post("/{card_id}/merge")
+def merge(card_id: int, data: CardMerge, db: sqlite3.Connection = Depends(get_db)) -> Card:
+    """
+    Сливает карточки data.card_ids в эту карточку. Все они должны быть от того же донатера.
+    Так работают «Объединить все донаты в эту карточку» и перетаскивание карточки на карточку.
+    """
+    target = merge_cards(db, get_card(db, card_id), data.card_ids)
+
+    notify_board_changed(db)
+    return target
+
+
+@router.post("/{card_id}/unmerge")
+def unmerge(card_id: int, data: CardUnmerge, db: sqlite3.Connection = Depends(get_db)) -> list[Card]:
+    """
+    «Разъединить»: возвращает слитые в эту карточку карточки на доску в ту же колонку.
+    Если card_ids прислали — только эти и туда, где они были до объединения
+    (так работает «Отменить» после объединения). Возвращает вернувшиеся карточки.
+    """
+    restored = split_cards(db, get_card(db, card_id), data.card_ids)
+
+    notify_board_changed(db)
+    return restored
 
 
 @router.delete("/{card_id}")

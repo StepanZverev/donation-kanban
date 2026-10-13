@@ -21,6 +21,8 @@ export type CardFromApi = {
   moved_at: string
   archived_at: string | null
   archive_reason: Card['archiveReason']
+  merge_count: number
+  merged_into_id: number | null
 }
 
 export function toCard(card: CardFromApi): Card {
@@ -40,6 +42,8 @@ export function toCard(card: CardFromApi): Card {
     movedAt: card.moved_at,
     archivedAt: card.archived_at,
     archiveReason: card.archive_reason,
+    mergeCount: card.merge_count,
+    mergedIntoId: card.merged_into_id,
   }
 }
 
@@ -91,6 +95,22 @@ export async function removeCard(id: number): Promise<Card> {
 export async function archiveCard(id: number, reason: 'done' | 'deleted'): Promise<Card> {
   const card = await request<CardFromApi>('POST', `/api/cards/${id}/archive`, { reason })
   return toCard(card)
+}
+
+// Сливает карточки cardIds в карточку targetId (все — от одного донатера).
+// Возвращает карточку targetId после слияния.
+export async function mergeCards(targetId: number, cardIds: number[]): Promise<Card> {
+  const card = await request<CardFromApi>('POST', `/api/cards/${targetId}/merge`, { card_ids: cardIds })
+  return toCard(card)
+}
+
+// «Разъединить»: слитые в targetId карточки возвращаются на доску, туда, где были.
+// cardIds — только эти (для «Отменить» после объединения), null — все.
+export async function unmergeCards(targetId: number, cardIds: number[] | null): Promise<Card[]> {
+  const cards = await request<CardFromApi[]>('POST', `/api/cards/${targetId}/unmerge`, {
+    card_ids: cardIds,
+  })
+  return cards.map(toCard)
 }
 
 // Кнопка «Очистить»: все карточки из «Выполнено» уходят в историю.

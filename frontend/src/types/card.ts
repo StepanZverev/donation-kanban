@@ -32,7 +32,12 @@ export type Card = {
   // Когда карточка попала в текущую колонку
   movedAt: string
   archivedAt: string | null
-  archiveReason: 'done' | 'deleted' | null
+  // merged — карточку слили в другую карточку того же донатера
+  archiveReason: 'done' | 'deleted' | 'merged' | null
+  // Сколько донатов слито в карточку: 1 — обычная, 2 и больше — объединённая
+  mergeCount: number
+  // В какую карточку слили эту (только у карточек в истории с пометкой merged)
+  mergedIntoId: number | null
 }
 
 // То, что пользователь вводит в форме создания или редактирования.

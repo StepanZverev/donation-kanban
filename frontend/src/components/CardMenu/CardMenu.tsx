@@ -8,6 +8,9 @@ type CardMenuProps = {
   onEdit: () => void
   onMove: (columnId: number) => void
   onDelete: () => void
+  // «Объединить все донаты в эту карточку» и «Разъединить». Не передали — пункта в меню нет.
+  onMergeAll?: () => void
+  onUnmerge?: () => void
 }
 
 // Если под кнопкой меньше места, чем столько пикселей, меню открывается вверх
@@ -15,7 +18,7 @@ const DROPDOWN_HEIGHT_GUESS = 240
 
 // Маленькое меню «⋯» на карточке: редкие действия, которые нужны больше модератору.
 export function CardMenu(props: CardMenuProps) {
-  const { moveTargets, onEdit, onMove, onDelete } = props
+  const { moveTargets, onEdit, onMove, onDelete, onMergeAll, onUnmerge } = props
   // Где показать открытое меню (координаты на экране). null — меню закрыто.
   const [dropdownPosition, setDropdownPosition] = useState<CSSProperties | null>(null)
   const isOpen = dropdownPosition !== null
@@ -38,6 +41,26 @@ export function CardMenu(props: CardMenuProps) {
           <button type="button" onClick={handleEdit}>
             Изменить
           </button>
+
+          {onMergeAll && (
+            <button
+              type="button"
+              title="Все карточки этого донатера сольются в эту: суммы сложатся, тексты допишутся в конец"
+              onClick={handleMergeAll}
+            >
+              Объединить все донаты в эту карточку
+            </button>
+          )}
+
+          {onUnmerge && (
+            <button
+              type="button"
+              title="Слитые донаты вернутся на доску отдельными карточками"
+              onClick={handleUnmerge}
+            >
+              Разъединить
+            </button>
+          )}
 
           <p className={styles.groupTitle}>Переместить в</p>
           {moveTargets.map((column) => (
@@ -80,6 +103,16 @@ export function CardMenu(props: CardMenuProps) {
   function handleEdit() {
     setDropdownPosition(null)
     onEdit()
+  }
+
+  function handleMergeAll() {
+    setDropdownPosition(null)
+    onMergeAll?.()
+  }
+
+  function handleUnmerge() {
+    setDropdownPosition(null)
+    onUnmerge?.()
   }
 
   function handleMove(columnId: number) {

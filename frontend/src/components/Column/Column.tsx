@@ -17,6 +17,13 @@ type ColumnProps = {
   onDeleteCard: (card: Card) => void
   onFinishCard: (card: Card) => void
   onDropCard: (cardId: number, columnId: number) => void
+  // Есть ли на доске другие карточки того же донатера, и «Объединить все донаты в эту карточку»
+  canMergeAll: (card: Card) => boolean
+  onMergeAll: (card: Card) => void
+  onUnmerge: (card: Card) => void
+  // Можно ли бросить перетаскиваемую карточку на эту, чтобы объединить, и само объединение
+  canMergeOnDrop: (card: Card) => boolean
+  onMergeDrop: (card: Card) => void
   onClearClick: () => void
 }
 
@@ -31,6 +38,11 @@ export function Column(props: ColumnProps) {
     onDeleteCard,
     onFinishCard,
     onDropCard,
+    canMergeAll,
+    onMergeAll,
+    onUnmerge,
+    canMergeOnDrop,
+    onMergeDrop,
     onClearClick,
   } = props
   // Держат ли сейчас карточку над этой колонкой (чтобы подсветить её).
@@ -84,6 +96,11 @@ export function Column(props: ColumnProps) {
             onEdit={onEditCard}
             onMove={onDropCard}
             onDelete={onDeleteCard}
+            canMergeAll={canMergeAll(card)}
+            onMergeAll={onMergeAll}
+            onUnmerge={onUnmerge}
+            canMergeOnDrop={canMergeOnDrop(card)}
+            onMergeDrop={onMergeDrop}
             leftArrow={leftColumn ? 'move' : 'delete'}
             rightArrow={rightColumn ? 'move' : 'finish'}
             onLeftClick={handleLeftClick}
@@ -118,6 +135,12 @@ export function Column(props: ColumnProps) {
 
   // Срабатывает много раз в секунду, пока карточку держат над колонкой.
   function handleDragOver(event: DragEvent<HTMLElement>) {
+    // Карточку держат над другой карточкой, и та уже приняла её для объединения
+    // (см. handleDragOver в CardItem). Тогда колонку не подсвечиваем.
+    if (event.defaultPrevented) {
+      setIsDragOver(false)
+      return
+    }
     // Без preventDefault браузер считает, что сюда бросать нельзя.
     event.preventDefault()
     setIsDragOver(true)

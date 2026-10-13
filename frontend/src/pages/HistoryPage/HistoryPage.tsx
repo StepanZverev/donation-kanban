@@ -6,6 +6,7 @@ import styles from './HistoryPage.module.css'
 const archiveReasonLabels = {
   done: 'Выполнена',
   deleted: 'Удалена',
+  merged: 'Объединена',
 }
 
 export function HistoryPage() {

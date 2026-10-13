@@ -109,3 +109,9 @@
   background-color: var(--color-error-background);
   color: var(--color-error);
 }
+
+/* «Объединена» — карточку слили в другую карточку того же донатера */
+.merged {
+  background-color: var(--color-accent-light);
+  color: var(--color-text);
+}

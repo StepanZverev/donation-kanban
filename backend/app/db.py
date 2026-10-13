@@ -53,7 +53,9 @@ CREATE TABLE IF NOT EXISTS cards (
     updated_at      TEXT    NOT NULL,
     moved_at        TEXT    NOT NULL,                   -- когда карточка попала в текущую колонку
     archived_at     TEXT,                               -- когда убрали с доски в историю
-    archive_reason  TEXT                                -- done | deleted
+    archive_reason  TEXT,                               -- done | deleted | merged
+    merge_count     INTEGER NOT NULL DEFAULT 1,         -- сколько донатов слито в карточку (1 — не объединена)
+    merged_into_id  INTEGER                             -- в какую карточку слили эту (если reason = merged)
 );
 
 -- Простое хранилище «ключ — значение» для служебных данных,
@@ -116,6 +118,7 @@ def init_db() -> None:
         db.executescript(SCHEMA)
         create_default_columns(db)
         rename_pile_to_queue(db)
+        add_merge_fields(db)
 
 
 def rename_pile_to_queue(db: sqlite3.Connection) -> None:
@@ -124,6 +127,21 @@ def rename_pile_to_queue(db: sqlite3.Connection) -> None:
     Переименовываем её в старых базах, но только если название ещё старое.
     """
     db.execute("UPDATE board_columns SET title = 'Очередь' WHERE kind = 'incoming' AND title = 'Куча'")
+
+
+def add_merge_fields(db: sqlite3.Connection) -> None:
+    """
+    Поля для объединения карточек появились позже остальных.
+    В старой базе их нет — добавляем. В новой они уже созданы через SCHEMA.
+    """
+    card_fields = [row["name"] for row in db.execute("PRAGMA table_info(cards)")]
+    new_fields = {
+        "merge_count": "INTEGER NOT NULL DEFAULT 1",
+        "merged_into_id": "INTEGER",
+    }
+    for name, field_type in new_fields.items():
+        if name not in card_fields:
+            db.execute(f"ALTER TABLE cards ADD COLUMN {name} {field_type}")
 
 
 def create_default_columns(db: sqlite3.Connection) -> None:

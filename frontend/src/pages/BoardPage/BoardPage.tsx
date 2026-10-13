@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type DragEvent } from 'react'
 import { sendFakeDonation } from '../../api/dev'
 import { useCards } from '../../hooks/useCards'
 import { usePriorityLevels } from '../../hooks/usePriorityLevels'
@@ -26,6 +26,11 @@ export function BoardPage() {
     editCard,
     moveCard,
     archiveCard,
+    getMergeableCards,
+    canMergeOnDrop,
+    mergeAllInto,
+    mergeOnDrop,
+    unmergeCard,
     clearDone,
     undoableActions,
     undoAction,
@@ -34,8 +39,10 @@ export function BoardPage() {
   // Уровни приоритета из настроек: от них зависит цвет обводки карточек
   const { levels } = usePriorityLevels()
   const [form, setForm] = useState<FormState>(null)
-  // Тащат ли сейчас какую-нибудь карточку: тогда показываем зоны по краям доски.
-  const [isDragging, setIsDragging] = useState(false)
+  // Какую карточку сейчас тащат (null — никакую). Пока тащат, показываем зоны по краям доски,
+  // а карточки, с которыми её можно объединить, готовы принять её.
+  const [draggedCardId, setDraggedCardId] = useState<number | null>(null)
+  const isDragging = draggedCardId !== null
 
   if (isLoading) {
     return <p>Загружаю карточки…</p>
@@ -74,6 +81,11 @@ export function BoardPage() {
             onDeleteCard={handleDeleteCard}
             onFinishCard={handleFinishCard}
             onDropCard={moveCard}
+            canMergeAll={(card) => getMergeableCards(card).length > 0}
+            onMergeAll={mergeAllInto}
+            onUnmerge={unmergeCard}
+            canMergeOnDrop={canMergeDraggedOn}
+            onMergeDrop={handleMergeDrop}
             onClearClick={clearDone}
           />
         ))}
@@ -105,13 +117,27 @@ export function BoardPage() {
     </div>
   )
 
-  function handleDragStart() {
-    setIsDragging(true)
+  // id карточки берём из «посылки», которую только что положила сама карточка (CardItem)
+  function handleDragStart(event: DragEvent<HTMLElement>) {
+    setDraggedCardId(Number(event.dataTransfer.getData('text/plain')) || null)
   }
 
   // Карточку отпустили (куда угодно) — прячем зоны.
   function handleDragEnd() {
-    setIsDragging(false)
+    setDraggedCardId(null)
+  }
+
+  // Можно ли бросить перетаскиваемую карточку на card, чтобы объединить их
+  function canMergeDraggedOn(card: Card) {
+    return draggedCardId !== null && canMergeOnDrop(draggedCardId, card)
+  }
+
+  // Карточку бросили на другую карточку того же донатера — сливаем её в ту, на которую бросили
+  function handleMergeDrop(card: Card) {
+    if (draggedCardId !== null) {
+      mergeOnDrop(draggedCardId, card)
+    }
+    setDraggedCardId(null)
   }
 
   // «Удалить» из меню карточки: в историю с пометкой «удалено», из любой колонки.
@@ -125,12 +151,12 @@ export function BoardPage() {
   }
 
   function handleDropToDelete(cardId: number) {
-    setIsDragging(false)
+    setDraggedCardId(null)
     archiveCard(cardId, 'deleted')
   }
 
   function handleDropToDone(cardId: number) {
-    setIsDragging(false)
+    setDraggedCardId(null)
     archiveCard(cardId, 'done')
   }
 
