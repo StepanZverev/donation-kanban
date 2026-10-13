@@ -12,6 +12,9 @@ export function Navigation() {
       <NavLink to="/history" className={getLinkClassName}>
         История
       </NavLink>
+      <NavLink to="/settings" className={getLinkClassName}>
+        Настройки
+      </NavLink>
     </nav>
   )
 

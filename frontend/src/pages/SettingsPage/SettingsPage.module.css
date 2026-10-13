@@ -1,0 +1,9 @@
+/* Настройки занимают всё место под навигацией и прокручиваются внутри, а не всей страницей */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 24px;
+}

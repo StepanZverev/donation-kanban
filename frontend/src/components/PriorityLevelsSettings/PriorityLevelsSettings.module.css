@@ -1,0 +1,146 @@
+.section {
+  max-width: 560px;
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.hint {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+/* Таблица на CSS grid: у всех строк одинаковые колонки,
+   поэтому поля стоят ровно друг под другом */
+.table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.headerRow,
+.row {
+  display: grid;
+  grid-template-columns: 44px 100px minmax(0, 1fr) 96px 28px;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerRow {
+  padding: 0 6px 0 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.row {
+  padding: 6px 6px 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+}
+
+/* Встроенный в браузер выбор цвета: квадратик, по клику открывается палитра */
+.colorInput {
+  width: 36px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+}
+
+.input {
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  background-color: var(--color-surface);
+  color: inherit;
+}
+
+.input:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.zero {
+  padding: 6px 9px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+/* Такой же бейдж, как сумма на карточке */
+.preview {
+  justify-self: start;
+  padding: 2px 10px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+}
+
+.iconButton:hover:not(:disabled) {
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
+.iconButton:disabled {
+  opacity: 0.3;
+}
+
+.addButton {
+  margin-top: 10px;
+}
+
+.error {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
+.footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.saveButton {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: #ffffff;
+}
+
+/* На телефоне таблица в 5 колонок не влезает: убираем пример и заголовки */
+@media (max-width: 520px) {
+  .headerRow {
+    display: none;
+  }
+
+  .row {
+    grid-template-columns: 44px 80px minmax(0, 1fr) 28px;
+  }
+
+  .preview {
+    display: none;
+  }
+}

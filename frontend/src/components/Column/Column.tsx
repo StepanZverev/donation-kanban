@@ -1,5 +1,6 @@
 import { useState, type DragEvent } from 'react'
 import type { BoardColumn, Card } from '../../types/card'
+import type { PriorityLevel } from '../../utils/priority'
 import { CardItem } from '../CardItem/CardItem'
 import styles from './Column.module.css'
 
@@ -8,6 +9,8 @@ type ColumnProps = {
   // Все колонки доски — для пункта «Переместить в…» в меню карточки
   allColumns: BoardColumn[]
   cards: Card[]
+  // Уровни приоритета для цвета обводки карточек
+  priorityLevels: PriorityLevel[]
   onAddClick: () => void
   onEditCard: (card: Card) => void
   // В историю с пометкой «удалено» / «выполнено»
@@ -22,6 +25,7 @@ export function Column(props: ColumnProps) {
     column,
     allColumns,
     cards,
+    priorityLevels,
     onAddClick,
     onEditCard,
     onDeleteCard,
@@ -75,6 +79,7 @@ export function Column(props: ColumnProps) {
           <CardItem
             key={card.id}
             card={card}
+            priorityLevels={priorityLevels}
             moveTargets={moveTargets}
             onEdit={onEditCard}
             onMove={onDropCard}

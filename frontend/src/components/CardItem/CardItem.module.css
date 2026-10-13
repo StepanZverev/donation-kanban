@@ -23,12 +23,16 @@
   gap: 4px;
 }
 
+/* Ник в одну строку: если колонка узкая, конец обрезается многоточием
+   (целиком ник виден во всплывающей подсказке) */
 .heading {
   flex: 0 1 auto;
   min-width: 0;
   margin: 0;
   font-size: 16px;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Сумма в бейдже с заливкой цвета уровня — того же, что и обводка */

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { sendFakeDonation } from '../../api/dev'
 import { useCards } from '../../hooks/useCards'
+import { usePriorityLevels } from '../../hooks/usePriorityLevels'
 import type { Card, CardDraft } from '../../types/card'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
 import { DonationAlertsStatus } from '../../components/DonationAlertsStatus/DonationAlertsStatus'
@@ -30,6 +31,8 @@ export function BoardPage() {
     undoAction,
     forgetAction,
   } = useCards()
+  // Уровни приоритета из настроек: от них зависит цвет обводки карточек
+  const { levels } = usePriorityLevels()
   const [form, setForm] = useState<FormState>(null)
   // Тащат ли сейчас какую-нибудь карточку: тогда показываем зоны по краям доски.
   const [isDragging, setIsDragging] = useState(false)
@@ -65,6 +68,7 @@ export function BoardPage() {
             column={column}
             allColumns={columns}
             cards={getColumnCards(column.id)}
+            priorityLevels={levels}
             onAddClick={() => handleAddClick(column.id)}
             onEditCard={handleEditCard}
             onDeleteCard={handleDeleteCard}

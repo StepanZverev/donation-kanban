@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from 'react'
 import type { BoardColumn, Card } from '../../types/card'
 import { formatMoney } from '../../utils/money'
-import { getPriorityLevel } from '../../utils/priority'
+import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
 import { CardMenu } from '../CardMenu/CardMenu'
 import styles from './CardItem.module.css'
 
 type CardItemProps = {
   card: Card
+  // Уровни приоритета из настроек: по ним выбирается цвет обводки
+  priorityLevels: PriorityLevel[]
   // Колонки, в которые карточку можно перенести через меню «⋯»
   moveTargets: BoardColumn[]
   onEdit: (card: Card) => void
@@ -23,6 +25,7 @@ type CardItemProps = {
 export function CardItem(props: CardItemProps) {
   const {
     card,
+    priorityLevels,
     moveTargets,
     onEdit,
     onMove,
@@ -42,7 +45,7 @@ export function CardItem(props: CardItemProps) {
 
   const isDonation = card.source === 'donationalerts'
   // Цвет обводки зависит от суммы доната. Ручные карточки считаются суммой 0.
-  const priority = getPriorityLevel(card.streamerAmount ?? 0)
+  const priority = getPriorityLevel(card.streamerAmount ?? 0, priorityLevels)
   // У доната заголовок — это обрезанное начало сообщения, а целиком оно лежит в описании.
   // Показываем сообщение один раз: описание, а если его нет — заголовок.
   const heading = isDonation ? card.donorName : card.title
@@ -85,7 +88,9 @@ export function CardItem(props: CardItemProps) {
 
       <div className={styles.content}>
         <header className={styles.header}>
-          <h3 className={styles.heading}>{heading}</h3>
+          <h3 className={styles.heading} title={heading ?? undefined}>
+            {heading}
+          </h3>
           <div className={styles.menuSlot}>
             <CardMenu
               moveTargets={moveTargets}

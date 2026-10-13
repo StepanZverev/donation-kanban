@@ -1,0 +1,123 @@
+.section {
+  max-width: 560px;
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 18px;
+}
+
+.hint {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.error {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+/* Одна колонка: поле с названием и кнопки справа */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+}
+
+/* «Куча» и «Выполнено» — серые, их не настроить */
+.fixedRow {
+  padding: 10px 12px;
+  border-color: transparent;
+  background-color: var(--color-column);
+}
+
+.fixedTitle {
+  flex: 1;
+  font-weight: 600;
+}
+
+.note {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  background-color: transparent;
+  color: inherit;
+}
+
+.input:hover:not(:disabled) {
+  border-color: var(--color-border);
+}
+
+.input:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.actions {
+  display: flex;
+  gap: 2px;
+}
+
+/* Квадратная кнопка без рамки, подложка появляется при наведении */
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: 15px;
+}
+
+.iconButton:hover:not(:disabled) {
+  background-color: var(--color-column);
+  color: var(--color-text);
+}
+
+.iconButton:disabled {
+  opacity: 0.3;
+}
+
+.dangerButton:hover:not(:disabled) {
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
+/* Поле «Название новой колонки» и кнопка «Добавить» */
+.addForm {
+  display: flex;
+  gap: 8px;
+}
+
+.addForm .input {
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+}
