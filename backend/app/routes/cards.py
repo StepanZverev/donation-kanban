@@ -42,7 +42,7 @@ def list_cards(db: sqlite3.Connection = Depends(get_db)) -> list[Card]:
 
 @router.post("", status_code=201)
 def create_card(data: CardCreate, db: sqlite3.Connection = Depends(get_db)) -> Card:
-    """Создаёт карточку вручную. Если колонку не указали — в «Кучу»."""
+    """Создаёт карточку вручную. Если колонку не указали — в «Очередь»."""
     if data.column_id is None:
         column_id = get_column_id_by_kind(db, "incoming")
     else:
@@ -95,7 +95,7 @@ def update_card(card_id: int, data: CardUpdate, db: sqlite3.Connection = Depends
 def move_card(card_id: int, data: CardMove, db: sqlite3.Connection = Depends(get_db)) -> Card:
     """
     Переносит карточку в любую колонку, без ограничений по направлению:
-    например, из «Кучи» сразу в «Выполнено» или из «Выполнено» обратно.
+    например, из «Очереди» сразу в «Выполнено» или из «Выполнено» обратно.
     """
     get_card(db, card_id)
     column = get_column(db, data.column_id)

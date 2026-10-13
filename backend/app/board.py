@@ -33,7 +33,7 @@ def get_column(db: sqlite3.Connection, column_id: int) -> BoardColumn:
 
 
 def get_column_id_by_kind(db: sqlite3.Connection, kind: str) -> int:
-    """id колонки нужного вида, например «Кучи» (kind = 'incoming')."""
+    """id колонки нужного вида, например «Очереди» (kind = 'incoming')."""
     row = db.execute(
         "SELECT id FROM board_columns WHERE kind = ? ORDER BY position, id LIMIT 1", (kind,)
     ).fetchone()

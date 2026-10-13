@@ -36,7 +36,7 @@ def restore_card(
     data: CardRestore | None = None,
     db: sqlite3.Connection = Depends(get_db),
 ) -> Card:
-    """Переоткрывает карточку: возвращает её на доску в указанную колонку или в «Кучу»."""
+    """Переоткрывает карточку: возвращает её на доску в указанную колонку или в «Очередь»."""
     get_archived_card(db, card_id)
     if data is None or data.column_id is None:
         column_id = get_column_id_by_kind(db, "incoming")

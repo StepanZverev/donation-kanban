@@ -51,7 +51,7 @@ def fake_da(monkeypatch):
 
 
 def queue_titles(client_):
-    # Суммы у тестовых донатов одинаковые, поэтому в «Куче» они идут от старых к новым
+    # Суммы у тестовых донатов одинаковые, поэтому в «Очереди» они идут от старых к новым
     return [card["title"] for card in client_.get("/api/cards").json()]
 
 

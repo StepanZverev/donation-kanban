@@ -1,7 +1,8 @@
 // Уровни приоритета карточки: чем больше донат, тем заметнее карточка.
 // Уровень задаётся нижней границей суммы (в валюте стримера),
 // верхняя граница — начало следующего уровня.
-// Пока это значения по умолчанию, позже их можно будет менять на странице «Настройки».
+// Стример меняет уровни на странице «Настройки», а здесь значения по умолчанию
+// (такие же, как на бэкенде) — ими красим карточки, пока настройки не загрузились.
 
 export type PriorityLevel = {
   minAmount: number
@@ -17,7 +18,7 @@ export const DEFAULT_PRIORITY_LEVELS: PriorityLevel[] = [
 
 // Находит уровень для суммы: самый «высокий» уровень, до нижней границы которого сумма дотянулась.
 // Уровни должны идти по возрастанию minAmount.
-export function getPriorityLevel(amount: number, levels = DEFAULT_PRIORITY_LEVELS) {
+export function getPriorityLevel(amount: number, levels: PriorityLevel[]) {
   let result = levels[0]
   for (const level of levels) {
     if (amount >= level.minAmount) {

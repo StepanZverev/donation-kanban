@@ -24,10 +24,43 @@ class BoardColumn(BaseModel):
     position: int
 
 
+class ColumnCreate(BaseModel):
+    """Новая промежуточная колонка. Встаёт последней, прямо перед «Выполнено»."""
+
+    title: str = Field(min_length=1, max_length=40)
+
+
+class ColumnUpdate(BaseModel):
+    """Переименование колонки."""
+
+    title: str = Field(min_length=1, max_length=40)
+
+
+class ColumnOrder(BaseModel):
+    """
+    Новый порядок промежуточных колонок слева направо — список их id.
+    «Очередь» и «Выполнено» всегда остаются по краям, их сюда не присылают.
+    """
+
+    column_ids: list[int]
+
+
+class PriorityLevel(BaseModel):
+    """
+    Уровень приоритета карточки. Задаётся только нижней границей суммы:
+    уровень действует от min_amount до начала следующего уровня.
+    """
+
+    min_amount: float = Field(ge=0)
+    name: str = Field(min_length=1, max_length=30)
+    # Цвет в виде #rrggbb — именно так его отдаёт <input type="color"> в браузере
+    color: str = Field(pattern=r"^#[0-9a-fA-F]{6}$")
+
+
 class CardCreate(BaseModel):
     """
     Что присылает фронт, когда создаёт карточку вручную.
-    Если column_id не прислали, карточка попадёт в «Кучу».
+    Если column_id не прислали, карточка попадёт в «Очередь».
     """
 
     title: str = Field(min_length=1, max_length=200)
@@ -62,7 +95,7 @@ class CardArchive(BaseModel):
 
 class CardRestore(BaseModel):
     """
-    Куда вернуть карточку из истории. Если column_id не прислали — в «Кучу».
+    Куда вернуть карточку из истории. Если column_id не прислали — в «Очередь».
     Кнопка «Отменить» присылает колонку, где карточка была до этого.
     """
 

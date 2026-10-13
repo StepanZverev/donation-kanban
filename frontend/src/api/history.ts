@@ -12,7 +12,7 @@ export async function getHistory(): Promise<Card[]> {
   return cards.map(toCard)
 }
 
-// Возвращает карточку на доску: в указанную колонку, а если её не указали — в «Кучу».
+// Возвращает карточку на доску: в указанную колонку, а если её не указали — в «Очередь».
 export async function restoreCard(id: number, columnId?: number): Promise<void> {
   const response = await fetch(`/api/history/${id}/restore`, {
     method: 'POST',
