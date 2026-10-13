@@ -6,6 +6,7 @@ import * as cardsApi from '../api/cards'
 import * as columnsApi from '../api/columns'
 import * as historyApi from '../api/history'
 import type { BoardColumn, Card, CardDraft } from '../types/card'
+import { findMergeTarget } from '../utils/merging'
 import { formatMoney } from '../utils/money'
 import { useBoardUpdates } from './useBoardUpdates'
 
@@ -90,6 +91,18 @@ export function useCards() {
     return runAndReload(() => cardsApi.archiveCard(card.id, reason))
   }
 
+  // Есть ли у карточки «пара» того же донатера, с которой её можно объединить
+  function canMerge(card: Card) {
+    return findMergeTarget(card, cards, columns) !== null
+  }
+
+  // «Объединить»: карточка сливается в основную карточку донатера, а сама уходит в историю.
+  // «Отменить» вернёт её из истории в ту же колонку — бэкенд при этом вычтет её сумму и текст.
+  function mergeCard(card: Card) {
+    rememberAction(`Объединена: ${describeCard(card)}`, [card], card.columnId)
+    return runAndReload(() => cardsApi.mergeCard(card.id))
+  }
+
   // «Очистить» — все выполненные в историю.
   function clearDone() {
     if (doneColumn) {
@@ -143,6 +156,8 @@ export function useCards() {
     editCard,
     moveCard,
     archiveCard,
+    canMerge,
+    mergeCard,
     clearDone,
     undoableActions,
     undoAction,

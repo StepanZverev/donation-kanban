@@ -7,7 +7,7 @@
 
 import sqlite3
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from ..board import (
     archive_card,
@@ -18,6 +18,7 @@ from ..board import (
     sort_column_cards,
 )
 from ..db import get_db, now
+from ..merging import merge_card
 from ..realtime import notify_board_changed
 from ..schemas import Card, CardArchive, CardCreate, CardMove, CardUpdate
 
@@ -120,6 +121,21 @@ def archive(card_id: int, data: CardArchive, db: sqlite3.Connection = Depends(ge
 
     notify_board_changed(db)
     return get_card(db, card_id)
+
+
+@router.post("/{card_id}/merge")
+def merge(card_id: int, db: sqlite3.Connection = Depends(get_db)) -> Card:
+    """
+    Кнопка «Объединить» на карточке в «Очереди»: сливает её в основную карточку
+    того же донатера (правило — в merging.py). Возвращает основную карточку.
+    """
+    card = get_card(db, card_id)
+    if card.archived_at is not None:
+        raise HTTPException(status_code=400, detail="Карточка уже в истории")
+    target = merge_card(db, card)
+
+    notify_board_changed(db)
+    return target
 
 
 @router.delete("/{card_id}")

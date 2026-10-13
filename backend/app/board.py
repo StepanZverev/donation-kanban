@@ -9,6 +9,9 @@ from fastapi import HTTPException
 from .db import now
 from .schemas import BoardColumn, Card
 
+# Заголовок карточки доната, если донатер ничего не написал
+EMPTY_MESSAGE_TITLE = "Донат без сообщения"
+
 
 def get_card(db: sqlite3.Connection, card_id: int) -> Card:
     """Находит карточку по id или отвечает фронту ошибкой 404 «не найдено»."""

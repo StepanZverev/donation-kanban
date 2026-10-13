@@ -12,7 +12,8 @@ from pydantic import BaseModel, Field
 # Literal значит «только одно из этих значений».
 ColumnKind = Literal["incoming", "work", "done"]
 Source = Literal["manual", "donationalerts"]
-ArchiveReason = Literal["done", "deleted"]
+# merged — карточку слили в другую карточку того же донатера
+ArchiveReason = Literal["done", "deleted", "merged"]
 
 
 class BoardColumn(BaseModel):
@@ -57,6 +58,12 @@ class PriorityLevel(BaseModel):
     color: str = Field(pattern=r"^#[0-9a-fA-F]{6}$")
 
 
+class AutoMerge(BaseModel):
+    """Галочка «Объединять донаты одного донатера автоматически»."""
+
+    enabled: bool
+
+
 class CardCreate(BaseModel):
     """
     Что присылает фронт, когда создаёт карточку вручную.
@@ -90,7 +97,8 @@ class CardArchive(BaseModel):
     красная («удалено») и зелёная («выполнено»).
     """
 
-    reason: ArchiveReason
+    # «Объединена» сюда не входит: так карточка попадает в историю только через объединение
+    reason: Literal["done", "deleted"]
 
 
 class CardRestore(BaseModel):
@@ -120,3 +128,7 @@ class Card(BaseModel):
     moved_at: str
     archived_at: str | None
     archive_reason: ArchiveReason | None
+    merge_count: int
+    merged_into_id: int | None
+    last_merged_at: str | None
+    last_merge_note: str | None

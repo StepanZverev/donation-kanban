@@ -26,6 +26,8 @@ export function BoardPage() {
     editCard,
     moveCard,
     archiveCard,
+    canMerge,
+    mergeCard,
     clearDone,
     undoableActions,
     undoAction,
@@ -74,6 +76,8 @@ export function BoardPage() {
             onDeleteCard={handleDeleteCard}
             onFinishCard={handleFinishCard}
             onDropCard={moveCard}
+            canMerge={canMerge}
+            onMergeCard={mergeCard}
             onClearClick={clearDone}
           />
         ))}

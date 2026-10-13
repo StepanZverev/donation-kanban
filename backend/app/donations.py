@@ -8,8 +8,9 @@
 import sqlite3
 from dataclasses import dataclass
 
-from .board import get_column_id_by_kind
+from .board import EMPTY_MESSAGE_TITLE, get_card, get_column_id_by_kind
 from .db import now
+from .merging import find_merge_target, is_auto_merge_enabled, merge_card
 
 # Сколько символов сообщения показываем в заголовке карточки
 TITLE_LENGTH = 80
@@ -30,6 +31,9 @@ def add_donation_card(db: sqlite3.Connection, donation: Donation) -> bool:
     """
     Создаёт карточку в «Очереди». Место в колонке определит сумма доната.
     Возвращает False, если карточка для этого доната уже есть (защита от дублей).
+
+    Если в настройках включено автообъединение и у донатера уже есть карточка,
+    новая сразу сливается в неё.
     """
     title, description = split_message(donation.message)
     timestamp = now()
@@ -57,7 +61,14 @@ def add_donation_card(db: sqlite3.Connection, donation: Donation) -> bool:
             timestamp,
         ),
     )
-    return cursor.rowcount == 1
+    if cursor.rowcount == 0:
+        return False
+
+    if is_auto_merge_enabled(db):
+        card = get_card(db, cursor.lastrowid)
+        if find_merge_target(db, card) is not None:
+            merge_card(db, card)
+    return True
 
 
 def split_message(message: str) -> tuple[str, str]:
@@ -67,7 +78,7 @@ def split_message(message: str) -> tuple[str, str]:
     """
     message = message.strip()
     if not message:
-        return "Донат без сообщения", ""
+        return EMPTY_MESSAGE_TITLE, ""
     if len(message) <= TITLE_LENGTH:
         return message, ""
     return message[: TITLE_LENGTH - 1].rstrip() + "…", message

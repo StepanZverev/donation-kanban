@@ -1,4 +1,4 @@
-// Запросы к API настроек: уровни приоритета карточек.
+// Запросы к API настроек: уровни приоритета карточек и автообъединение.
 
 import type { PriorityLevel } from '../utils/priority'
 
@@ -41,4 +41,25 @@ export async function savePriorityLevels(levels: PriorityLevel[]): Promise<Prior
   }
   const saved: PriorityLevelFromApi[] = await response.json()
   return saved.map(toPriorityLevel)
+}
+
+// Галочка «Объединять донаты одного донатера автоматически»
+export async function getAutoMerge(): Promise<boolean> {
+  const response = await fetch('/api/settings/auto-merge')
+  if (!response.ok) {
+    throw new Error(`Не удалось загрузить настройку: ${response.status}`)
+  }
+  const body: { enabled: boolean } = await response.json()
+  return body.enabled
+}
+
+export async function saveAutoMerge(enabled: boolean): Promise<void> {
+  const response = await fetch('/api/settings/auto-merge', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ enabled }),
+  })
+  if (!response.ok) {
+    throw new Error(`Не удалось сохранить настройку: ${response.status}`)
+  }
 }

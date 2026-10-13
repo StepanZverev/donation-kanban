@@ -21,6 +21,10 @@ export type CardFromApi = {
   moved_at: string
   archived_at: string | null
   archive_reason: Card['archiveReason']
+  merge_count: number
+  merged_into_id: number | null
+  last_merged_at: string | null
+  last_merge_note: string | null
 }
 
 export function toCard(card: CardFromApi): Card {
@@ -40,6 +44,10 @@ export function toCard(card: CardFromApi): Card {
     movedAt: card.moved_at,
     archivedAt: card.archived_at,
     archiveReason: card.archive_reason,
+    mergeCount: card.merge_count,
+    mergedIntoId: card.merged_into_id,
+    lastMergedAt: card.last_merged_at,
+    lastMergeNote: card.last_merge_note,
   }
 }
 
@@ -90,6 +98,13 @@ export async function removeCard(id: number): Promise<Card> {
 // Убирает карточку в историю с явной пометкой — так работают зоны по краям доски.
 export async function archiveCard(id: number, reason: 'done' | 'deleted'): Promise<Card> {
   const card = await request<CardFromApi>('POST', `/api/cards/${id}/archive`, { reason })
+  return toCard(card)
+}
+
+// Кнопка «Объединить»: сливает карточку в основную карточку того же донатера.
+// Какую именно — решает бэкенд (то же правило, что в utils/merging.ts). Возвращает основную карточку.
+export async function mergeCard(id: number): Promise<Card> {
+  const card = await request<CardFromApi>('POST', `/api/cards/${id}/merge`)
   return toCard(card)
 }
 

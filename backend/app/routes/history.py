@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..board import get_card, get_column, get_column_id_by_kind
 from ..db import get_db, now
+from ..merging import unmerge_card
 from ..realtime import notify_board_changed
 from ..schemas import Card, CardRestore
 
@@ -36,8 +37,14 @@ def restore_card(
     data: CardRestore | None = None,
     db: sqlite3.Connection = Depends(get_db),
 ) -> Card:
-    """Переоткрывает карточку: возвращает её на доску в указанную колонку или в «Очередь»."""
-    get_archived_card(db, card_id)
+    """
+    Переоткрывает карточку: возвращает её на доску в указанную колонку или в «Очередь».
+    Так же работает «Отменить» после объединения: у объединённой карточки
+    сначала вычитаем её сумму и текст из основной.
+    """
+    card = get_archived_card(db, card_id)
+    if card.archive_reason == "merged" and card.merged_into_id is not None:
+        unmerge_card(db, card)
     if data is None or data.column_id is None:
         column_id = get_column_id_by_kind(db, "incoming")
     else:

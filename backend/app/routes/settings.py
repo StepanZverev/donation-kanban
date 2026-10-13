@@ -1,5 +1,5 @@
 """
-Эндпоинты страницы «Настройки»: уровни приоритета карточек.
+Эндпоинты страницы «Настройки»: уровни приоритета карточек и автообъединение.
 
 Колонки настраиваются через /api/columns (см. columns.py).
 """
@@ -10,8 +10,9 @@ import sqlite3
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..db import get_db, get_setting, set_setting
+from ..merging import AUTO_MERGE_KEY, is_auto_merge_enabled
 from ..realtime import notify_board_changed
-from ..schemas import PriorityLevel
+from ..schemas import AutoMerge, PriorityLevel
 
 router = APIRouter(prefix="/api/settings", tags=["Настройки"])
 
@@ -58,3 +59,16 @@ def save_priority_levels(
     # Открытые доски перезагрузят уровни и перекрасят карточки
     notify_board_changed(db)
     return sorted_levels
+
+
+@router.get("/auto-merge")
+def get_auto_merge(db: sqlite3.Connection = Depends(get_db)) -> AutoMerge:
+    """Включено ли автообъединение донатов одного донатера. По умолчанию выключено."""
+    return AutoMerge(enabled=is_auto_merge_enabled(db))
+
+
+@router.put("/auto-merge")
+def save_auto_merge(data: AutoMerge, db: sqlite3.Connection = Depends(get_db)) -> AutoMerge:
+    set_setting(db, AUTO_MERGE_KEY, "1" if data.enabled else "0")
+    notify_board_changed(db)
+    return data
