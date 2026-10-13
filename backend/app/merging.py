@@ -8,7 +8,7 @@
 Объединять можно любые карточки на доске с одинаковым ником (без учёта регистра),
 в какой бы колонке они ни лежали. История не участвует.
 
-«Разъединить» возвращает слитые карточки на доску, в те колонки, где они были,
+«Разъединить» возвращает слитые карточки на доску в ту же колонку, где основная,
 и вычитает их суммы и тексты из основной карточки.
 """
 
@@ -132,9 +132,10 @@ def merge_one(db: sqlite3.Connection, target: Card, card: Card) -> None:
 
 def split_cards(db: sqlite3.Connection, target: Card, card_ids: list[int] | None) -> list[Card]:
     """
-    «Разъединить»: возвращает на доску карточки, слитые в target.
-    card_ids — какие именно (так работает «Отменить» сразу после объединения),
-    None — все. Возвращает вернувшиеся карточки.
+    Возвращает на доску карточки, слитые в target. Возвращает вернувшиеся карточки.
+    - card_ids = None — «Разъединить»: все слитые карточки встают в ту же колонку, где target;
+    - card_ids = [...] — «Отменить» сразу после объединения: только эти карточки,
+      и каждая возвращается туда, где была до объединения.
     """
     rows = db.execute(
         """
@@ -151,10 +152,12 @@ def split_cards(db: sqlite3.Connection, target: Card, card_ids: list[int] | None
     column_ids = {column.id for column in get_columns(db)}
     for card in merged:
         unmerge_card(db, card)
-        # Колонку, где карточка была, могли удалить — тогда в «Очередь»
-        if card.column_id in column_ids:
+        if card_ids is None:
+            column_id = target.column_id
+        elif card.column_id in column_ids:
             column_id = card.column_id
         else:
+            # Колонку, где карточка была, могли удалить — тогда в «Очередь»
             column_id = get_column_id_by_kind(db, "incoming")
         return_to_board(db, card.id, column_id)
     return [get_card(db, card.id) for card in merged]

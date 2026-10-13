@@ -109,7 +109,7 @@ def test_other_donor_and_history_are_not_merged(client):
     assert merge(client, vasya, vasya).status_code == 400
 
 
-def test_unmerge_returns_cards_to_their_columns(client):
+def test_unmerge_keeps_cards_in_target_column(client):
     donate("Вася", 200, "Первый")
     donate("Вася", 300, "Второй")
     donate("Вася", 400, "Третий")
@@ -125,7 +125,8 @@ def test_unmerge_returns_cards_to_their_columns(client):
 
     first = card_by_message(client, "Первый")
     assert (first["amount"], first["description"], first["merge_count"]) == (200, "", 1)
-    assert card_by_message(client, "Второй")["column_id"] == columns(client)["work"]
+    # Все остаются в колонке основной карточки, даже «Второй», который до слияния был в работе
+    assert card_by_message(client, "Второй")["column_id"] == columns(client)["incoming"]
     assert card_by_message(client, "Третий")["column_id"] == columns(client)["incoming"]
     assert history(client) == []
     # Разъединять больше нечего
@@ -143,10 +144,15 @@ def test_undo_merge_returns_only_just_merged(client):
     merge(client, first, second)
     merge(client, first, third)
 
+    client.post(f"/api/cards/{third['id']}/move", json={"column_id": columns(client)["work"]})
+    merge(client, first, card_by_message(client, "Третий"))
+
     unmerge(client, first, third)
 
     first = card_by_message(client, "Первый")
     assert (first["amount"], first["description"]) == (500, "Первый\n⸻\nВторой")
+    # «Отменить» возвращает карточку туда, где она была до объединения
+    assert card_by_message(client, "Третий")["column_id"] == columns(client)["work"]
 
 
 def test_unmerge_from_history_in_any_order(client):

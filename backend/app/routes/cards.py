@@ -146,9 +146,9 @@ def merge(card_id: int, data: CardMerge, db: sqlite3.Connection = Depends(get_db
 @router.post("/{card_id}/unmerge")
 def unmerge(card_id: int, data: CardUnmerge, db: sqlite3.Connection = Depends(get_db)) -> list[Card]:
     """
-    «Разъединить»: возвращает слитые в эту карточку карточки на доску, туда, где они были.
-    Если card_ids прислали — только эти (так работает «Отменить» после объединения).
-    Возвращает вернувшиеся карточки.
+    «Разъединить»: возвращает слитые в эту карточку карточки на доску в ту же колонку.
+    Если card_ids прислали — только эти и туда, где они были до объединения
+    (так работает «Отменить» после объединения). Возвращает вернувшиеся карточки.
     """
     restored = split_cards(db, get_card(db, card_id), data.card_ids)
 
