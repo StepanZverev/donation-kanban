@@ -10,6 +10,13 @@ import { findSameDonorCards, isSameDonor } from '../utils/merging'
 import { formatMoney } from '../utils/money'
 import { useBoardUpdates } from './useBoardUpdates'
 
+// Как подписать плашку «Отменить» после того, как карточку убрали в историю
+const archiveVerbs = {
+  done: 'Выполнена',
+  deleted: 'Удалена',
+  rejected: 'Отклонена',
+}
+
 // Действие, которое можно отменить кнопкой «Отменить»:
 // текст плашки и функция, которая откатывает действие.
 export type UndoableAction = {
@@ -79,16 +86,16 @@ export function useCards() {
     return runAndReload(() => cardsApi.moveCard(id, columnId))
   }
 
-  // Сразу в историю как «выполнено» или «удалено»: зоны по краям доски,
-  // крайние стрелки на карточке и «Удалить» в меню.
-  function archiveCard(cardId: number, reason: 'done' | 'deleted') {
+  // Сразу в историю как «выполнено», «удалено» или «отклонено»: зоны по краям доски,
+  // крайние стрелки на карточке, «Удалить» и «Отклонить» в меню.
+  // note — причина отказа, нужна только для «отклонено».
+  function archiveCard(cardId: number, reason: 'done' | 'deleted' | 'rejected', note = '') {
     const card = cards.find((boardCard) => boardCard.id === cardId)
     if (!card) {
       return
     }
-    const verb = reason === 'done' ? 'Выполнена' : 'Удалена'
-    rememberRestore(`${verb}: ${describeCard(card)}`, [card], card.columnId)
-    return runAndReload(() => cardsApi.archiveCard(card.id, reason))
+    rememberRestore(`${archiveVerbs[reason]}: ${describeCard(card)}`, [card], card.columnId)
+    return runAndReload(() => cardsApi.archiveCard(card.id, reason, note))
   }
 
   // Другие карточки того же донатера, которые можно слить в эту

@@ -134,11 +134,14 @@ def move_card(card_id: int, data: CardMove, db: sqlite3.Connection = Depends(get
 @router.post("/{card_id}/archive")
 def archive(card_id: int, data: CardArchive, db: sqlite3.Connection = Depends(get_db)) -> Card:
     """
-    Убирает карточку в историю с явной пометкой: «выполнено» или «удалено»,
-    из какой бы колонки её ни взяли. Это перетаскивание в зоны по краям доски.
+    Убирает карточку в историю с явной пометкой: «выполнено», «удалено» или «отклонено»
+    (с причиной), из какой бы колонки её ни взяли. Это перетаскивание в зоны по краям доски
+    и «Отклонить» в меню карточки.
     """
     get_card(db, card_id)
-    archive_card(db, card_id, data.reason)
+    # Причина нужна только у «Отклонено», у остальных пометок её не сохраняем
+    note = data.note.strip() if data.reason == "rejected" else None
+    archive_card(db, card_id, data.reason, note)
 
     notify_board_changed(db)
     return get_card(db, card_id)

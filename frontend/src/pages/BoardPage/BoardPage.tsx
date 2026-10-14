@@ -5,6 +5,7 @@ import type { Card, CardDraft } from '../../types/card'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
 import { Column } from '../../components/Column/Column'
 import { DropZone } from '../../components/DropZone/DropZone'
+import { RejectDialog } from '../../components/RejectDialog/RejectDialog'
 import { UndoToast } from '../../components/UndoToast/UndoToast'
 import styles from './BoardPage.module.css'
 
@@ -42,6 +43,8 @@ export function BoardPage() {
   // Уровни приоритета из настроек: от них зависит цвет полоски и суммы на карточках
   const { levels } = usePriorityLevels()
   const [form, setForm] = useState<FormState>(null)
+  // Какую карточку сейчас отклоняют (открыто окно с причиной), null — никакую
+  const [rejectingCard, setRejectingCard] = useState<Card | null>(null)
   // Какую карточку сейчас тащат (null — никакую). Пока тащат, показываем зоны по краям доски,
   // а карточки, с которыми её можно объединить, готовы принять её.
   const [draggedCardId, setDraggedCardId] = useState<number | null>(null)
@@ -78,6 +81,7 @@ export function BoardPage() {
             onEditCard={handleEditCard}
             onDeleteCard={handleDeleteCard}
             onFinishCard={handleFinishCard}
+            onRejectCard={setRejectingCard}
             onDropCard={moveCard}
             canMergeAll={(card) => getMergeableCards(card).length > 0}
             onMergeAll={mergeAllInto}
@@ -99,6 +103,14 @@ export function BoardPage() {
           <UndoToast key={action.id} action={action} onUndo={undoAction} onClose={forgetAction} />
         ))}
       </div>
+
+      {rejectingCard && (
+        <RejectDialog
+          card={rejectingCard}
+          onSubmit={handleRejectSubmit}
+          onClose={() => setRejectingCard(null)}
+        />
+      )}
 
       {form && (
         <CardFormDialog
@@ -171,6 +183,14 @@ export function BoardPage() {
   // Зелёная стрелка у карточки в «Выполнено»: в историю как выполненную.
   function handleFinishCard(card: Card) {
     archiveCard(card.id, 'done')
+  }
+
+  // В окне «Отклонить донат» нажали «Отклонить»: в историю с пометкой и причиной
+  function handleRejectSubmit(reason: string) {
+    if (rejectingCard) {
+      archiveCard(rejectingCard.id, 'rejected', reason)
+    }
+    setRejectingCard(null)
   }
 
   function handleDropToDelete(cardId: number) {

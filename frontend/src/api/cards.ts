@@ -21,6 +21,7 @@ export type CardFromApi = {
   moved_at: string
   archived_at: string | null
   archive_reason: Card['archiveReason']
+  archive_note: string | null
   merge_count: number
   merged_into_id: number | null
   last_donation_at?: string | null
@@ -44,6 +45,7 @@ export function toCard(card: CardFromApi): Card {
     movedAt: card.moved_at,
     archivedAt: card.archived_at,
     archiveReason: card.archive_reason,
+    archiveNote: card.archive_note,
     mergeCount: card.merge_count,
     mergedIntoId: card.merged_into_id,
     lastDonationAt: card.last_donation_at ?? null,
@@ -95,9 +97,14 @@ export async function removeCard(id: number): Promise<Card> {
   return toCard(card)
 }
 
-// Убирает карточку в историю с явной пометкой — так работают зоны по краям доски.
-export async function archiveCard(id: number, reason: 'done' | 'deleted'): Promise<Card> {
-  const card = await request<CardFromApi>('POST', `/api/cards/${id}/archive`, { reason })
+// Убирает карточку в историю с явной пометкой — так работают зоны по краям доски
+// и «Отклонить» в меню. note — причина отказа (нужна только для 'rejected').
+export async function archiveCard(
+  id: number,
+  reason: 'done' | 'deleted' | 'rejected',
+  note = '',
+): Promise<Card> {
+  const card = await request<CardFromApi>('POST', `/api/cards/${id}/archive`, { reason, note })
   return toCard(card)
 }
 
