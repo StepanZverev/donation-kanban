@@ -24,9 +24,11 @@ def test_manual_card_with_nick_and_amount(client):
     assert client.get("/api/stream-total").json()["total"] == 300
 
 
-def test_manual_card_needs_nick_or_text(client):
-    assert client.post("/api/cards", json={"text": "  ", "donor_name": " "}).status_code == 422
-    assert client.post("/api/cards", json={"donor_name": "Катя"}).status_code == 201
+def test_manual_card_without_nick_is_anonymous(client):
+    # Как у доната: без ника — аноним (пустая строка), без текста — «Донат без сообщения»
+    card = client.post("/api/cards", json={"text": "  ", "donor_name": " "}).json()
+    assert card["donor_name"] == ""
+    assert card["title"] == "Донат без сообщения"
 
 
 def test_long_text_is_split_like_donation(client):
@@ -39,8 +41,8 @@ def test_long_text_is_split_like_donation(client):
 
 
 def test_manual_card_without_nick_and_amount(client):
-    card = client.post("/api/cards", json={"text": "Спеть", "donor_name": ""}).json()
-    assert card["donor_name"] is None
+    card = client.post("/api/cards", json={"text": "Спеть"}).json()
+    assert card["donor_name"] == ""
     assert card["amount"] is None
 
 

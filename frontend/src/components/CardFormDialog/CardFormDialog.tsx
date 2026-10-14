@@ -22,8 +22,6 @@ export function CardFormDialog(props: CardFormDialogProps) {
   // Сумму храним строкой, как она написана в поле: так можно стереть её целиком
   const [amount, setAmount] = useState(initialDraft.amount === null ? '' : String(initialDraft.amount))
   const [text, setText] = useState(initialDraft.text)
-  // Нужен хотя бы ник или текст
-  const canSave = donorName.trim() !== '' || text.trim() !== ''
 
   // showModal() открывает окно поверх страницы и затемняет фон.
   useEffect(() => {
@@ -76,7 +74,7 @@ export function CardFormDialog(props: CardFormDialogProps) {
           <button type="button" onClick={onClose}>
             Отмена
           </button>
-          <button type="submit" disabled={!canSave}>
+          <button type="submit">
             Сохранить
           </button>
         </div>

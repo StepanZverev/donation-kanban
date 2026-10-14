@@ -26,7 +26,7 @@ export function NickInput({ value, onChange }: NickInputProps) {
         className={styles.input}
         value={value}
         maxLength={100}
-        placeholder="Без ника"
+        placeholder="Аноним"
         role="combobox"
         aria-expanded={showList}
         aria-autocomplete="list"

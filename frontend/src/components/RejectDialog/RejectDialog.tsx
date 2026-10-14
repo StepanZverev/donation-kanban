@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { Card } from '../../types/card'
-import { getDonorName, hasDonor } from '../../utils/donor'
-import { formatMoney } from '../../utils/money'
+import { describeCard } from '../../utils/donor'
 import styles from './RejectDialog.module.css'
 
 type RejectDialogProps = {
@@ -17,11 +16,8 @@ export function RejectDialog(props: RejectDialogProps) {
   const { card, onSubmit, onClose } = props
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [reason, setReason] = useState('')
-  // О какой карточке речь: «Вася · 500 ₽» или заголовок ручной карточки
-  const cardLabel =
-    hasDonor(card) && card.amount !== null
-      ? `${getDonorName(card)} · ${formatMoney(card.amount, card.currency)}`
-      : card.title
+  // О какой карточке речь: «Вася · 500 ₽»
+  const cardLabel = describeCard(card)
 
   // showModal() открывает окно поверх страницы и затемняет фон
   useEffect(() => {

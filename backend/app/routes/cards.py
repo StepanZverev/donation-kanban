@@ -7,7 +7,7 @@
 
 import sqlite3
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 
 from ..board import (
     add_last_donation_times,
@@ -82,9 +82,6 @@ def create_card(data: CardCreate, db: sqlite3.Connection = Depends(get_db)) -> C
     else:
         column_id = get_column(db, data.column_id).id
 
-    donor_name = clean_donor_name(data.donor_name)
-    if not donor_name and not data.text.strip():
-        raise HTTPException(status_code=422, detail="Нужен ник или текст")
     # Как у доната: короткий текст — заголовок, длинный обрезается в заголовке,
     # а целиком лежит в описании (см. split_message)
     title, description = split_message(data.text)
@@ -104,7 +101,7 @@ def create_card(data: CardCreate, db: sqlite3.Connection = Depends(get_db)) -> C
             title,
             description,
             column_id,
-            donor_name,
+            clean_donor_name(data.donor_name),
             data.amount,
             currency,
             data.amount,
@@ -151,9 +148,6 @@ def update_card(card_id: int, data: CardUpdate, db: sqlite3.Connection = Depends
     sent = data.model_fields_set
 
     donor_name = clean_donor_name(data.donor_name) if "donor_name" in sent else card.donor_name
-    # У доната ник стираем до пустой строки: так хранится аноним
-    if donor_name is None and card.source == "donationalerts":
-        donor_name = ""
 
     title, description = card.title, card.description
     if data.text is not None:
@@ -185,11 +179,12 @@ def update_card(card_id: int, data: CardUpdate, db: sqlite3.Connection = Depends
     return get_card(db, card_id)
 
 
-def clean_donor_name(name: str | None) -> str | None:
-    """Ник без пробелов по краям. Пустой ник у ручной карточки — значит ника нет."""
-    if name is None:
-        return None
-    return name.strip() or None
+def clean_donor_name(name: str | None) -> str:
+    """
+    Ник без пробелов по краям. Нет ника — аноним: как и у доната, храним пустую строку,
+    а «Аноним» пишет фронт.
+    """
+    return (name or "").strip()
 
 
 def new_amount_fields(card: Card, amount: float | None) -> tuple[float | None, str | None, float | None]:

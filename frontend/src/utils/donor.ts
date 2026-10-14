@@ -1,15 +1,11 @@
 import type { Card } from '../types/card'
+import { formatMoney } from './money'
 
 // Заголовок доната без сообщения (backend/app/board.py, EMPTY_MESSAGE_TITLE)
 const EMPTY_MESSAGE_TITLE = 'Донат без сообщения'
 
-// Есть ли у карточки донатер: у доната есть всегда (пусть и аноним),
-// у ручной — если стример вписал ник.
-export function hasDonor(card: Card) {
-  return card.source === 'donationalerts' || Boolean(card.donorName)
-}
-
-// Ник донатера для экрана. Анонимный донат приходит без ника — пишем «Аноним».
+// Ник донатера для экрана. Нет ника — это аноним, и неважно,
+// пришёл донат из DonationAlerts или карточку создали вручную.
 export function getDonorName(card: Card) {
   return card.donorName || 'Аноним'
 }
@@ -23,4 +19,11 @@ export function getCardText(card: Card) {
 // Текст для поля «Текст» в форме: у доната без сообщения поле пустое
 export function getEditableText(card: Card) {
   return card.title === EMPTY_MESSAGE_TITLE && !card.description ? '' : getCardText(card)
+}
+
+// Коротко о карточке: «Вася · 500 ₽» или просто «Вася», если суммы нет.
+// Для плашки «Отменить» и окна «Отклонить».
+export function describeCard(card: Card) {
+  const name = getDonorName(card)
+  return card.amount === null ? name : `${name} · ${formatMoney(card.amount, card.currency)}`
 }

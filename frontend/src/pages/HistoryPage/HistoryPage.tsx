@@ -4,7 +4,7 @@ import { useHighlightSince } from '../../hooks/useHighlightSince'
 import { useHistoryCards } from '../../hooks/useHistoryCards'
 import { useNow } from '../../hooks/useNow'
 import type { Card } from '../../types/card'
-import { getCardText, getDonorName, hasDonor } from '../../utils/donor'
+import { getCardText, getDonorName } from '../../utils/donor'
 import { groupByDay } from '../../utils/historyDays'
 import { formatMoney } from '../../utils/money'
 import { pluralize } from '../../utils/time'
@@ -122,8 +122,8 @@ export function HistoryPage({ seenAt }: HistoryPageProps) {
 
                   {/* Длинный текст обрезается многоточием, целиком — во всплывающей подсказке */}
                   <span className={styles.what} title={getFullText(card)}>
-                    {hasDonor(card) && <b className={styles.who}>{getDonorName(card)}</b>}
-                    {hasDonor(card) && ' · '}
+                    <b className={styles.who}>{getDonorName(card)}</b>
+                    {' · '}
                     {getCardText(card)}
                   </span>
 
@@ -185,7 +185,7 @@ export function HistoryPage({ seenAt }: HistoryPageProps) {
 
 // Полный текст для всплывающей подсказки
 function getFullText(card: Card) {
-  return hasDonor(card) ? `${getDonorName(card)}: ${getCardText(card)}` : getCardText(card)
+  return `${getDonorName(card)}: ${getCardText(card)}`
 }
 
 // '2026-10-12T13:04:13+00:00' → '16:04' (в часовом поясе пользователя)

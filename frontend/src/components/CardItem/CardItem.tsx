@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from 'react'
 import type { BoardColumn, Card } from '../../types/card'
 import { useNow } from '../../hooks/useNow'
-import { getCardText, getDonorName, hasDonor } from '../../utils/donor'
+import { getCardText, getDonorName } from '../../utils/donor'
 import { formatMoney } from '../../utils/money'
 import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
 import { formatTimeAgo, GLOW_SECONDS, pluralize } from '../../utils/time'
@@ -80,11 +80,10 @@ export function CardItem(props: CardItemProps) {
   // и подсветка гасла вовремя
   const now = useNow(1000)
 
-  const isDonation = card.source === 'donationalerts'
   // Цвет полоски и суммы зависит от суммы доната. Ручные карточки считаются суммой 0.
   const priority = getPriorityLevel(card.streamerAmount ?? 0, priorityLevels)
-  // Сверху ник. У ручной карточки без ника сверху пусто, только сумма и меню.
-  const heading = hasDonor(card) ? getDonorName(card) : null
+  // Сверху ник (без ника — «Аноним»), ниже текст
+  const heading = getDonorName(card)
   const text = getCardText(card)
   // Тексты объединённых донатов по отдельности: между ними нарисуем пунктир
   const textParts = text.split(MERGE_SEPARATOR)
@@ -103,9 +102,7 @@ export function CardItem(props: CardItemProps) {
   const isGlowing = !isMuted && (isNew || now - lastEventTime < GLOW_SECONDS * 1000)
   // Подпись внизу: «3 мин назад · 2 доната»
   const donationsWord = `${card.mergeCount} ${pluralize(card.mergeCount, ['донат', 'доната', 'донатов'])}`
-  const meta = isDonation
-    ? `${formatTimeAgo(lastDonationAt, now)} · ${donationsWord}`
-    : formatTimeAgo(lastDonationAt, now)
+  const meta = `${formatTimeAgo(lastDonationAt, now)} · ${donationsWord}`
 
   // Меряем, обрезан ли текст. Делаем это, пока он свёрнут: у обрезанного полная высота
   // (scrollHeight) больше видимой (clientHeight). ResizeObserver перемеряет,
@@ -153,7 +150,7 @@ export function CardItem(props: CardItemProps) {
 
       <div className={styles.content}>
         <header className={styles.header}>
-          <h3 className={styles.heading} title={heading ?? undefined}>
+          <h3 className={styles.heading} title={heading}>
             {heading}
           </h3>
           <div className={styles.menuSlot}>

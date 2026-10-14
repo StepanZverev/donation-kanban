@@ -52,10 +52,6 @@ def test_create_goes_to_incoming_by_default(client):
     assert column(client, columns(client)["incoming"]) == ["Спеть песню"]
 
 
-def test_empty_title_is_rejected(client):
-    assert client.post("/api/cards", json={"text": ""}).status_code == 422
-
-
 def test_update(client):
     card = create(client, "Старое")
     response = client.patch(f"/api/cards/{card['id']}", json={"text": "Новое"})
