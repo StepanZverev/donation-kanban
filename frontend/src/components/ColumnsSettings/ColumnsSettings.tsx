@@ -1,16 +1,23 @@
 import { useState, type FormEvent, type KeyboardEvent } from 'react'
 import { MAX_WORK_COLUMNS, MIN_WORK_COLUMNS, useColumnSettings } from '../../hooks/useColumnSettings'
 import type { BoardColumn } from '../../types/card'
+import { ColumnDialog } from '../ColumnDialog/ColumnDialog'
+import { ColumnsBoardView } from '../ColumnsBoardView/ColumnsBoardView'
 import { TrashIcon } from '../Icons/Icons'
 import styles from './ColumnsSettings.module.css'
 
+// Какое окно сейчас открыто: создание колонки, переименование или никакое
+type DialogState = { mode: 'create' } | { mode: 'edit'; column: BoardColumn } | null
+
 // Раздел «Колонки доски» на странице настроек.
-// Список колонок сверху вниз = на доске слева направо.
+// На широком экране колонки стоят в ряд, как на доске (ColumnsBoardView),
+// а на телефоне — списком сверху вниз (сверху вниз = на доске слева направо).
 export function ColumnsSettings() {
   const { columns, workColumns, error, addColumn, renameColumn, removeColumn, moveColumn } =
     useColumnSettings()
   // Название новой колонки в поле внизу списка
   const [newTitle, setNewTitle] = useState('')
+  const [dialog, setDialog] = useState<DialogState>(null)
 
   const incomingColumn = columns.find((column) => column.kind === 'incoming')
   const doneColumn = columns.find((column) => column.kind === 'done')
@@ -22,48 +29,87 @@ export function ColumnsSettings() {
       <h2 className={styles.title}>Колонки доски</h2>
       <p className={styles.hint}>
         «{incomingColumn?.title ?? 'Очередь'}» и «{doneColumn?.title ?? 'Выполнено'}» есть всегда.
-        Между ними от {MIN_WORK_COLUMNS} до {MAX_WORK_COLUMNS} колонок. Если удалить колонку,
-        её карточки вернутся в «{incomingColumn?.title ?? 'Очередь'}».
+        Между ними от {MIN_WORK_COLUMNS} до {MAX_WORK_COLUMNS} колонок. Если удалить колонку, её
+        карточки вернутся в «{incomingColumn?.title ?? 'Очередь'}».
       </p>
 
       {error && <p className={styles.error}>{error}</p>}
 
-      <ol className={styles.list}>
-        {incomingColumn && <FixedColumnRow column={incomingColumn} note="всегда первая" />}
-
-        {workColumns.map((column, index) => (
-          // В key есть название: если колонку переименуют в другой вкладке,
-          // строка создастся заново и поле покажет новое название
-          <WorkColumnRow
-            key={`${column.id}-${column.title}`}
-            column={column}
-            isFirst={index === 0}
-            isLast={index === workColumns.length - 1}
-            canRemove={canRemove}
-            onRename={renameColumn}
-            onMove={moveColumn}
-            onRemove={handleRemove}
-          />
-        ))}
-
-        {doneColumn && <FixedColumnRow column={doneColumn} note="всегда последняя" />}
-      </ol>
-
-      <form className={styles.addForm} onSubmit={handleAddSubmit}>
-        <input
-          className={styles.input}
-          value={newTitle}
-          onChange={(event) => setNewTitle(event.target.value)}
-          placeholder={canAdd ? 'Название новой колонки' : `Уже ${MAX_WORK_COLUMNS} колонки, больше нельзя`}
-          maxLength={40}
-          disabled={!canAdd}
+      <div className={styles.boardView}>
+        <ColumnsBoardView
+          incomingColumn={incomingColumn}
+          workColumns={workColumns}
+          doneColumn={doneColumn}
+          canAdd={canAdd}
+          canRemove={canRemove}
+          onAddClick={() => setDialog({ mode: 'create' })}
+          onEditClick={(column) => setDialog({ mode: 'edit', column })}
+          onMove={moveColumn}
+          onRemove={handleRemove}
         />
-        <button type="submit" disabled={!canAdd || newTitle.trim() === ''}>
-          + Добавить
-        </button>
-      </form>
+      </div>
+
+      {/* Список для узкого экрана: какой из двух видов показать, решает CSS */}
+      <div className={styles.listView}>
+        <ol className={styles.list}>
+          {incomingColumn && <FixedColumnRow column={incomingColumn} note="всегда первая" />}
+
+          {workColumns.map((column, index) => (
+            // В key есть название: если колонку переименуют в другой вкладке,
+            // строка создастся заново и поле покажет новое название
+            <WorkColumnRow
+              key={`${column.id}-${column.title}`}
+              column={column}
+              isFirst={index === 0}
+              isLast={index === workColumns.length - 1}
+              canRemove={canRemove}
+              onRename={renameColumn}
+              onMove={moveColumn}
+              onRemove={handleRemove}
+            />
+          ))}
+
+          {doneColumn && <FixedColumnRow column={doneColumn} note="всегда последняя" />}
+        </ol>
+
+        <form className={styles.addForm} onSubmit={handleAddSubmit}>
+          <input
+            className={styles.input}
+            value={newTitle}
+            onChange={(event) => setNewTitle(event.target.value)}
+            placeholder={
+              canAdd ? 'Название новой колонки' : `Уже ${MAX_WORK_COLUMNS} колонки, больше нельзя`
+            }
+            maxLength={40}
+            disabled={!canAdd}
+          />
+          <button type="submit" disabled={!canAdd || newTitle.trim() === ''}>
+            + Добавить
+          </button>
+        </form>
+      </div>
+
+      {dialog && (
+        <ColumnDialog
+          heading={dialog.mode === 'create' ? 'Новая колонка' : 'Колонка'}
+          initialTitle={dialog.mode === 'edit' ? dialog.column.title : ''}
+          submitLabel={dialog.mode === 'create' ? 'Добавить' : 'Сохранить'}
+          onSubmit={handleDialogSubmit}
+          onClose={() => setDialog(null)}
+        />
+      )}
     </section>
   )
+
+  function handleDialogSubmit(title: string) {
+    if (dialog?.mode === 'create') {
+      addColumn(title)
+    }
+    if (dialog?.mode === 'edit' && title !== dialog.column.title) {
+      renameColumn(dialog.column.id, title)
+    }
+    setDialog(null)
+  }
 
   function handleAddSubmit(event: FormEvent) {
     // Без preventDefault браузер перезагрузил бы страницу, отправляя форму
