@@ -1,5 +1,4 @@
 import type { HistoryFilter } from '../../api/history'
-import { HistorySkeleton } from '../../components/HistorySkeleton/HistorySkeleton'
 import { RestoreIcon, TrashIcon } from '../../components/Icons/Icons'
 import { useHighlightSince } from '../../hooks/useHighlightSince'
 import { useHistoryCards } from '../../hooks/useHistoryCards'
@@ -53,13 +52,8 @@ export function HistoryPage(props: HistoryPageProps) {
   // Отсеянные донаты новее этого времени пришли, пока история была закрыта
   const highlightSince = useHighlightSince(seenAt)
 
-  // Пока грузится — серые заглушки строк на месте истории
   if (isLoading) {
-    return (
-      <div className={styles.page}>
-        <HistorySkeleton />
-      </div>
-    )
+    return <p>Загружаю историю…</p>
   }
 
   const days = groupByDay(cards, new Date(now))
