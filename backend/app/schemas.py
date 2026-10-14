@@ -177,3 +177,14 @@ class LatestDonations(BaseModel):
     on_board: str | None
     # Самый свежий донат, который сразу ушёл в историю (отсеян настройками приёма)
     to_history: str | None
+
+
+class StreamTotal(BaseModel):
+    """Сумма за стрим в шапке (см. routes/stream.py)."""
+
+    # Сумма донатов с последнего сброса, в валюте стримера
+    total: float
+    # Сколько донатов пришло с последнего сброса
+    donation_count: int
+    # Сколько карточек сейчас на доске — столько уйдёт в историю при сбросе
+    board_card_count: int

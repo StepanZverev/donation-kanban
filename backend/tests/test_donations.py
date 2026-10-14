@@ -11,7 +11,8 @@ def test_fake_donation_creates_card_in_incoming(client):
     assert card["source"] == "donationalerts"
     assert card["column_id"] == incoming["id"]
     assert card["streamer_amount"] == card["amount"]
-    assert card["donor_name"]
+    # Ник может быть пустым: тестовый донат иногда анонимный
+    assert card["donor_name"] is not None
     assert card["amount"] > 0
 
 

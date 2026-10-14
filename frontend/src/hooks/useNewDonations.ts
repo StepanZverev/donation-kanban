@@ -78,5 +78,7 @@ export function useNewDonations(pathname: string) {
     // null — ещё не загрузили, подсвечивать нечего.
     boardSeenAt: seen?.onBoard ?? null,
     historySeenAt: seen?.toHistory ?? null,
+    // Время самого свежего доната на доске (для звука). undefined — ещё не загрузили.
+    latestOnBoard: latest ? latest.onBoard : undefined,
   }
 }
