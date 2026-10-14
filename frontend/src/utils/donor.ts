@@ -1,5 +1,8 @@
 import type { Card } from '../types/card'
 
+// Заголовок доната без сообщения (backend/app/board.py, EMPTY_MESSAGE_TITLE)
+const EMPTY_MESSAGE_TITLE = 'Донат без сообщения'
+
 // Есть ли у карточки донатер: у доната есть всегда (пусть и аноним),
 // у ручной — если стример вписал ник.
 export function hasDonor(card: Card) {
@@ -11,17 +14,13 @@ export function getDonorName(card: Card) {
   return card.donorName || 'Аноним'
 }
 
-// Текст карточки под ником (если ника нет — под заголовком):
-// - у доната заголовок — обрезанное начало сообщения, а целиком оно в описании,
-//   поэтому показываем описание, а если его нет — заголовок;
-// - у ручной карточки с ником заголовок уходит в текст, ведь сверху стоит ник;
-// - у ручной карточки без ника заголовок стоит сверху, а текст — это описание.
+// Текст карточки. Короткий текст лежит в заголовке, а длинный — целиком в описании
+// (в заголовке тогда только его начало), поэтому берём описание, а если его нет — заголовок.
 export function getCardText(card: Card) {
-  if (card.source === 'donationalerts') {
-    return card.description || card.title
-  }
-  if (card.donorName) {
-    return card.description ? `${card.title}\n${card.description}` : card.title
-  }
-  return card.description
+  return card.description || card.title
+}
+
+// Текст для поля «Текст» в форме: у доната без сообщения поле пустое
+export function getEditableText(card: Card) {
+  return card.title === EMPTY_MESSAGE_TITLE && !card.description ? '' : getCardText(card)
 }

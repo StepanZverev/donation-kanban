@@ -1,4 +1,4 @@
-from app.db import connect
+from app.db import connect, init_db
 from app.donations import Donation, add_donation_card
 
 
@@ -16,7 +16,7 @@ def donate(donation_id: int, username: str = "Вася", amount: float = 100, cu
 
 
 def test_manual_card_with_nick_and_amount(client):
-    card = client.post("/api/cards", json={"title": "Спеть", "donor_name": "  Катя ", "amount": 300}).json()
+    card = client.post("/api/cards", json={"text": "Спеть", "donor_name": "  Катя ", "amount": 300}).json()
     assert card["donor_name"] == "Катя"
     assert card["amount"] == 300
     assert card["currency"] == "RUB"
@@ -24,8 +24,22 @@ def test_manual_card_with_nick_and_amount(client):
     assert client.get("/api/stream-total").json()["total"] == 300
 
 
+def test_manual_card_needs_nick_or_text(client):
+    assert client.post("/api/cards", json={"text": "  ", "donor_name": " "}).status_code == 422
+    assert client.post("/api/cards", json={"donor_name": "Катя"}).status_code == 201
+
+
+def test_long_text_is_split_like_donation(client):
+    text = "а" * 200
+    card = client.post("/api/cards", json={"text": text}).json()
+    assert len(card["title"]) == 80 and card["description"] == text
+
+    edited = client.patch(f"/api/cards/{card['id']}", json={"text": "Коротко"}).json()
+    assert (edited["title"], edited["description"]) == ("Коротко", "")
+
+
 def test_manual_card_without_nick_and_amount(client):
-    card = client.post("/api/cards", json={"title": "Спеть", "donor_name": ""}).json()
+    card = client.post("/api/cards", json={"text": "Спеть", "donor_name": ""}).json()
     assert card["donor_name"] is None
     assert card["amount"] is None
 
@@ -58,8 +72,8 @@ def test_edit_nick(client):
 
 
 def test_fields_not_sent_stay_the_same(client):
-    card = client.post("/api/cards", json={"title": "Спеть", "donor_name": "Катя", "amount": 300}).json()
-    edited = client.patch(f"/api/cards/{card['id']}", json={"title": "Спеть две"}).json()
+    card = client.post("/api/cards", json={"text": "Спеть", "donor_name": "Катя", "amount": 300}).json()
+    edited = client.patch(f"/api/cards/{card['id']}", json={"text": "Спеть две"}).json()
     assert (edited["donor_name"], edited["amount"]) == ("Катя", 300)
 
     cleared = client.patch(f"/api/cards/{card['id']}", json={"amount": None}).json()
@@ -67,7 +81,7 @@ def test_fields_not_sent_stay_the_same(client):
 
 
 def test_amount_cannot_be_negative(client):
-    assert client.post("/api/cards", json={"title": "Спеть", "amount": -5}).status_code == 422
+    assert client.post("/api/cards", json={"text": "Спеть", "amount": -5}).status_code == 422
 
 
 def test_donor_suggestions(client):
@@ -75,7 +89,7 @@ def test_donor_suggestions(client):
     donate(2, username="вася")
     donate(3, username="Катя_стрим")
     donate(4, username="")
-    client.post("/api/cards", json={"title": "Спеть", "donor_name": "Кот"})
+    client.post("/api/cards", json={"text": "Спеть", "donor_name": "Кот"})
 
     # Свежие выше; «Вася» и «вася» — один ник, аноним без ника не попадает
     assert client.get("/api/donors").json() == ["Кот", "Катя_стрим", "вася"]
@@ -83,3 +97,16 @@ def test_donor_suggestions(client):
     assert client.get("/api/donors", params={"q": "ка"}).json() == ["Катя_стрим"]
     assert client.get("/api/donors", params={"q": "т"}).json() == ["Кот", "Катя_стрим"]
     assert client.get("/api/donors", params={"q": "ВАС"}).json() == ["вася"]
+
+
+def test_old_manual_card_title_and_description_are_joined(client):
+    card = client.post("/api/cards", json={"text": "Сыграть катку"}).json()
+    # Так ручная карточка лежала в базе, когда у неё были отдельные заголовок и описание
+    with connect() as db:
+        db.execute("UPDATE cards SET description = 'на пистолетах' WHERE id = ?", (card["id"],))
+
+    init_db()
+    init_db()  # второй запуск ничего не портит
+
+    [joined] = client.get("/api/cards").json()
+    assert (joined["title"], joined["description"]) == ("Сыграть катку\nна пистолетах", "")

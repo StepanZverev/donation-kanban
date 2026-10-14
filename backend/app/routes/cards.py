@@ -7,7 +7,7 @@
 
 import sqlite3
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from ..board import (
     add_last_donation_times,
@@ -19,6 +19,7 @@ from ..board import (
     sort_column_cards,
 )
 from ..db import get_db, now
+from ..donations import split_message
 from ..merging import STREAMER_CURRENCY, merge_cards, split_cards
 from ..realtime import notify_board_changed
 from ..schemas import (
@@ -81,6 +82,13 @@ def create_card(data: CardCreate, db: sqlite3.Connection = Depends(get_db)) -> C
     else:
         column_id = get_column(db, data.column_id).id
 
+    donor_name = clean_donor_name(data.donor_name)
+    if not donor_name and not data.text.strip():
+        raise HTTPException(status_code=422, detail="Нужен ник или текст")
+    # Как у доната: короткий текст — заголовок, длинный обрезается в заголовке,
+    # а целиком лежит в описании (см. split_message)
+    title, description = split_message(data.text)
+
     timestamp = now()
     # Сумму ручной карточки стример пишет в своей валюте
     currency = STREAMER_CURRENCY if data.amount is not None else None
@@ -93,10 +101,10 @@ def create_card(data: CardCreate, db: sqlite3.Connection = Depends(get_db)) -> C
         VALUES (?, ?, ?, 'manual', ?, ?, ?, ?, ?, ?, ?)
         """,
         (
-            data.title,
-            data.description,
+            title,
+            description,
             column_id,
-            clean_donor_name(data.donor_name),
+            donor_name,
             data.amount,
             currency,
             data.amount,
@@ -136,7 +144,7 @@ def clear_column(db: sqlite3.Connection, kind: str, reason: str) -> int:
 
 @router.patch("/{card_id}")
 def update_card(card_id: int, data: CardUpdate, db: sqlite3.Connection = Depends(get_db)) -> Card:
-    """Редактирует заголовок, описание, ник и сумму. Что не прислали, не меняется."""
+    """Редактирует ник, текст и сумму. Что не прислали, не меняется."""
     card = get_card(db, card_id)
     # model_fields_set — поля, которые фронт прислал. Так отличаем «не прислал»
     # от «прислал null» (стереть ник или сумму).
@@ -146,6 +154,10 @@ def update_card(card_id: int, data: CardUpdate, db: sqlite3.Connection = Depends
     # У доната ник стираем до пустой строки: так хранится аноним
     if donor_name is None and card.source == "donationalerts":
         donor_name = ""
+
+    title, description = card.title, card.description
+    if data.text is not None:
+        title, description = split_message(data.text)
 
     amount, currency, streamer_amount = card.amount, card.currency, card.streamer_amount
     if "amount" in sent:
@@ -159,8 +171,8 @@ def update_card(card_id: int, data: CardUpdate, db: sqlite3.Connection = Depends
         WHERE id = ?
         """,
         (
-            data.title if data.title is not None else card.title,
-            data.description if data.description is not None else card.description,
+            title,
+            description,
             donor_name,
             amount,
             currency,

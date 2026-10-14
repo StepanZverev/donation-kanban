@@ -60,7 +60,7 @@ def test_reorder_needs_all_work_columns(client):
 def test_delete_column_returns_cards_to_incoming(client):
     add_column(client, "Отложено")
     postponed = column_id(client, "Отложено")
-    card = client.post("/api/cards", json={"title": "Потом", "column_id": postponed}).json()
+    card = client.post("/api/cards", json={"text": "Потом", "column_id": postponed}).json()
 
     assert client.delete(f"/api/columns/{postponed}").status_code == 204
 

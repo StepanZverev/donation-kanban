@@ -51,11 +51,11 @@ export type Card = {
 }
 
 // То, что пользователь вводит в форме создания или редактирования.
+// Карточка устроена как донат: ник, текст и сумма.
 export type CardDraft = {
-  title: string
-  description: string
   // Ник донатера. Пустая строка — без ника (у доната — аноним).
   donorName: string
+  text: string
   // Сумма в валюте карточки, null — без суммы
   amount: number | null
 }

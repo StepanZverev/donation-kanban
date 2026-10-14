@@ -78,9 +78,8 @@ export async function getCards(): Promise<Card[]> {
 // Форма → то, что ждёт бэкенд (snake_case). Пустой ник отправляем как null — «без ника».
 function draftToApi(draft: CardDraft) {
   return {
-    title: draft.title,
-    description: draft.description,
     donor_name: draft.donorName || null,
+    text: draft.text,
     amount: draft.amount,
   }
 }

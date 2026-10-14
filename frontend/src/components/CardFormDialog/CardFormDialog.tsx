@@ -21,8 +21,9 @@ export function CardFormDialog(props: CardFormDialogProps) {
   const [donorName, setDonorName] = useState(initialDraft.donorName)
   // Сумму храним строкой, как она написана в поле: так можно стереть её целиком
   const [amount, setAmount] = useState(initialDraft.amount === null ? '' : String(initialDraft.amount))
-  const [title, setTitle] = useState(initialDraft.title)
-  const [description, setDescription] = useState(initialDraft.description)
+  const [text, setText] = useState(initialDraft.text)
+  // Нужен хотя бы ник или текст
+  const canSave = donorName.trim() !== '' || text.trim() !== ''
 
   // showModal() открывает окно поверх страницы и затемняет фон.
   useEffect(() => {
@@ -60,24 +61,14 @@ export function CardFormDialog(props: CardFormDialogProps) {
         </div>
 
         <label className={styles.field}>
-          Заголовок
-          <input
-            autoComplete="off"
-            value={title}
-            onChange={handleTitleChange}
-            maxLength={200}
-            required
-            autoFocus
-          />
-        </label>
-
-        <label className={styles.field}>
-          Описание
+          Текст
           <textarea
             autoComplete="off"
-            value={description}
-            onChange={handleDescriptionChange}
-            rows={4}
+            value={text}
+            onChange={handleTextChange}
+            maxLength={2000}
+            rows={5}
+            autoFocus
           />
         </label>
 
@@ -85,7 +76,7 @@ export function CardFormDialog(props: CardFormDialogProps) {
           <button type="button" onClick={onClose}>
             Отмена
           </button>
-          <button type="submit" disabled={title.trim() === ''}>
+          <button type="submit" disabled={!canSave}>
             Сохранить
           </button>
         </div>
@@ -97,12 +88,8 @@ export function CardFormDialog(props: CardFormDialogProps) {
     setAmount(event.target.value)
   }
 
-  function handleTitleChange(event: ChangeEvent<HTMLInputElement>) {
-    setTitle(event.target.value)
-  }
-
-  function handleDescriptionChange(event: ChangeEvent<HTMLTextAreaElement>) {
-    setDescription(event.target.value)
+  function handleTextChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    setText(event.target.value)
   }
 
   function handleSubmit(event: FormEvent) {
@@ -110,9 +97,8 @@ export function CardFormDialog(props: CardFormDialogProps) {
     // Пустое поле — без суммы. Минус браузер не пропустит (min=0).
     const parsedAmount = amount.trim() === '' ? null : Number(amount)
     onSubmit({
-      title: title.trim(),
-      description: description.trim(),
       donorName: donorName.trim(),
+      text: text.trim(),
       amount: parsedAmount !== null && Number.isFinite(parsedAmount) ? parsedAmount : null,
     })
   }

@@ -83,8 +83,8 @@ export function CardItem(props: CardItemProps) {
   const isDonation = card.source === 'donationalerts'
   // Цвет полоски и суммы зависит от суммы доната. Ручные карточки считаются суммой 0.
   const priority = getPriorityLevel(card.streamerAmount ?? 0, priorityLevels)
-  // Сверху ник, если он есть, иначе заголовок. Что под ним — см. getCardText.
-  const heading = hasDonor(card) ? getDonorName(card) : card.title
+  // Сверху ник. У ручной карточки без ника сверху пусто, только сумма и меню.
+  const heading = hasDonor(card) ? getDonorName(card) : null
   const text = getCardText(card)
   // Тексты объединённых донатов по отдельности: между ними нарисуем пунктир
   const textParts = text.split(MERGE_SEPARATOR)

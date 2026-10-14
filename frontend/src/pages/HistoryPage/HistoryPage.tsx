@@ -124,7 +124,7 @@ export function HistoryPage({ seenAt }: HistoryPageProps) {
                   <span className={styles.what} title={getFullText(card)}>
                     {hasDonor(card) && <b className={styles.who}>{getDonorName(card)}</b>}
                     {hasDonor(card) && ' · '}
-                    {getText(card)}
+                    {getCardText(card)}
                   </span>
 
                   <span className={styles.amount}>
@@ -183,17 +183,9 @@ export function HistoryPage({ seenAt }: HistoryPageProps) {
   }
 }
 
-// Что показать в строке после ника. У карточки без ника — заголовок.
-function getText(card: Card) {
-  return hasDonor(card) ? getCardText(card) : card.title
-}
-
 // Полный текст для всплывающей подсказки
 function getFullText(card: Card) {
-  if (hasDonor(card)) {
-    return `${getDonorName(card)}: ${getCardText(card)}`
-  }
-  return card.description ? `${card.title}\n${card.description}` : card.title
+  return hasDonor(card) ? `${getDonorName(card)}: ${getCardText(card)}` : getCardText(card)
 }
 
 // '2026-10-12T13:04:13+00:00' → '16:04' (в часовом поясе пользователя)
