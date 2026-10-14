@@ -3,6 +3,7 @@ import { RestoreIcon, TrashIcon } from '../../components/Icons/Icons'
 import { useHistoryCards } from '../../hooks/useHistoryCards'
 import { useNow } from '../../hooks/useNow'
 import type { Card } from '../../types/card'
+import { getDonorName } from '../../utils/donor'
 import { groupByDay } from '../../utils/historyDays'
 import { formatMoney } from '../../utils/money'
 import { pluralize } from '../../utils/time'
@@ -15,6 +16,7 @@ const FILTERS: { reason: HistoryFilter['reason']; label: string }[] = [
   { reason: 'rejected', label: 'Отклонено' },
   { reason: 'deleted', label: 'Удалено' },
   { reason: 'merged', label: 'Объединено' },
+  { reason: 'filtered', label: 'Отсеяно' },
 ]
 
 const archiveReasonLabels = {
@@ -22,6 +24,14 @@ const archiveReasonLabels = {
   rejected: 'Отклонено',
   deleted: 'Удалено',
   merged: 'Объединено',
+  filtered: 'Отсеяно',
+}
+
+// Почему донат отсеян (archiveNote у пометки «Отсеяно», см. backend/app/intake.py)
+const filterNoteLabels: Record<string, string> = {
+  closed: 'Приём был закрыт',
+  below_min: 'Меньше минимальной суммы',
+  anonymous: 'Анонимный донат',
 }
 
 // Вкладка «История»: фильтр и поиск сверху, ниже карточки по дням с итогом за день.
@@ -109,7 +119,7 @@ export function HistoryPage() {
 
                   {/* Длинный текст обрезается многоточием, целиком — во всплывающей подсказке */}
                   <span className={styles.what} title={getFullText(card)}>
-                    {card.source === 'donationalerts' && <b className={styles.who}>{card.donorName}</b>}
+                    {card.source === 'donationalerts' && <b className={styles.who}>{getDonorName(card)}</b>}
                     {card.source === 'donationalerts' && ' · '}
                     {getText(card)}
                   </span>
@@ -144,6 +154,13 @@ export function HistoryPage() {
                   {card.archiveReason === 'rejected' && card.archiveNote && (
                     <span className={styles.note}>Причина: {card.archiveNote}</span>
                   )}
+
+                  {/* Почему донат не попал на доску */}
+                  {card.archiveReason === 'filtered' && card.archiveNote && (
+                    <span className={`${styles.note} ${styles.filterNote}`}>
+                      {filterNoteLabels[card.archiveNote] ?? card.archiveNote}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
@@ -176,7 +193,7 @@ function getText(card: Card) {
 // Полный текст для всплывающей подсказки
 function getFullText(card: Card) {
   if (card.source === 'donationalerts') {
-    return `${card.donorName}: ${card.description || card.title}`
+    return `${getDonorName(card)}: ${card.description || card.title}`
   }
   return card.description ? `${card.title}\n${card.description}` : card.title
 }

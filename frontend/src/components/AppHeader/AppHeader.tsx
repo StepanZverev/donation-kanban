@@ -1,10 +1,11 @@
 import { sendFakeDonation } from '../../api/dev'
 import { DonationAlertsStatus } from '../DonationAlertsStatus/DonationAlertsStatus'
+import { IntakeToggle } from '../IntakeToggle/IntakeToggle'
 import { Navigation } from '../Navigation/Navigation'
 import styles from './AppHeader.module.css'
 
-// Шапка приложения в одну строку: логотип, вкладки, справа тестовый донат и статус DonationAlerts.
-// Позже справа появятся сумма за стрим и переключатель приёма заказов.
+// Шапка приложения в одну строку: логотип, вкладки, справа тестовый донат,
+// переключатель приёма заказов и статус DonationAlerts. Позже справа появится сумма за стрим.
 export function AppHeader() {
   return (
     // full-width: фон шапки тянется на всю ширину окна, а содержимое стоит в рабочей области
@@ -34,6 +35,7 @@ export function AppHeader() {
           >
             +<span className={styles.wideOnly}> Тестовый донат</span>
           </button>
+          <IntakeToggle />
           <DonationAlertsStatus />
         </div>
       </div>

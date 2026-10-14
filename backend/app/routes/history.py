@@ -31,7 +31,7 @@ def list_history(
     """
     История, сначала самые недавние.
 
-    reason — только карточки с этой пометкой (done, deleted, merged, rejected), без него — все.
+    reason — только карточки с этой пометкой (done, deleted, merged, rejected, filtered), без него — все.
     q — поиск: остаются карточки, у которых ник, заголовок или текст содержат эти буквы
     (большие и маленькие не различаем).
     """
@@ -56,7 +56,9 @@ def searchable_text(card: Card) -> str:
     Всё, по чему ищем: ник, заголовок, текст карточки и причина отказа —
     одной строкой в нижнем регистре.
     """
-    return " ".join([card.donor_name or "", card.title, card.description, card.archive_note or ""]).casefold()
+    # У «Отсеяно» в archive_note служебное слово (closed, below_min), по нему не ищем
+    note = card.archive_note or "" if card.archive_reason == "rejected" else ""
+    return " ".join([card.donor_name or "", card.title, card.description, note]).casefold()
 
 
 @router.post("/{card_id}/restore")

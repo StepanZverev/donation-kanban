@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from 'react'
 import type { BoardColumn, Card } from '../../types/card'
 import { useNow } from '../../hooks/useNow'
+import { getDonorName } from '../../utils/donor'
 import { formatMoney } from '../../utils/money'
 import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
 import { formatTimeAgo, pluralize } from '../../utils/time'
@@ -84,7 +85,7 @@ export function CardItem(props: CardItemProps) {
   const priority = getPriorityLevel(card.streamerAmount ?? 0, priorityLevels)
   // У доната заголовок — это обрезанное начало сообщения, а целиком оно лежит в описании.
   // Показываем сообщение один раз: описание, а если его нет — заголовок.
-  const heading = isDonation ? card.donorName : card.title
+  const heading = isDonation ? getDonorName(card) : card.title
   const text = isDonation ? card.description || card.title : card.description
   // Тексты объединённых донатов по отдельности: между ними нарисуем пунктир
   const textParts = text.split(MERGE_SEPARATOR)

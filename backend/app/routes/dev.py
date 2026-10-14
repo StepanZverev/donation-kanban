@@ -14,7 +14,8 @@ from ..realtime import notify_board_changed
 
 router = APIRouter(prefix="/api/dev", tags=["Для разработки"])
 
-FAKE_NAMES = ["Вася", "Катя_стрим", "Dimon2007", "Аноним", "MegaFan", "ЛёхаПро"]
+# Пустая строка — анонимный донат
+FAKE_NAMES = ["Вася", "Катя_стрим", "Dimon2007", "", "MegaFan", "ЛёхаПро"]
 FAKE_MESSAGES = [
     "Спой «Звезду по имени Солнце»!",
     "Сыграй следующую катку на пистолетах",

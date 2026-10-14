@@ -177,6 +177,17 @@
   overflow-wrap: anywhere;
 }
 
+/* «Отсеяно» — донат не прошёл настройки приёма и сразу попал в историю */
+.filtered {
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+/* Почему отсеян — тем же местом, что причина отказа, но серым */
+.filterNote {
+  color: var(--color-text-secondary);
+}
+
 /* «Объединено» — карточку слили в другую карточку того же донатера */
 .merged {
   background-color: var(--color-accent-light);

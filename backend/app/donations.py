@@ -8,8 +8,9 @@
 import sqlite3
 from dataclasses import dataclass
 
-from .board import EMPTY_MESSAGE_TITLE, get_card, get_column_id_by_kind
+from .board import EMPTY_MESSAGE_TITLE, archive_card, get_card, get_column_id_by_kind
 from .db import now
+from .intake import filter_reason
 from .merging import find_auto_merge_target, is_auto_merge_enabled, merge_cards
 
 # Сколько символов сообщения показываем в заголовке карточки
@@ -19,7 +20,7 @@ TITLE_LENGTH = 80
 @dataclass
 class Donation:
     id: int  # id доната в DonationAlerts
-    username: str
+    username: str  # пустая строка — анонимный донат (на экране пишем «Аноним»)
     message: str
     amount: float  # сумма в валюте донатера
     currency: str
@@ -31,6 +32,9 @@ def add_donation_card(db: sqlite3.Connection, donation: Donation) -> bool:
     """
     Создаёт карточку в «Очереди». Место в колонке определит сумма доната.
     Возвращает False, если карточка для этого доната уже есть (защита от дублей).
+
+    Если донат не проходит настройки приёма (приём закрыт, сумма меньше минимума,
+    аноним), карточка сразу уходит в историю с пометкой «отсеяно».
 
     Если в настройках включено автообъединение и у донатера уже есть карточка,
     новая сразу сливается в неё.
@@ -63,6 +67,12 @@ def add_donation_card(db: sqlite3.Connection, donation: Donation) -> bool:
     )
     if cursor.rowcount == 0:
         return False
+
+    # Колонку «Очередь» отсеянная карточка запоминает: «Вернуть на доску» положит её туда
+    reason = filter_reason(db, donation.username, donation.streamer_amount)
+    if reason is not None:
+        archive_card(db, cursor.lastrowid, "filtered", reason)
+        return True
 
     if is_auto_merge_enabled(db):
         card = get_card(db, cursor.lastrowid)

@@ -134,7 +134,8 @@ def to_donation(data: dict) -> Donation:
     streamer_amount = data.get("amount_in_user_currency")
     return Donation(
         id=int(data["id"]),
-        username=data.get("username") or "Аноним",
+        # Аноним приходит без ника. Храним пустую строку, а «Аноним» пишет фронт.
+        username=data.get("username") or "",
         # У голосовых донатов текста может не быть
         message=data.get("message") or "",
         amount=amount,

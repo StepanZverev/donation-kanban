@@ -1,4 +1,4 @@
-// Запросы к API настроек: уровни приоритета карточек и автообъединение.
+// Запросы к API настроек: уровни приоритета карточек, автообъединение и приём донатов.
 
 import type { PriorityLevel } from '../utils/priority'
 
@@ -61,5 +61,47 @@ export async function saveAutoMerge(enabled: boolean): Promise<void> {
   })
   if (!response.ok) {
     throw new Error(`Не удалось сохранить настройку: ${response.status}`)
+  }
+}
+
+// Раздел «Приём донатов»: какие донаты становятся карточками (backend/app/intake.py)
+export type IntakeSettings = {
+  // Принимать заказы. Выключено — донаты сразу уходят в историю с пометкой «приём закрыт».
+  isOpen: boolean
+  // Донаты меньше этой суммы на доску не попадают. 0 — без минимума.
+  minAmount: number
+  // Донаты без ника на доску не попадают
+  ignoreAnonymous: boolean
+}
+
+type IntakeSettingsFromApi = {
+  open: boolean
+  min_amount: number
+  ignore_anonymous: boolean
+}
+
+export async function getIntakeSettings(): Promise<IntakeSettings> {
+  const response = await fetch('/api/settings/intake')
+  if (!response.ok) {
+    throw new Error(`Не удалось загрузить настройки приёма: ${response.status}`)
+  }
+  const body: IntakeSettingsFromApi = await response.json()
+  return { isOpen: body.open, minAmount: body.min_amount, ignoreAnonymous: body.ignore_anonymous }
+}
+
+// Сохраняет настройки приёма целиком
+export async function saveIntakeSettings(settings: IntakeSettings): Promise<void> {
+  const body: IntakeSettingsFromApi = {
+    open: settings.isOpen,
+    min_amount: settings.minAmount,
+    ignore_anonymous: settings.ignoreAnonymous,
+  }
+  const response = await fetch('/api/settings/intake', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!response.ok) {
+    throw new Error(`Не удалось сохранить настройки приёма: ${response.status}`)
   }
 }
