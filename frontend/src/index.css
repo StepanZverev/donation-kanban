@@ -125,3 +125,32 @@ button:disabled {
 .app > .full-width {
   grid-column: 1 / -1;
 }
+
+/* Тонкие полосы прокрутки во всём приложении: прозрачная дорожка и бледный ползунок,
+   который становится заметнее, когда курсор над прокручиваемым блоком */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--color-text-secondary) 25%, transparent);
+}
+
+:hover::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--color-text-secondary) 50%, transparent);
+}
+
+/* Firefox не знает ::-webkit-scrollbar — ему хватает этих двух свойств */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--color-text-secondary) 40%, transparent) transparent;
+  }
+}

@@ -10,7 +10,7 @@ from ..board import get_card, get_column, get_column_id_by_kind, return_to_board
 from ..db import get_db
 from ..merging import unmerge_card
 from ..realtime import notify_board_changed
-from ..schemas import Card, CardRestore
+from ..schemas import ArchiveReason, Card, CardRestore
 
 router = APIRouter(prefix="/api/history", tags=["История"])
 
@@ -23,12 +23,37 @@ def get_archived_card(db: sqlite3.Connection, card_id: int) -> Card:
 
 
 @router.get("")
-def list_history(db: sqlite3.Connection = Depends(get_db)) -> list[Card]:
-    """Вся история, сначала самые недавние."""
-    rows = db.execute(
-        "SELECT * FROM cards WHERE archived_at IS NOT NULL ORDER BY archived_at DESC, id DESC"
-    ).fetchall()
-    return [Card(**row) for row in rows]
+def list_history(
+    reason: ArchiveReason | None = None,
+    q: str = "",
+    db: sqlite3.Connection = Depends(get_db),
+) -> list[Card]:
+    """
+    История, сначала самые недавние.
+
+    reason — только карточки с этой пометкой (done, deleted, merged), без него — все.
+    q — поиск: остаются карточки, у которых ник, заголовок или текст содержат эти буквы
+    (большие и маленькие не различаем).
+    """
+    sql = "SELECT * FROM cards WHERE archived_at IS NOT NULL"
+    params: list[str] = []
+    if reason is not None:
+        sql += " AND archive_reason = ?"
+        params.append(reason)
+    sql += " ORDER BY archived_at DESC, id DESC"
+    cards = [Card(**row) for row in db.execute(sql, params).fetchall()]
+
+    # Поиск делаем в Python, а не через LIKE в SQL: SQLite не умеет сравнивать
+    # без учёта регистра русские буквы («Вася» и «вася» для него разные).
+    query = q.strip().casefold()
+    if query:
+        cards = [card for card in cards if query in searchable_text(card)]
+    return cards
+
+
+def searchable_text(card: Card) -> str:
+    """Всё, по чему ищем: ник, заголовок и текст карточки — одной строкой в нижнем регистре."""
+    return " ".join([card.donor_name or "", card.title, card.description]).casefold()
 
 
 @router.post("/{card_id}/restore")

@@ -1,69 +1,147 @@
+import type { HistoryFilter } from '../../api/history'
 import { RestoreIcon, TrashIcon } from '../../components/Icons/Icons'
 import { useHistoryCards } from '../../hooks/useHistoryCards'
+import { useNow } from '../../hooks/useNow'
 import type { Card } from '../../types/card'
+import { groupByDay } from '../../utils/historyDays'
+import { formatMoney } from '../../utils/money'
+import { pluralize } from '../../utils/time'
 import styles from './HistoryPage.module.css'
 
+// Кнопки фильтра над историей, в том порядке, в каком они стоят на экране
+const FILTERS: { reason: HistoryFilter['reason']; label: string }[] = [
+  { reason: null, label: 'Все' },
+  { reason: 'done', label: 'Выполнено' },
+  { reason: 'deleted', label: 'Удалено' },
+  { reason: 'merged', label: 'Объединено' },
+]
+
 const archiveReasonLabels = {
-  done: 'Выполнена',
-  deleted: 'Удалена',
-  merged: 'Объединена',
+  done: 'Выполнено',
+  deleted: 'Удалено',
+  merged: 'Объединено',
 }
 
+// Вкладка «История»: фильтр и поиск сверху, ниже карточки по дням с итогом за день.
 export function HistoryPage() {
-  const { cards, isLoading, error, restoreCard, deleteForever } = useHistoryCards()
+  const {
+    cards,
+    isLoading,
+    error,
+    reason,
+    setReason,
+    query,
+    setQuery,
+    isFiltered,
+    restoreCard,
+    deleteForever,
+  } = useHistoryCards()
+  // Текущее время раз в минуту: чтобы после полуночи «Сегодня» стало «Вчера»
+  const now = useNow(60_000)
 
   if (isLoading) {
     return <p>Загружаю историю…</p>
   }
 
+  const days = groupByDay(cards, new Date(now))
+
   return (
     <div className={styles.page}>
+      <div className={styles.toolbar}>
+        <div className={styles.filters} role="radiogroup" aria-label="Что показать">
+          {FILTERS.map((filter) => (
+            <button
+              key={filter.label}
+              type="button"
+              role="radio"
+              aria-checked={reason === filter.reason}
+              className={reason === filter.reason ? `${styles.chip} ${styles.chipSelected}` : styles.chip}
+              onClick={() => setReason(filter.reason)}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+
+        <input
+          type="search"
+          className={styles.search}
+          placeholder="Поиск по нику или тексту…"
+          aria-label="Поиск по нику или тексту"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      </div>
+
       {error && <p className={styles.error}>{error}</p>}
 
-      {cards.length === 0 && <p className={styles.empty}>В истории пока ничего нет</p>}
+      {/* Прокручивается только список, фильтр и поиск остаются на месте */}
+      <div className={styles.list}>
+        {cards.length === 0 && (
+          <p className={styles.empty}>{isFiltered ? 'Ничего не нашлось' : 'В истории пока ничего нет'}</p>
+        )}
 
-      <ul className={styles.list}>
-        {cards.map((card) => (
-          <li key={card.id} className={styles.item}>
-            <div className={styles.info}>
-              <p className={styles.meta}>
-                {card.archiveReason && (
-                  <span className={`${styles.badge} ${styles[card.archiveReason]}`}>
-                    {archiveReasonLabels[card.archiveReason]}
+        {days.map((day) => (
+          <section key={day.key} className={styles.day}>
+            <header className={styles.dayHeader}>
+              <h2 className={styles.dayTitle}>{day.label}</h2>
+              {day.donationCount > 0 && (
+                <span>
+                  {day.donationCount} {pluralize(day.donationCount, ['донат', 'доната', 'донатов'])}
+                </span>
+              )}
+              {day.total > 0 && <span className={styles.dayTotal}>{formatMoney(day.total, 'RUB')}</span>}
+            </header>
+
+            <ul className={styles.rows}>
+              {day.cards.map((card) => (
+                <li key={card.id} className={styles.row}>
+                  <span className={styles.time}>{card.archivedAt && formatTime(card.archivedAt)}</span>
+
+                  {card.archiveReason && (
+                    <span className={`${styles.badge} ${styles[card.archiveReason]}`}>
+                      {archiveReasonLabels[card.archiveReason]}
+                    </span>
+                  )}
+
+                  {/* Длинный текст обрезается многоточием, целиком — во всплывающей подсказке */}
+                  <span className={styles.what} title={getFullText(card)}>
+                    {card.source === 'donationalerts' && <b className={styles.who}>{card.donorName}</b>}
+                    {card.source === 'donationalerts' && ' · '}
+                    {getText(card)}
                   </span>
-                )}
-                {card.archivedAt && formatDate(card.archivedAt)}
-                {card.source === 'donationalerts' &&
-                  ` · ${card.donorName} · ${card.amount} ${card.currency}`}
-              </p>
-              <h3 className={styles.title}>{card.title}</h3>
-              {card.description && <p className={styles.description}>{card.description}</p>}
-            </div>
 
-            {/* Кнопки-иконки; подпись видна во всплывающей подсказке (title) */}
-            <div className={styles.actions}>
-              <button
-                type="button"
-                className={styles.iconButton}
-                title="Переоткрыть"
-                aria-label="Переоткрыть"
-                onClick={() => handleRestore(card)}
-              >
-                <RestoreIcon />
-              </button>
-              <button
-                type="button"
-                className={`${styles.iconButton} ${styles.dangerButton}`}
-                title="Удалить навсегда"
-                aria-label="Удалить навсегда"
-                onClick={() => handleDeleteForever(card)}
-              >
-                <TrashIcon />
-              </button>
-            </div>
-          </li>
+                  <span className={styles.amount}>
+                    {card.amount !== null && formatMoney(card.amount, card.currency)}
+                  </span>
+
+                  {/* Кнопки-иконки; подпись видна во всплывающей подсказке (title) */}
+                  <span className={styles.actions}>
+                    <button
+                      type="button"
+                      className={styles.iconButton}
+                      title="Вернуть на доску"
+                      aria-label="Вернуть на доску"
+                      onClick={() => handleRestore(card)}
+                    >
+                      <RestoreIcon />
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.iconButton} ${styles.dangerButton}`}
+                      title="Удалить навсегда"
+                      aria-label="Удалить навсегда"
+                      onClick={() => handleDeleteForever(card)}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         ))}
-      </ul>
+      </div>
     </div>
   )
 
@@ -78,13 +156,24 @@ export function HistoryPage() {
   }
 }
 
-// '2026-10-12T13:04:13+00:00' → '12.10.2026, 16:04' (в часовом поясе пользователя)
-function formatDate(isoDate: string) {
-  return new Date(isoDate).toLocaleString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+// Что показать в строке после ника. У доната заголовок — обрезанное начало сообщения,
+// а целиком оно в описании. У ручной карточки — заголовок.
+function getText(card: Card) {
+  if (card.source === 'donationalerts') {
+    return card.description || card.title
+  }
+  return card.title
+}
+
+// Полный текст для всплывающей подсказки
+function getFullText(card: Card) {
+  if (card.source === 'donationalerts') {
+    return `${card.donorName}: ${card.description || card.title}`
+  }
+  return card.description ? `${card.title}\n${card.description}` : card.title
+}
+
+// '2026-10-12T13:04:13+00:00' → '16:04' (в часовом поясе пользователя)
+function formatTime(isoDate: string) {
+  return new Date(isoDate).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
 }

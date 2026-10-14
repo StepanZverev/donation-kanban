@@ -1,26 +1,42 @@
-// Логика вкладки «История»: загрузка списка и действия с ним.
+// Логика вкладки «История»: загрузка списка с фильтром и поиском и действия с ним.
 
 import { useCallback, useEffect, useState } from 'react'
 import * as historyApi from '../api/history'
+import type { HistoryFilter } from '../api/history'
 import type { Card } from '../types/card'
 import { useBoardUpdates } from './useBoardUpdates'
+
+// Сколько ждать после последней набранной буквы, прежде чем искать.
+// Чтобы не слать запрос на каждую букву, пока человек печатает.
+const SEARCH_DELAY_MS = 300
 
 export function useHistoryCards() {
   const [cards, setCards] = useState<Card[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // Выбранная пометка и текст в поле поиска — как их видит человек
+  const [reason, setReason] = useState<HistoryFilter['reason']>(null)
+  const [query, setQuery] = useState('')
+  // Текст поиска, по которому реально ищем: догоняет query с задержкой
+  const [searchQuery, setSearchQuery] = useState('')
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearchQuery(query), SEARCH_DELAY_MS)
+    return () => window.clearTimeout(timer)
+  }, [query])
 
   const reload = useCallback(() => {
     return historyApi
-      .getHistory()
+      .getHistory({ reason, query: searchQuery })
       .then((freshCards) => {
         setCards(freshCards)
         setError(null)
       })
       .catch(() => setError('Не удалось загрузить историю. Проверь, что бэкенд запущен.'))
       .finally(() => setIsLoading(false))
-  }, [])
+  }, [reason, searchQuery])
 
+  // Загружаем при открытии и заново при каждой смене фильтра или поиска
   useEffect(() => {
     reload()
   }, [reload])
@@ -45,5 +61,17 @@ export function useHistoryCards() {
     return runAndReload(() => historyApi.deleteForever(id))
   }
 
-  return { cards, isLoading, error, restoreCard, deleteForever }
+  return {
+    cards,
+    isLoading,
+    error,
+    reason,
+    setReason,
+    query,
+    setQuery,
+    // Включён ли фильтр или поиск — чтобы различать «история пуста» и «ничего не нашлось»
+    isFiltered: reason !== null || searchQuery.trim() !== '',
+    restoreCard,
+    deleteForever,
+  }
 }
