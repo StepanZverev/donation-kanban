@@ -1,46 +1,146 @@
-/* История занимает всё место под навигацией и прокручивается внутри, а не всей страницей */
+/* История занимает всё место под шапкой: сверху фильтр и поиск, ниже список,
+   который прокручивается сам, а не вся страница */
 .page {
   min-height: 0;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Фильтр слева, поиск справа; на узком экране поиск уходит на следующую строку */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* Кнопка фильтра — капсула */
+.chip {
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: var(--color-text-secondary);
+}
+
+.chip:hover {
+  color: var(--color-text);
+}
+
+/* Выбранная кнопка — залитая цветом текста */
+.chipSelected,
+.chipSelected:hover {
+  border-color: var(--color-text);
+  background-color: var(--color-text);
+  color: var(--color-background);
+  font-weight: 600;
+}
+
+.search {
+  flex: 0 1 280px;
+  min-width: 200px;
+  margin-left: auto;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
 }
 
 .list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 24px;
+}
+
+.day {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Заголовок дня: дата, число донатов и сумма за день справа */
+.dayHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 0 4px 6px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.dayTitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.dayTotal {
+  margin-left: auto;
+  font-family: var(--font-numbers);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.item {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 12px;
-  border: 1px solid var(--color-border);
+/* Строка — таблица из пяти столбцов: время, пометка, ник и текст, сумма, кнопки */
+.row {
+  display: grid;
+  grid-template-columns: 48px 104px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px 6px 12px;
   border-radius: 8px;
   background-color: var(--color-surface);
+  font-size: 14px;
 }
 
-.info {
-  min-width: 0;
-}
-
-.meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin: 0 0 4px;
-  font-size: 13px;
+.time {
+  font-family: var(--font-numbers);
+  font-size: 12px;
   color: var(--color-text-secondary);
 }
 
+.what {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+
+.who {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.amount {
+  font-family: var(--font-numbers);
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+}
+
 .badge {
+  justify-self: start;
   padding: 1px 8px;
-  border-radius: 10px;
+  border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
 }
@@ -55,24 +155,15 @@
   color: var(--color-text-secondary);
 }
 
-.title {
-  margin: 0;
-  font-size: 15px;
-  overflow-wrap: anywhere;
-}
-
-.description {
-  margin: 6px 0 0;
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+/* «Объединено» — карточку слили в другую карточку того же донатера */
+.merged {
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
 }
 
 .actions {
   display: flex;
-  flex-shrink: 0;
-  gap: 4px;
+  gap: 2px;
 }
 
 /* Квадратная кнопка с иконкой: без рамки, подложка появляется при наведении */
@@ -97,6 +188,18 @@
   color: var(--color-error);
 }
 
+/* На узком экране время и пометка остаются в первой строке, а текст уходит под них */
+@media (max-width: 700px) {
+  .row {
+    grid-template-columns: auto auto 1fr auto;
+  }
+
+  .what {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
 .empty {
   padding: 32px 0;
   text-align: center;
@@ -104,14 +207,9 @@
 }
 
 .error {
+  margin: 0;
   padding: 8px 12px;
   border-radius: 6px;
   background-color: var(--color-error-background);
   color: var(--color-error);
-}
-
-/* «Объединена» — карточку слили в другую карточку того же донатера */
-.merged {
-  background-color: var(--color-accent-light);
-  color: var(--color-text);
 }
