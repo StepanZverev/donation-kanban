@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { usePriorityLevels } from '../../hooks/usePriorityLevels'
 import { formatMoney } from '../../utils/money'
 import type { PriorityLevel } from '../../utils/priority'
@@ -16,7 +16,7 @@ export function PriorityLevelsSettings() {
     <section className={styles.section}>
       <h2 className={styles.title}>Уровни приоритета</h2>
       <p className={styles.hint}>
-        Цвет обводки карточки зависит от суммы доната. Уровень действует от своей суммы до суммы
+        Цвет полоски и суммы на карточке зависит от суммы доната. Уровень действует от своей суммы до суммы
         следующего уровня. Первый уровень всегда начинается с 0.
       </p>
 
@@ -32,74 +32,87 @@ type PriorityLevelsEditorProps = {
   onSave: (levels: PriorityLevel[]) => Promise<void>
 }
 
-// Таблица уровней. Правки копятся в черновике и уходят на сервер кнопкой «Сохранить».
+// Список уровней. Правки копятся в черновике и уходят на сервер кнопкой «Сохранить».
 function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
   const { levels, onSave } = props
   const [draft, setDraft] = useState(levels)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  // Номер только что добавленного уровня: в его название сразу ставим курсор
+  const [newLevelIndex, setNewLevelIndex] = useState<number | null>(null)
 
   // Есть ли несохранённые правки
   const isChanged = JSON.stringify(draft) !== JSON.stringify(levels)
 
   return (
     <>
-      <div className={styles.table}>
-        <div className={styles.headerRow}>
-          <span>Цвет</span>
-          <span>От суммы</span>
-          <span>Название</span>
-          <span>Как выглядит</span>
-          <span />
-        </div>
-
+      {/* Каждый уровень нарисован как карточка доната этого уровня:
+          полоска слева и сумма его цветом. Так сразу видно, как будет выглядеть доска. */}
+      <div className={styles.list}>
         {draft.map((level, index) => (
-          <div key={index} className={styles.row}>
-            <input
-              type="color"
-              className={styles.colorInput}
-              value={level.color}
-              onChange={(event) => handleChange(index, { color: event.target.value })}
-              aria-label="Цвет уровня"
-            />
-
-            {/* Первый уровень всегда с 0, его сумму не меняем */}
-            {index === 0 ? (
-              <span className={styles.zero}>0</span>
-            ) : (
+          <div
+            key={index}
+            className={styles.card}
+            // CSS-переменная с цветом уровня, её используют .card и .amount
+            style={{ '--level-color': level.color } as CSSProperties}
+          >
+            <div className={styles.top}>
+              {/* autoComplete="off" во всех полях приложения: иначе Chrome принимает их
+                  за адрес или номер машины и предлагает «сохранить данные» */}
               <input
-                type="number"
-                className={styles.input}
-                min={1}
-                value={level.minAmount}
-                onChange={(event) => handleChange(index, { minAmount: Number(event.target.value) })}
-                aria-label="От суммы"
+                autoComplete="off"
+                // У нового уровня выделяем название целиком: можно сразу печатать своё
+                ref={index === newLevelIndex ? selectText : undefined}
+                className={styles.nameInput}
+                value={level.name}
+                maxLength={30}
+                onChange={(event) => handleChange(index, { name: event.target.value })}
+                aria-label="Название уровня"
               />
-            )}
+              {/* Пример: так будет выглядеть сумма на карточке этого уровня */}
+              <span className={styles.amount}>{formatMoney(level.minAmount, 'RUB')}</span>
+            </div>
 
-            <input
-              className={styles.input}
-              value={level.name}
-              maxLength={30}
-              onChange={(event) => handleChange(index, { name: event.target.value })}
-              aria-label="Название уровня"
-            />
+            <div className={styles.bottom}>
+              {/* Встроенный в браузер выбор цвета: по клику открывается палитра */}
+              <label className={styles.field}>
+                Цвет
+                <input
+                  type="color"
+                  className={styles.colorInput}
+                  value={level.color}
+                  onChange={(event) => handleChange(index, { color: event.target.value })}
+                />
+              </label>
 
-            {/* Пример: так будет выглядеть сумма на карточке этого уровня */}
-            <span className={styles.preview} style={{ backgroundColor: level.color }}>
-              {formatMoney(level.minAmount, 'RUB')}
-            </span>
+              <label className={styles.field}>
+                От суммы
+                {/* Первый уровень всегда с 0, его сумму не меняем */}
+                {index === 0 ? (
+                  <span className={styles.zero}>0 ₽, всегда</span>
+                ) : (
+                  <input
+                    autoComplete="off"
+                    type="number"
+                    className={styles.amountInput}
+                    min={1}
+                    value={level.minAmount}
+                    onChange={(event) => handleChange(index, { minAmount: Number(event.target.value) })}
+                  />
+                )}
+              </label>
 
-            <button
-              type="button"
-              className={styles.iconButton}
-              title={index === 0 ? 'Первый уровень удалить нельзя' : 'Удалить уровень'}
-              aria-label="Удалить уровень"
-              disabled={index === 0}
-              onClick={() => handleRemove(index)}
-            >
-              <TrashIcon />
-            </button>
+              <button
+                type="button"
+                className={styles.iconButton}
+                title={index === 0 ? 'Первый уровень удалить нельзя' : 'Удалить уровень'}
+                aria-label="Удалить уровень"
+                disabled={index === 0}
+                onClick={() => handleRemove(index)}
+              >
+                <TrashIcon />
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -134,6 +147,7 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
   function handleAdd() {
     const biggestAmount = Math.max(...draft.map((level) => level.minAmount))
     setDraft([...draft, { minAmount: biggestAmount + 100, name: 'Новый уровень', color: NEW_LEVEL_COLOR }])
+    setNewLevelIndex(draft.length)
   }
 
   function handleReset() {
@@ -153,4 +167,9 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
       setIsSaving(false)
     }
   }
+}
+
+// Ставит курсор в поле и выделяет весь текст. React вызывает её, когда поле появилось на странице.
+function selectText(input: HTMLInputElement | null) {
+  input?.select()
 }

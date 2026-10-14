@@ -1,5 +1,22 @@
-.section {
+.title,
+.hint {
   max-width: 560px;
+}
+
+/* Два вида одного и того же: колонки в ряд на широком экране, список — на узком */
+.listView {
+  display: none;
+  max-width: 560px;
+}
+
+@media (max-width: 700px) {
+  .boardView {
+    display: none;
+  }
+
+  .listView {
+    display: block;
+  }
 }
 
 .title {

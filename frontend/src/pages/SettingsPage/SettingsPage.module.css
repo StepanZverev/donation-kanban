@@ -1,9 +1,55 @@
-/* Настройки занимают всё место под навигацией и прокручиваются внутри, а не всей страницей */
+/* Меню разделов слева, выбранный раздел справа */
 .page {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  align-items: start;
+  gap: 32px;
+}
+
+.menu {
   display: flex;
   flex-direction: column;
-  gap: 40px;
-  min-height: 0;
+  gap: 2px;
+}
+
+.link {
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.link:hover {
+  background-color: var(--color-column);
+  color: var(--color-text);
+}
+
+.active,
+.active:hover {
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* Раздел прокручивается сам, меню остаётся на месте */
+.panel {
+  max-height: 100%;
   overflow-y: auto;
   padding-bottom: 24px;
+}
+
+/* На узком экране меню становится строкой над разделом */
+@media (max-width: 700px) {
+  .page {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
 }

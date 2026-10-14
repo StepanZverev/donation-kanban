@@ -1,0 +1,116 @@
+/* Плитки-колонки в ряд, делят ширину поровну, как на доске */
+.board {
+  display: flex;
+  gap: 12px;
+}
+
+.board > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.column {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 240px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+
+/* «Очередь» и «Выполнено» — с заливкой, как на доске */
+.fixedColumn {
+  border-color: transparent;
+  background-color: var(--color-column);
+}
+
+.fixedTitle,
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stubs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stub {
+  height: 28px;
+  border-radius: 6px;
+  background-color: var(--color-surface);
+  opacity: 0.6;
+}
+
+.column:not(.fixedColumn) .stub {
+  background-color: var(--color-column);
+}
+
+.note {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.actions {
+  display: flex;
+  gap: 2px;
+}
+
+/* Квадратная кнопка без рамки, подложка появляется при наведении */
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: 18px;
+}
+
+.iconButton:hover:not(:disabled) {
+  background-color: var(--color-column);
+  color: var(--color-text);
+}
+
+.iconButton:disabled {
+  opacity: 0.3;
+}
+
+/* Карандаш и корзина прижаты к правому краю, стрелки — к левому */
+.editButton {
+  margin-left: auto;
+}
+
+.dangerButton:hover:not(:disabled) {
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
+/* Пунктирная плитка «+ Новая колонка» */
+.addColumn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 240px;
+  border: 2px dashed var(--color-border);
+  border-radius: 10px;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.addColumn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}

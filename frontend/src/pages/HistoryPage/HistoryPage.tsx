@@ -64,6 +64,7 @@ export function HistoryPage() {
         </div>
 
         <input
+          autoComplete="off"
           type="search"
           className={styles.search}
           placeholder="Поиск по нику или тексту…"

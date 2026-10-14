@@ -30,6 +30,7 @@ export function CardFormDialog({ heading, initialDraft, onSubmit, onClose }: Car
         <label className={styles.field}>
           Заголовок
           <input
+            autoComplete="off"
             value={title}
             onChange={handleTitleChange}
             maxLength={200}
@@ -41,6 +42,7 @@ export function CardFormDialog({ heading, initialDraft, onSubmit, onClose }: Car
         <label className={styles.field}>
           Описание
           <textarea
+            autoComplete="off"
             value={description}
             onChange={handleDescriptionChange}
             rows={4}
