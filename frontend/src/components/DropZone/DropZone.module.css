@@ -1,5 +1,5 @@
-/* Зона стоит в боковом поле доски (см. .page в BoardPage.module.css): от края экрана
-   до рабочей области и по высоте как колонки. Видна только во время перетаскивания. */
+/* Зона стоит в боковом поле доски, в строке с колонками (см. .page в BoardPage.module.css):
+   от края экрана до рабочей области и по высоте как колонки. Видна только во время перетаскивания. */
 .zone {
   box-sizing: border-box;
   display: flex;
@@ -18,7 +18,7 @@
 /* Левая зона: прижата к левому краю экрана, скруглена только справа */
 .delete {
   grid-column: 1;
-  grid-row: 2;
+  grid-row: 3;
   border-left: none;
   border-radius: 0 10px 10px 0;
   border-color: var(--color-error);
@@ -29,7 +29,7 @@
 /* Правая зона: прижата к правому краю экрана, скруглена только слева */
 .done {
   grid-column: 3;
-  grid-row: 2;
+  grid-row: 3;
   border-right: none;
   border-radius: 10px 0 0 10px;
   border-color: var(--color-success);
@@ -58,5 +58,12 @@
 @media (min-width: 1500px) {
   .label {
     writing-mode: horizontal-tb;
+  }
+}
+
+/* На узком экране боковых полей нет — и зон тоже */
+@media (max-width: 800px) {
+  .zone {
+    display: none;
   }
 }

@@ -2,9 +2,10 @@
   position: relative;
 }
 
-/* Кнопка «⋯» неброская: без рамки и фона */
+/* Кнопка «⋯» неброская: без рамки и фона. В узкой карточке сужается вместе с местом под меню */
 .toggle {
-  width: 32px;
+  width: 100%;
+  max-width: 32px;
   height: 32px;
   padding: 0;
   border-color: transparent;
