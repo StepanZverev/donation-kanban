@@ -3,6 +3,7 @@ import { AppHeader } from './components/AppHeader/AppHeader'
 import { BoardPage } from './pages/BoardPage/BoardPage'
 import { HistoryPage } from './pages/HistoryPage/HistoryPage'
 import { SettingsPage } from './pages/SettingsPage/SettingsPage'
+import { SETTINGS_SECTIONS } from './pages/SettingsPage/settingsSections'
 
 function App() {
   return (
@@ -13,7 +14,14 @@ function App() {
       <Routes>
         <Route path="/" element={<BoardPage />} />
         <Route path="/history" element={<HistoryPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+        {/* У настроек свои адреса для разделов: /settings/columns, /settings/appearance… */}
+        <Route path="/settings" element={<SettingsPage />}>
+          {/* /settings без раздела — открываем первый */}
+          <Route index element={<Navigate to={SETTINGS_SECTIONS[0].path} replace />} />
+          {SETTINGS_SECTIONS.map((section) => (
+            <Route key={section.path} path={section.path} element={section.element} />
+          ))}
+        </Route>
         {/* Любой неизвестный адрес отправляем на доску */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
