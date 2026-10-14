@@ -20,10 +20,19 @@
   background-color: var(--color-column);
 }
 
-/* На узком экране название прячем, остаётся точка */
+/* Короткое название «DA» — только на узком экране, вместо полного */
+.shortName {
+  display: none;
+  font-weight: 600;
+}
+
 @media (max-width: 1000px) {
   .name {
     display: none;
+  }
+
+  .shortName {
+    display: inline;
   }
 }
 

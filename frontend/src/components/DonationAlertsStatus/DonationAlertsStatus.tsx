@@ -47,6 +47,7 @@ export function DonationAlertsStatus() {
       >
         <span className={`${styles.dot} ${styles[status.listener]}`} />
         <span className={styles.name}>DonationAlerts</span>
+        <span className={styles.shortName}>DA</span>
       </button>
 
       {isOpen && (
