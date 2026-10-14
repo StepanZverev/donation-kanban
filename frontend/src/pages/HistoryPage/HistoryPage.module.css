@@ -56,6 +56,11 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* Полоса прокрутки встаёт в поле справа от списка и не сужает строки
+     (как в колонках доски). Место под неё держим всегда, чтобы строки не прыгали. */
+  margin-right: -14px;
+  padding-right: 8px;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -100,10 +105,12 @@
   list-style: none;
 }
 
-/* Строка — таблица из пяти столбцов: время, пометка, ник и текст, сумма, кнопки */
+/* Строка — таблица из пяти столбцов: время, пометка, ник и текст, сумма, кнопки.
+   Ширины столбцов заданы числами, чтобы во всех строках они совпадали
+   и текст обрезался в одном и том же месте. */
 .row {
   display: grid;
-  grid-template-columns: 48px 104px minmax(0, 1fr) auto auto;
+  grid-template-columns: 48px 104px minmax(0, 1fr) 110px 60px;
   align-items: center;
   gap: 12px;
   padding: 6px 8px 6px 12px;
