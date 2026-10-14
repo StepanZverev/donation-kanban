@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'r
 import type { CardDraft } from '../../types/card'
 import { getCurrencySymbol } from '../../utils/money'
 import { NickInput } from '../NickInput/NickInput'
+import { useBackdropClose } from '../../hooks/useBackdropClose'
 import styles from './CardFormDialog.module.css'
 
 type CardFormDialogProps = {
@@ -18,6 +19,7 @@ type CardFormDialogProps = {
 export function CardFormDialog(props: CardFormDialogProps) {
   const { heading, initialDraft, currency, onSubmit, onClose } = props
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const backdropClose = useBackdropClose(onClose)
   const [donorName, setDonorName] = useState(initialDraft.donorName)
   // Сумму храним строкой, как она написана в поле: так можно стереть её целиком
   const [amount, setAmount] = useState(initialDraft.amount === null ? '' : String(initialDraft.amount))
@@ -29,8 +31,8 @@ export function CardFormDialog(props: CardFormDialogProps) {
   }, [])
 
   return (
-    // onClose срабатывает и при нажатии Esc
-    <dialog ref={dialogRef} className={styles.dialog} onClose={onClose}>
+    // onClose срабатывает и при нажатии Esc, а клик по серому фону — как «Отмена»
+    <dialog ref={dialogRef} className={styles.dialog} onClose={onClose} {...backdropClose}>
       <form className={styles.form} onSubmit={handleSubmit}>
         <h2 className={styles.heading}>{heading}</h2>
 

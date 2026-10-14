@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useBackdropClose } from '../../hooks/useBackdropClose'
 import styles from './ColumnDialog.module.css'
 
 type ColumnDialogProps = {
@@ -16,6 +17,7 @@ type ColumnDialogProps = {
 export function ColumnDialog(props: ColumnDialogProps) {
   const { heading, initialTitle, submitLabel, onSubmit, onClose } = props
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const backdropClose = useBackdropClose(onClose)
   const [title, setTitle] = useState(initialTitle)
 
   // showModal() открывает окно поверх страницы и затемняет фон
@@ -24,8 +26,8 @@ export function ColumnDialog(props: ColumnDialogProps) {
   }, [])
 
   return (
-    // onClose срабатывает и при нажатии Esc
-    <dialog ref={dialogRef} className={styles.dialog} onClose={onClose}>
+    // onClose срабатывает и при нажатии Esc, а клик по серому фону — как «Отмена»
+    <dialog ref={dialogRef} className={styles.dialog} onClose={onClose} {...backdropClose}>
       <form className={styles.form} onSubmit={handleSubmit}>
         <h2 className={styles.heading}>{heading}</h2>
 

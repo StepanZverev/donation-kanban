@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { Card } from '../../types/card'
 import { describeCard } from '../../utils/donor'
+import { useBackdropClose } from '../../hooks/useBackdropClose'
 import styles from './RejectDialog.module.css'
 
 type RejectDialogProps = {
@@ -15,6 +16,7 @@ type RejectDialogProps = {
 export function RejectDialog(props: RejectDialogProps) {
   const { card, onSubmit, onClose } = props
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const backdropClose = useBackdropClose(onClose)
   const [reason, setReason] = useState('')
   // О какой карточке речь: «Вася · 500 ₽»
   const cardLabel = describeCard(card)
@@ -25,8 +27,8 @@ export function RejectDialog(props: RejectDialogProps) {
   }, [])
 
   return (
-    // onClose срабатывает и при нажатии Esc
-    <dialog ref={dialogRef} className={styles.dialog} onClose={onClose}>
+    // onClose срабатывает и при нажатии Esc, а клик по серому фону — как «Отмена»
+    <dialog ref={dialogRef} className={styles.dialog} onClose={onClose} {...backdropClose}>
       <form className={styles.form} onSubmit={handleSubmit}>
         <h2 className={styles.heading}>Отклонить донат</h2>
         <p className={styles.card}>{cardLabel}</p>
