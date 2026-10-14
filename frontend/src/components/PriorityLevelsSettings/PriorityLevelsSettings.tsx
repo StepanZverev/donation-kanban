@@ -38,6 +38,8 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
   const [draft, setDraft] = useState(levels)
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  // Номер только что добавленного уровня: в его название сразу ставим курсор
+  const [newLevelIndex, setNewLevelIndex] = useState<number | null>(null)
 
   // Есть ли несохранённые правки
   const isChanged = JSON.stringify(draft) !== JSON.stringify(levels)
@@ -59,6 +61,8 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
                   за адрес или номер машины и предлагает «сохранить данные» */}
               <input
                 autoComplete="off"
+                // У нового уровня выделяем название целиком: можно сразу печатать своё
+                ref={index === newLevelIndex ? selectText : undefined}
                 className={styles.nameInput}
                 value={level.name}
                 maxLength={30}
@@ -143,6 +147,7 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
   function handleAdd() {
     const biggestAmount = Math.max(...draft.map((level) => level.minAmount))
     setDraft([...draft, { minAmount: biggestAmount + 100, name: 'Новый уровень', color: NEW_LEVEL_COLOR }])
+    setNewLevelIndex(draft.length)
   }
 
   function handleReset() {
@@ -162,4 +167,9 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
       setIsSaving(false)
     }
   }
+}
+
+// Ставит курсор в поле и выделяет весь текст. React вызывает её, когда поле появилось на странице.
+function selectText(input: HTMLInputElement | null) {
+  input?.select()
 }
