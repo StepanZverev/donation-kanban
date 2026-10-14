@@ -5,7 +5,7 @@ import styles from './IntakeSettingsFields.module.css'
 
 // Настройки «какие донаты становятся карточками» в разделе «Приём донатов»:
 // принимать ли заказы, минимальная сумма, анонимные донаты.
-// Отсеянные донаты не теряются: они сразу лежат в истории с пометкой «Отсеяно».
+// Отсеянные донаты не теряются: они сразу лежат в истории с пометкой «Отклонено» и причиной.
 export function IntakeSettingsFields() {
   const { settings, error, changeIntake } = useIntakeSettings()
   // Что сейчас написано в поле суммы. null — поле не редактируют, показываем сохранённое.
@@ -21,7 +21,7 @@ export function IntakeSettingsFields() {
 
       <ToggleField
         label="Принимать заказы"
-        description="Если выключить, донаты всё равно приходят, но сразу попадают в историю с пометкой «приём закрыт». Переключатель есть и в шапке."
+        description="Если выключить, донаты всё равно приходят, но сразу попадают в историю как отклонённые с причиной «Приём был закрыт». Переключатель есть и в шапке."
         checked={settings.isOpen}
         onChange={(isOpen) => changeIntake({ isOpen })}
       />
@@ -31,8 +31,7 @@ export function IntakeSettingsFields() {
         <span className={styles.text}>
           <span className={styles.label}>Минимальная сумма для карточки</span>
           <span className={styles.description}>
-            Донаты меньше этой суммы попадают сразу в историю с пометкой «меньше минимума». 0 — без
-            минимума.
+            Донаты меньше этой суммы сразу попадают в историю как отклонённые. 0 — без минимума.
           </span>
         </span>
 
@@ -55,7 +54,7 @@ export function IntakeSettingsFields() {
 
       <ToggleField
         label="Игнорировать анонимные донаты"
-        description="Донаты без ника попадают сразу в историю с пометкой «аноним»."
+        description="Донаты без ника сразу попадают в историю как отклонённые."
         checked={settings.ignoreAnonymous}
         onChange={(ignoreAnonymous) => changeIntake({ ignoreAnonymous })}
       />

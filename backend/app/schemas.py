@@ -13,9 +13,9 @@ from pydantic import BaseModel, Field
 ColumnKind = Literal["incoming", "work", "done"]
 Source = Literal["manual", "donationalerts"]
 # merged — карточку слили в другую карточку того же донатера,
-# rejected — стример отказался выполнять просьбу (причина лежит в archive_note),
-# filtered — донат отсеян настройками приёма и сразу ушёл в историю (почему — в archive_note)
-ArchiveReason = Literal["done", "deleted", "merged", "rejected", "filtered"]
+# rejected — стример отказался выполнять просьбу или донат отсеян настройками приёма
+# (причина лежит в archive_note)
+ArchiveReason = Literal["done", "deleted", "merged", "rejected"]
 
 
 class BoardColumn(BaseModel):
@@ -155,8 +155,8 @@ class Card(BaseModel):
     moved_at: str
     archived_at: str | None
     archive_reason: ArchiveReason | None
-    # Пояснение к пометке: у «Отклонено» — причина отказа, у «Отсеяно» — closed,
-    # below_min или anonymous (см. intake.py). Пусто, если пояснения нет.
+    # Пояснение к пометке: у «Отклонено» — причина отказа (её пишет стример или
+    # ставят настройки приёма, см. intake.py). Пусто, если пояснения нет.
     archive_note: str | None
     merge_count: int
     merged_into_id: int | None
@@ -165,3 +165,15 @@ class Card(BaseModel):
     last_donation_at: str | None = None
     # Когда в карточку последний раз слили другую (None — не сливали). Тоже считает list_cards.
     last_merged_at: str | None = None
+
+
+class LatestDonations(BaseModel):
+    """
+    Когда пришли самые свежие донаты. По этим временам фронт ставит точку «есть новое»
+    у вкладок «Доска» и «История». None — таких донатов ещё не было.
+    """
+
+    # Самый свежий донат, который попал на доску
+    on_board: str | None
+    # Самый свежий донат, который сразу ушёл в историю (отсеян настройками приёма)
+    to_history: str | None

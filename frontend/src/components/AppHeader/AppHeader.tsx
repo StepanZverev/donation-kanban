@@ -6,7 +6,13 @@ import styles from './AppHeader.module.css'
 
 // Шапка приложения в одну строку: логотип, вкладки, справа тестовый донат,
 // переключатель приёма заказов и статус DonationAlerts. Позже справа появится сумма за стрим.
-export function AppHeader() {
+type AppHeaderProps = {
+  // Точки «есть новое» у вкладок (см. useNewDonations)
+  hasNewOnBoard: boolean
+  hasNewInHistory: boolean
+}
+
+export function AppHeader({ hasNewOnBoard, hasNewInHistory }: AppHeaderProps) {
   return (
     // full-width: фон шапки тянется на всю ширину окна, а содержимое стоит в рабочей области
     <header className={`${styles.header} full-width`}>
@@ -23,7 +29,7 @@ export function AppHeader() {
           Донатная доска
         </div>
 
-        <Navigation />
+        <Navigation hasNewOnBoard={hasNewOnBoard} hasNewInHistory={hasNewInHistory} />
 
         <div className={styles.right}>
           {/* Карточка появится сама: бэкенд пришлёт обновление через WebSocket */}

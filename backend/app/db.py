@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS cards (
     updated_at      TEXT    NOT NULL,
     moved_at        TEXT    NOT NULL,                   -- когда карточка попала в текущую колонку
     archived_at     TEXT,                               -- когда убрали с доски в историю
-    archive_reason  TEXT,                               -- done | deleted | merged | rejected | filtered
+    archive_reason  TEXT,                               -- done | deleted | merged | rejected
     archive_note    TEXT,                               -- пояснение к пометке, например причина отказа
     merge_count     INTEGER NOT NULL DEFAULT 1,         -- сколько донатов слито в карточку (1 — не объединена)
     merged_into_id  INTEGER                             -- в какую карточку слили эту (если reason = merged)

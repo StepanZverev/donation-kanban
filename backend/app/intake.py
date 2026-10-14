@@ -7,8 +7,8 @@
 - задать минимальную сумму для карточки — донаты меньше неё на доску не попадают;
 - игнорировать анонимные донаты (без ника).
 
-Отсеянный донат не теряется: он сразу лежит в истории с пометкой «отсеяно»
-и пояснением, почему (archive_note). Оттуда его можно вернуть на доску.
+Отсеянный донат не теряется: он сразу лежит в истории с пометкой «Отклонено»,
+а причиной (archive_note) стоит, почему его отсеяли. Оттуда его можно вернуть на доску.
 """
 
 import sqlite3
@@ -21,10 +21,10 @@ INTAKE_OPEN_KEY = "intake_open"
 MIN_AMOUNT_KEY = "min_amount"
 IGNORE_ANONYMOUS_KEY = "ignore_anonymous"
 
-# Пояснения к пометке «отсеяно». Фронт показывает их по-русски.
-CLOSED_NOTE = "closed"  # приём закрыт
-BELOW_MIN_NOTE = "below_min"  # меньше минимума
-ANONYMOUS_NOTE = "anonymous"  # аноним
+# Причины отказа у отсеянных донатов — так их и видно в истории
+CLOSED_NOTE = "Приём был закрыт"
+BELOW_MIN_NOTE = "Меньше минимальной суммы"
+ANONYMOUS_NOTE = "Анонимный донат"
 
 
 def get_intake_settings(db: sqlite3.Connection) -> IntakeSettings:
@@ -44,7 +44,7 @@ def save_intake_settings(db: sqlite3.Connection, settings: IntakeSettings) -> No
 
 def filter_reason(db: sqlite3.Connection, donor_name: str, streamer_amount: float) -> str | None:
     """
-    Почему донат не должен попасть на доску, или None, если должен.
+    Почему донат не должен попасть на доску (причина отказа), или None, если должен.
     Сумму сравниваем в валюте стримера: минимум стример задаёт в своей валюте.
     """
     settings = get_intake_settings(db)

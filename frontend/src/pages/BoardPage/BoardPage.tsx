@@ -1,5 +1,6 @@
 import { useRef, useState, type DragEvent } from 'react'
 import { useCards } from '../../hooks/useCards'
+import { useHighlightSince } from '../../hooks/useHighlightSince'
 import { usePriorityLevels } from '../../hooks/usePriorityLevels'
 import type { Card, CardDraft } from '../../types/card'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
@@ -19,7 +20,13 @@ type FormState =
   | { mode: 'edit'; card: Card }
   | null
 
-export function BoardPage() {
+type BoardPageProps = {
+  // До какого времени донаты на доске уже видели (см. useNewDonations).
+  // Пришедшие позже мигнут подсветкой, когда откроешь доску.
+  seenAt: string | null
+}
+
+export function BoardPage({ seenAt }: BoardPageProps) {
   const {
     isLoading,
     error,
@@ -42,6 +49,8 @@ export function BoardPage() {
   } = useCards()
   // Уровни приоритета из настроек: от них зависит цвет полоски и суммы на карточках
   const { levels } = usePriorityLevels()
+  // Донаты новее этого времени пришли, пока доска была закрыта. null — подсвечивать нечего.
+  const highlightSince = useHighlightSince(seenAt)
   const [form, setForm] = useState<FormState>(null)
   // Какую карточку сейчас отклоняют (открыто окно с причиной), null — никакую
   const [rejectingCard, setRejectingCard] = useState<Card | null>(null)
@@ -89,6 +98,7 @@ export function BoardPage() {
             canMergeOnDrop={canMergeDraggedOn}
             onMergeDrop={handleMergeDrop}
             onClearClick={column.kind === 'incoming' ? clearQueue : clearDone}
+            isNewCard={isNewCard}
           />
         ))}
       </div>
@@ -128,6 +138,12 @@ export function BoardPage() {
   )
 
   // id карточки берём из «посылки», которую только что положила сама карточка (CardItem)
+  // У объединённой карточки считаем по самому свежему донату в ней
+  function isNewCard(card: Card) {
+    const lastDonationAt = card.lastDonationAt ?? card.createdAt
+    return highlightSince !== null && card.source === 'donationalerts' && lastDonationAt > highlightSince
+  }
+
   function handleDragStart(event: DragEvent<HTMLElement>) {
     setDraggedCardId(Number(event.dataTransfer.getData('text/plain')) || null)
   }

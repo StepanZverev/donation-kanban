@@ -133,3 +133,21 @@ export async function clearDone(): Promise<void> {
 export async function clearQueue(): Promise<void> {
   await request('POST', '/api/cards/clear-queue')
 }
+
+// Когда пришли самые свежие донаты (null — таких ещё не было). По ним в навигации
+// ставится точка «есть новое» у вкладок «Доска» и «История».
+export type LatestDonations = {
+  // Самый свежий донат, который попал на доску
+  onBoard: string | null
+  // Самый свежий донат, который сразу ушёл в историю (отсеян настройками приёма)
+  toHistory: string | null
+}
+
+export async function getLatestDonations(): Promise<LatestDonations> {
+  const response = await fetch('/api/cards/latest-donations')
+  if (!response.ok) {
+    throw new Error(`Не удалось узнать о новых донатах: ${response.status}`)
+  }
+  const body: { on_board: string | null; to_history: string | null } = await response.json()
+  return { onBoard: body.on_board, toHistory: body.to_history }
+}

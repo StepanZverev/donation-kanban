@@ -1,5 +1,6 @@
 import type { HistoryFilter } from '../../api/history'
 import { RestoreIcon, TrashIcon } from '../../components/Icons/Icons'
+import { useHighlightSince } from '../../hooks/useHighlightSince'
 import { useHistoryCards } from '../../hooks/useHistoryCards'
 import { useNow } from '../../hooks/useNow'
 import type { Card } from '../../types/card'
@@ -16,7 +17,6 @@ const FILTERS: { reason: HistoryFilter['reason']; label: string }[] = [
   { reason: 'rejected', label: 'Отклонено' },
   { reason: 'deleted', label: 'Удалено' },
   { reason: 'merged', label: 'Объединено' },
-  { reason: 'filtered', label: 'Отсеяно' },
 ]
 
 const archiveReasonLabels = {
@@ -24,18 +24,16 @@ const archiveReasonLabels = {
   rejected: 'Отклонено',
   deleted: 'Удалено',
   merged: 'Объединено',
-  filtered: 'Отсеяно',
 }
 
-// Почему донат отсеян (archiveNote у пометки «Отсеяно», см. backend/app/intake.py)
-const filterNoteLabels: Record<string, string> = {
-  closed: 'Приём был закрыт',
-  below_min: 'Меньше минимальной суммы',
-  anonymous: 'Анонимный донат',
+type HistoryPageProps = {
+  // До какого времени отсеянные донаты уже видели (см. useNewDonations).
+  // Пришедшие позже мигнут подсветкой, когда откроешь историю.
+  seenAt: string | null
 }
 
 // Вкладка «История»: фильтр и поиск сверху, ниже карточки по дням с итогом за день.
-export function HistoryPage() {
+export function HistoryPage({ seenAt }: HistoryPageProps) {
   const {
     cards,
     isLoading,
@@ -50,6 +48,8 @@ export function HistoryPage() {
   } = useHistoryCards()
   // Текущее время раз в минуту: чтобы после полуночи «Сегодня» стало «Вчера»
   const now = useNow(60_000)
+  // Отсеянные донаты новее этого времени пришли, пока история была закрыта
+  const highlightSince = useHighlightSince(seenAt)
 
   if (isLoading) {
     return <p>Загружаю историю…</p>
@@ -108,7 +108,10 @@ export function HistoryPage() {
 
             <ul className={styles.rows}>
               {day.cards.map((card) => (
-                <li key={card.id} className={styles.row}>
+                <li
+                  key={card.id}
+                  className={isNewCard(card) ? `${styles.row} ${styles.fresh}` : styles.row}
+                >
                   <span className={styles.time}>{card.archivedAt && formatTime(card.archivedAt)}</span>
 
                   {card.archiveReason && (
@@ -154,13 +157,6 @@ export function HistoryPage() {
                   {card.archiveReason === 'rejected' && card.archiveNote && (
                     <span className={styles.note}>Причина: {card.archiveNote}</span>
                   )}
-
-                  {/* Почему донат не попал на доску */}
-                  {card.archiveReason === 'filtered' && card.archiveNote && (
-                    <span className={`${styles.note} ${styles.filterNote}`}>
-                      {filterNoteLabels[card.archiveNote] ?? card.archiveNote}
-                    </span>
-                  )}
                 </li>
               ))}
             </ul>
@@ -169,6 +165,12 @@ export function HistoryPage() {
       </div>
     </div>
   )
+
+  // Отсеянный донат: отклонён в тот же момент, когда пришёл (на доске не был)
+  function isNewCard(card: Card) {
+    const isFiltered = card.archiveReason === 'rejected' && card.archivedAt === card.createdAt
+    return highlightSince !== null && isFiltered && card.createdAt > highlightSince
+  }
 
   function handleRestore(card: Card) {
     restoreCard(card.id)

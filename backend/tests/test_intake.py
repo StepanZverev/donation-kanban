@@ -36,8 +36,8 @@ def test_closed_intake_sends_donation_to_history(client):
     donate(1)
 
     assert client.get("/api/cards").json() == []
-    [card] = client.get("/api/history", params={"reason": "filtered"}).json()
-    assert card["archive_note"] == "closed"
+    [card] = client.get("/api/history", params={"reason": "rejected"}).json()
+    assert card["archive_note"] == "Приём был закрыт"
 
 
 def test_donation_below_min_amount_goes_to_history(client):
@@ -48,8 +48,8 @@ def test_donation_below_min_amount_goes_to_history(client):
     [on_board] = client.get("/api/cards").json()
     assert on_board["amount"] == 100
     [filtered] = client.get("/api/history").json()
-    assert filtered["archive_reason"] == "filtered"
-    assert filtered["archive_note"] == "below_min"
+    assert filtered["archive_reason"] == "rejected"
+    assert filtered["archive_note"] == "Меньше минимальной суммы"
 
 
 def test_anonymous_donations_can_be_ignored(client):
@@ -62,7 +62,7 @@ def test_anonymous_donations_can_be_ignored(client):
 
     assert len(client.get("/api/cards").json()) == 2
     [filtered] = client.get("/api/history").json()
-    assert filtered["archive_note"] == "anonymous"
+    assert filtered["archive_note"] == "Анонимный донат"
 
 
 def test_filtered_donation_can_be_returned_to_board(client):
@@ -86,3 +86,24 @@ def test_anonymous_donations_are_not_auto_merged(client):
     donate(1, username="")
     donate(2, username="")
     assert len(client.get("/api/cards").json()) == 2
+
+
+def test_latest_donations(client):
+    assert client.get("/api/cards/latest-donations").json() == {"on_board": None, "to_history": None}
+
+    donate(1)
+    on_board = client.get("/api/cards/latest-donations").json()["on_board"]
+    assert on_board is not None
+
+    set_intake(client, open=False)
+    donate(2)
+    latest = client.get("/api/cards/latest-donations").json()
+    assert latest["on_board"] == on_board
+    assert latest["to_history"] > on_board
+
+
+def test_rejected_by_streamer_is_not_counted_as_filtered(client):
+    donate(1)
+    [card] = client.get("/api/cards").json()
+    client.post(f"/api/cards/{card['id']}/archive", json={"reason": "rejected", "note": "нет"})
+    assert client.get("/api/cards/latest-donations").json()["to_history"] is None

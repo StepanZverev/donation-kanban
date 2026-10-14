@@ -30,6 +30,8 @@ type ColumnProps = {
   // Можно ли бросить перетаскиваемую карточку на эту, чтобы объединить, и само объединение
   canMergeOnDrop: (card: Card) => boolean
   onMergeDrop: (card: Card) => void
+  // Пришёл ли донат карточки, пока стример был на другой вкладке (тогда она мигнёт)
+  isNewCard: (card: Card) => boolean
   // «Очистить» есть только у «Очереди» и «Выполнено»
   onClearClick: () => void
 }
@@ -52,6 +54,7 @@ export function Column(props: ColumnProps) {
     canMergeOnDrop,
     onMergeDrop,
     onClearClick,
+    isNewCard,
   } = props
   // Держат ли сейчас карточку над этой колонкой (чтобы подсветить её).
   const [isDragOver, setIsDragOver] = useState(false)
@@ -127,6 +130,7 @@ export function Column(props: ColumnProps) {
             card={card}
             priorityLevels={priorityLevels}
             isMuted={isDoneColumn}
+            isNew={isNewCard(card)}
             moveTargets={moveTargets}
             onEdit={onEditCard}
             onMove={onDropCard}
