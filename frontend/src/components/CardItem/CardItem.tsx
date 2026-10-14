@@ -12,7 +12,7 @@ import styles from './CardItem.module.css'
 const MERGE_SEPARATOR = '\n⸻\n'
 
 // Сколько секунд после доната карточка светится как свежая
-const FRESH_SECONDS = 60
+const FRESH_SECONDS = 10
 
 // Пункт «Разъединить» в меню «⋯» пока спрятан: стримеру он не нужен.
 // Сама функция осталась, чтобы вернуть пункт, достаточно поставить true.

@@ -1,4 +1,4 @@
-import { useState, type DragEvent } from 'react'
+import { useRef, useState, type DragEvent } from 'react'
 import { useCards } from '../../hooks/useCards'
 import { usePriorityLevels } from '../../hooks/usePriorityLevels'
 import type { Card, CardDraft } from '../../types/card'
@@ -7,6 +7,10 @@ import { Column } from '../../components/Column/Column'
 import { DropZone } from '../../components/DropZone/DropZone'
 import { UndoToast } from '../../components/UndoToast/UndoToast'
 import styles from './BoardPage.module.css'
+
+// Насколько близко к краю экрана (в пикселях) должен был быть курсор, чтобы карточка,
+// которую отпустили за краем окна, ушла в зону «Удалить» или «Выполнено»
+const SCREEN_EDGE_PX = 12
 
 // Какую форму сейчас показываем: создание в колонке, редактирование карточки или никакую.
 type FormState =
@@ -42,6 +46,9 @@ export function BoardPage() {
   // а карточки, с которыми её можно объединить, готовы принять её.
   const [draggedCardId, setDraggedCardId] = useState<number | null>(null)
   const isDragging = draggedCardId !== null
+  // Где по горизонтали курсор был в последний раз, пока тащили карточку.
+  // useRef — потому что значение меняется много раз в секунду и перерисовка не нужна.
+  const lastDragX = useRef<number | null>(null)
 
   if (isLoading) {
     return <p>Загружаю карточки…</p>
@@ -49,7 +56,7 @@ export function BoardPage() {
 
   return (
     // full-width: доске нужны боковые поля экрана под зоны «Удалить» и «Выполнено» (см. index.css)
-    <div className={`${styles.page} full-width`}>
+    <div className={`${styles.page} full-width`} onDragOver={handleDragMove}>
       {error && <p className={styles.error}>{error}</p>}
 
       {/* События перетаскивания всплывают от карточек и колонок до доски,
@@ -58,7 +65,7 @@ export function BoardPage() {
         className={styles.board}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
-        onDrop={handleDragEnd}
+        onDrop={handleDrop}
       >
         {columns.map((column) => (
           <Column
@@ -113,9 +120,34 @@ export function BoardPage() {
     setDraggedCardId(Number(event.dataTransfer.getData('text/plain')) || null)
   }
 
-  // Карточку отпустили (куда угодно) — прячем зоны.
-  function handleDragEnd() {
+  // Запоминаем, где курсор, пока тащат карточку (нужно в handleDragEnd)
+  function handleDragMove(event: DragEvent<HTMLElement>) {
+    lastDragX.current = event.clientX
+  }
+
+  // Карточку бросили куда-то на доске — прячем зоны.
+  function handleDrop() {
     setDraggedCardId(null)
+  }
+
+  // Перетаскивание закончилось. Если карточку никуда не бросили (dropEffect === 'none'),
+  // но курсор перед этим был у самого края экрана, значит её утащили за край окна:
+  // на крайнем пикселе браузер иногда уже не считает курсор над зоной. Делаем то же,
+  // что сделала бы зона у этого края.
+  function handleDragEnd(event: DragEvent<HTMLElement>) {
+    const cardId = draggedCardId
+    const x = lastDragX.current
+    setDraggedCardId(null)
+    lastDragX.current = null
+
+    if (cardId === null || x === null || event.dataTransfer.dropEffect !== 'none') {
+      return
+    }
+    if (x <= SCREEN_EDGE_PX) {
+      archiveCard(cardId, 'deleted')
+    } else if (x >= window.innerWidth - 1 - SCREEN_EDGE_PX) {
+      archiveCard(cardId, 'done')
+    }
   }
 
   // Можно ли бросить перетаскиваемую карточку на card, чтобы объединить их
