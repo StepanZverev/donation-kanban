@@ -29,6 +29,8 @@ export function IntakeToggle() {
     >
       <span className={styles.track} aria-hidden="true" />
       <span className={styles.label}>{label}</span>
+      {/* Открыт приём или закрыт, видно по цвету переключателя */}
+      <span className={styles.shortLabel}>Приём</span>
     </button>
   )
 }

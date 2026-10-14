@@ -56,13 +56,17 @@
   transform: none;
 }
 
-/* На узком экране подпись прячем, остаётся переключатель */
-@media (max-width: 1000px) {
-  .toggle {
-    padding: 4px 8px;
-  }
+/* Короткая подпись «Приём» — только на узком экране, вместо полной */
+.shortLabel {
+  display: none;
+}
 
+@media (max-width: 1000px) {
   .label {
     display: none;
+  }
+
+  .shortLabel {
+    display: inline;
   }
 }
