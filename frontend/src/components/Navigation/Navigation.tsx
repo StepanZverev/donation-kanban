@@ -10,7 +10,9 @@ type NavigationProps = {
 
 // NavLink — это ссылка из React Router, которая сама знает, активна ли она
 // (совпадает ли её адрес с текущим), и передаёт это в className.
-export function Navigation({ hasNewOnBoard, hasNewInHistory }: NavigationProps) {
+export function Navigation(props: NavigationProps) {
+  const { hasNewOnBoard, hasNewInHistory } = props
+
   return (
     <nav className={styles.navigation}>
       <NavLink to="/" end className={getLinkClassName}>

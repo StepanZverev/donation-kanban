@@ -1,4 +1,4 @@
-import { useState, type CSSProperties, type FocusEvent, type MouseEvent } from 'react'
+import { useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type MouseEvent } from 'react'
 import type { BoardColumn } from '../../types/card'
 import styles from './CardMenu.module.css'
 
@@ -24,11 +24,14 @@ export function CardMenu(props: CardMenuProps) {
   // Где показать открытое меню (координаты на экране). null — меню закрыто.
   const [dropdownPosition, setDropdownPosition] = useState<CSSProperties | null>(null)
   const isOpen = dropdownPosition !== null
+  const toggleRef = useRef<HTMLButtonElement>(null)
 
   return (
     // onBlur на обёртке: фокус ушёл куда-то за пределы меню (кликнули мимо) — закрываем.
-    <div className={styles.menu} onBlur={handleBlur}>
+    // onKeyDown: Esc закрывает меню и возвращает фокус на кнопку «⋯»
+    <div className={styles.menu} onBlur={handleBlur} onKeyDown={handleKeyDown}>
       <button
+        ref={toggleRef}
         type="button"
         className={styles.toggle}
         title="Ещё действия"
@@ -107,6 +110,13 @@ export function CardMenu(props: CardMenuProps) {
     // relatedTarget — элемент, куда ушёл фокус. Если он внутри меню, меню не закрываем.
     if (!event.currentTarget.contains(event.relatedTarget)) {
       setDropdownPosition(null)
+    }
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'Escape' && isOpen) {
+      setDropdownPosition(null)
+      toggleRef.current?.focus()
     }
   }
 

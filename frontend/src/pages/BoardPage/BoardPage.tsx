@@ -4,6 +4,7 @@ import { useHighlightSince } from '../../hooks/useHighlightSince'
 import { usePriorityLevels } from '../../hooks/usePriorityLevels'
 import type { Card, CardDraft } from '../../types/card'
 import { getEditableText } from '../../utils/donor'
+import { BoardSkeleton } from '../../components/BoardSkeleton/BoardSkeleton'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
 import { Column } from '../../components/Column/Column'
 import { DropZone } from '../../components/DropZone/DropZone'
@@ -27,7 +28,8 @@ type BoardPageProps = {
   seenAt: string | null
 }
 
-export function BoardPage({ seenAt }: BoardPageProps) {
+export function BoardPage(props: BoardPageProps) {
+  const { seenAt } = props
   const {
     isLoading,
     error,
@@ -63,8 +65,13 @@ export function BoardPage({ seenAt }: BoardPageProps) {
   // useRef — потому что значение меняется много раз в секунду и перерисовка не нужна.
   const lastDragX = useRef<number | null>(null)
 
+  // Пока грузится — серые заглушки колонок на месте доски
   if (isLoading) {
-    return <p>Загружаю карточки…</p>
+    return (
+      <div className={`${styles.page} full-width`}>
+        <BoardSkeleton />
+      </div>
+    )
   }
 
   return (

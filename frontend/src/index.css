@@ -97,6 +97,15 @@ h1 {
   letter-spacing: -0.01em;
 }
 
+/* Видимая рамка у того, на чём фокус с клавиатуры (Tab). Мышью рамка не появляется:
+   :focus-visible браузер включает только при управлении с клавиатуры. */
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 button:disabled {
   cursor: not-allowed;
   opacity: 0.5;

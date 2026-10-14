@@ -12,7 +12,9 @@ type AppHeaderProps = {
   hasNewInHistory: boolean
 }
 
-export function AppHeader({ hasNewOnBoard, hasNewInHistory }: AppHeaderProps) {
+export function AppHeader(props: AppHeaderProps) {
+  const { hasNewOnBoard, hasNewInHistory } = props
+
   return (
     // full-width: фон шапки тянется на всю ширину окна, а содержимое стоит в рабочей области
     <header className={`${styles.header} full-width`}>

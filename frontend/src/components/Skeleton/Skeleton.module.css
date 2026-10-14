@@ -1,0 +1,19 @@
+.skeleton {
+  display: block;
+  border-radius: 6px;
+  background-color: var(--color-border);
+  opacity: 0.6;
+}
+
+/* Переливание, только если человек не просил в системе поменьше анимаций */
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: skeleton-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
