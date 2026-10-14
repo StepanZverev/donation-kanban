@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router'
 import { AppHeader } from './components/AppHeader/AppHeader'
+import { FakeDonationButton } from './components/FakeDonationButton/FakeDonationButton'
 import { useDonationSound } from './hooks/useDonationSound'
 import { useNewDonations } from './hooks/useNewDonations'
 import { BoardPage } from './pages/BoardPage/BoardPage'
@@ -36,6 +37,9 @@ function App() {
         {/* Любой неизвестный адрес отправляем на доску */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      {/* Только для проверки без настоящих донатов, потом уберём */}
+      <FakeDonationButton />
     </main>
   )
 }

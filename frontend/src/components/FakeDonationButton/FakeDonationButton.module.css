@@ -1,0 +1,18 @@
+/* Прибита к правому нижнему углу окна поверх всего, неброская */
+.button {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 20;
+  border-style: dashed;
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  white-space: nowrap;
+  opacity: 0.7;
+}
+
+.button:hover {
+  color: var(--color-text);
+  opacity: 1;
+}

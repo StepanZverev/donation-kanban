@@ -1,0 +1,45 @@
+import { useStreamTotal } from '../../hooks/useStreamTotal'
+import { formatMoney } from '../../utils/money'
+import { pluralize } from '../../utils/time'
+import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
+import styles from './ResetBoardSettings.module.css'
+
+// «Сбросить доску» в разделе «Приём донатов»: конец стрима, начинаем с чистого листа.
+// Сумма за стрим обнуляется, все карточки уходят в историю.
+export function ResetBoardSettings() {
+  const { streamTotal, resetBoard } = useStreamTotal()
+
+  if (!streamTotal) {
+    return null
+  }
+
+  const { total, boardCardCount } = streamTotal
+  const cardsWord = pluralize(boardCardCount, ['карточка', 'карточки', 'карточек'])
+
+  return (
+    <div className={styles.field}>
+      <span className={styles.text}>
+        <span className={styles.label}>Сбросить доску</span>
+        <span className={styles.description}>
+          Сумма за стрим ({formatMoney(total, 'RUB')}) обнулится, а все карточки уйдут с доски в
+          историю: из «Выполнено» — как выполненные, остальные — как удалённые. Сейчас на доске{' '}
+          {boardCardCount} {cardsWord}.
+        </span>
+      </span>
+
+      <ConfirmButton
+        className={styles.button}
+        title="Сбросить доску"
+        question={
+          boardCardCount > 0
+            ? `Сумма обнулится, а ${boardCardCount} ${cardsWord} ${pluralize(boardCardCount, ['уйдёт', 'уйдут', 'уйдут'])} с доски в историю.`
+            : 'Сумма за стрим обнулится.'
+        }
+        confirmLabel="Сбросить"
+        onConfirm={resetBoard}
+      >
+        Сбросить
+      </ConfirmButton>
+    </div>
+  )
+}

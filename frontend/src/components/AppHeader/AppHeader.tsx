@@ -1,11 +1,10 @@
-import { sendFakeDonation } from '../../api/dev'
 import { DonationAlertsStatus } from '../DonationAlertsStatus/DonationAlertsStatus'
 import { IntakeToggle } from '../IntakeToggle/IntakeToggle'
 import { Navigation } from '../Navigation/Navigation'
 import { StreamTotal } from '../StreamTotal/StreamTotal'
 import styles from './AppHeader.module.css'
 
-// Шапка приложения в одну строку: логотип, вкладки, справа сумма за стрим, тестовый донат,
+// Шапка приложения в одну строку: логотип, вкладки, справа сумма за стрим,
 // переключатель приёма заказов и статус DonationAlerts.
 type AppHeaderProps = {
   // Точки «есть новое» у вкладок (см. useNewDonations)
@@ -34,23 +33,10 @@ export function AppHeader({ hasNewOnBoard, hasNewInHistory }: AppHeaderProps) {
 
         <div className={styles.right}>
           <StreamTotal />
-          {/* Карточка появится сама: бэкенд пришлёт обновление через WebSocket */}
-          <button
-            type="button"
-            className={styles.fakeButton}
-            title="Тестовый донат"
-            onClick={handleFakeDonationClick}
-          >
-            +<span className={styles.wideOnly}> Тестовый донат</span>
-          </button>
           <IntakeToggle />
           <DonationAlertsStatus />
         </div>
       </div>
     </header>
   )
-
-  function handleFakeDonationClick() {
-    sendFakeDonation().catch(() => window.alert('Не удалось создать тестовый донат'))
-  }
 }
