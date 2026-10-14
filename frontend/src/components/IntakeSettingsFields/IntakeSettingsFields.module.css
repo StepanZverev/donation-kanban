@@ -1,0 +1,59 @@
+.error {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
+/* Строка с полем суммы — такая же, как строка с переключателем (ToggleField) */
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.description {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.amount {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.amountInput {
+  box-sizing: border-box;
+  width: 90px;
+  padding: 5px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-family: var(--font-numbers);
+  text-align: right;
+}
+
+.amountInput:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.currency {
+  color: var(--color-text-secondary);
+}

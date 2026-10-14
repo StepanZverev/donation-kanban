@@ -1,5 +1,6 @@
 """
-Эндпоинты страницы «Настройки»: уровни приоритета карточек и автообъединение.
+Эндпоинты страницы «Настройки»: уровни приоритета карточек, автообъединение
+и приём донатов.
 
 Колонки настраиваются через /api/columns (см. columns.py).
 """
@@ -10,9 +11,10 @@ import sqlite3
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..db import get_db, get_setting, set_setting
+from ..intake import get_intake_settings, save_intake_settings
 from ..merging import AUTO_MERGE_KEY, is_auto_merge_enabled
 from ..realtime import notify_board_changed
-from ..schemas import AutoMerge, PriorityLevel
+from ..schemas import AutoMerge, IntakeSettings, PriorityLevel
 
 router = APIRouter(prefix="/api/settings", tags=["Настройки"])
 
@@ -70,5 +72,23 @@ def get_auto_merge(db: sqlite3.Connection = Depends(get_db)) -> AutoMerge:
 @router.put("/auto-merge")
 def save_auto_merge(data: AutoMerge, db: sqlite3.Connection = Depends(get_db)) -> AutoMerge:
     set_setting(db, AUTO_MERGE_KEY, "1" if data.enabled else "0")
+    notify_board_changed(db)
+    return data
+
+
+@router.get("/intake")
+def get_intake(db: sqlite3.Connection = Depends(get_db)) -> IntakeSettings:
+    """Приём донатов: открыт ли, минимальная сумма, игнорировать ли анонимов."""
+    return get_intake_settings(db)
+
+
+@router.put("/intake")
+def save_intake(data: IntakeSettings, db: sqlite3.Connection = Depends(get_db)) -> IntakeSettings:
+    """
+    Сохраняет настройки приёма целиком. Переключатель в шапке присылает их тоже целиком,
+    поменяв только open.
+    """
+    save_intake_settings(db, data)
+    # Шапка и настройки в других вкладках увидят, что приём закрыли или открыли
     notify_board_changed(db)
     return data

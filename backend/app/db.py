@@ -120,6 +120,7 @@ def init_db() -> None:
         create_default_columns(db)
         rename_pile_to_queue(db)
         add_new_card_fields(db)
+        rename_filtered_to_rejected(db)
 
 
 def rename_pile_to_queue(db: sqlite3.Connection) -> None:
@@ -144,6 +145,26 @@ def add_new_card_fields(db: sqlite3.Connection) -> None:
     for name, field_type in new_fields.items():
         if name not in card_fields:
             db.execute(f"ALTER TABLE cards ADD COLUMN {name} {field_type}")
+
+
+def rename_filtered_to_rejected(db: sqlite3.Connection) -> None:
+    """
+    Недолго у отсеянных донатов была своя пометка «filtered», а причина хранилась
+    служебным словом (closed, below_min, anonymous). Теперь они «Отклонено» с причиной
+    по-русски. Переделываем такие карточки, если они остались в базе.
+    """
+    old_notes = {
+        "closed": "Приём был закрыт",
+        "below_min": "Меньше минимальной суммы",
+        "anonymous": "Анонимный донат",
+    }
+    for old_note, new_note in old_notes.items():
+        db.execute(
+            "UPDATE cards SET archive_reason = 'rejected', archive_note = ?"
+            " WHERE archive_reason = 'filtered' AND archive_note = ?",
+            (new_note, old_note),
+        )
+    db.execute("UPDATE cards SET archive_reason = 'rejected' WHERE archive_reason = 'filtered'")
 
 
 def create_default_columns(db: sqlite3.Connection) -> None:

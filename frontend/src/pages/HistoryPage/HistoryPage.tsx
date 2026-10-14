@@ -1,8 +1,10 @@
 import type { HistoryFilter } from '../../api/history'
 import { RestoreIcon, TrashIcon } from '../../components/Icons/Icons'
+import { useHighlightSince } from '../../hooks/useHighlightSince'
 import { useHistoryCards } from '../../hooks/useHistoryCards'
 import { useNow } from '../../hooks/useNow'
 import type { Card } from '../../types/card'
+import { getDonorName } from '../../utils/donor'
 import { groupByDay } from '../../utils/historyDays'
 import { formatMoney } from '../../utils/money'
 import { pluralize } from '../../utils/time'
@@ -24,8 +26,14 @@ const archiveReasonLabels = {
   merged: 'Объединено',
 }
 
+type HistoryPageProps = {
+  // До какого времени отсеянные донаты уже видели (см. useNewDonations).
+  // Пришедшие позже мигнут подсветкой, когда откроешь историю.
+  seenAt: string | null
+}
+
 // Вкладка «История»: фильтр и поиск сверху, ниже карточки по дням с итогом за день.
-export function HistoryPage() {
+export function HistoryPage({ seenAt }: HistoryPageProps) {
   const {
     cards,
     isLoading,
@@ -40,6 +48,8 @@ export function HistoryPage() {
   } = useHistoryCards()
   // Текущее время раз в минуту: чтобы после полуночи «Сегодня» стало «Вчера»
   const now = useNow(60_000)
+  // Отсеянные донаты новее этого времени пришли, пока история была закрыта
+  const highlightSince = useHighlightSince(seenAt)
 
   if (isLoading) {
     return <p>Загружаю историю…</p>
@@ -98,7 +108,10 @@ export function HistoryPage() {
 
             <ul className={styles.rows}>
               {day.cards.map((card) => (
-                <li key={card.id} className={styles.row}>
+                <li
+                  key={card.id}
+                  className={isNewCard(card) ? `${styles.row} ${styles.fresh}` : styles.row}
+                >
                   <span className={styles.time}>{card.archivedAt && formatTime(card.archivedAt)}</span>
 
                   {card.archiveReason && (
@@ -109,7 +122,7 @@ export function HistoryPage() {
 
                   {/* Длинный текст обрезается многоточием, целиком — во всплывающей подсказке */}
                   <span className={styles.what} title={getFullText(card)}>
-                    {card.source === 'donationalerts' && <b className={styles.who}>{card.donorName}</b>}
+                    {card.source === 'donationalerts' && <b className={styles.who}>{getDonorName(card)}</b>}
                     {card.source === 'donationalerts' && ' · '}
                     {getText(card)}
                   </span>
@@ -153,6 +166,12 @@ export function HistoryPage() {
     </div>
   )
 
+  // Отсеянный донат: отклонён в тот же момент, когда пришёл (на доске не был)
+  function isNewCard(card: Card) {
+    const isFiltered = card.archiveReason === 'rejected' && card.archivedAt === card.createdAt
+    return highlightSince !== null && isFiltered && card.createdAt > highlightSince
+  }
+
   function handleRestore(card: Card) {
     restoreCard(card.id)
   }
@@ -176,7 +195,7 @@ function getText(card: Card) {
 // Полный текст для всплывающей подсказки
 function getFullText(card: Card) {
   if (card.source === 'donationalerts') {
-    return `${card.donorName}: ${card.description || card.title}`
+    return `${getDonorName(card)}: ${card.description || card.title}`
   }
   return card.description ? `${card.title}\n${card.description}` : card.title
 }

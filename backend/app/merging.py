@@ -50,7 +50,8 @@ def is_same_donor(card: Card, other: Card) -> bool:
     Делаем это в Python, а не в SQL: LOWER() в SQLite понимает только латиницу.
     Это же правило повторяет фронт (utils/merging.ts).
     """
-    if card.donor_name is None or other.donor_name is None:
+    # У анонимов ника нет: два анонимных доната — не обязательно один человек
+    if not card.donor_name or not other.donor_name:
         return False
     return card.donor_name.casefold() == other.donor_name.casefold()
 

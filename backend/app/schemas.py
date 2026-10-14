@@ -13,7 +13,8 @@ from pydantic import BaseModel, Field
 ColumnKind = Literal["incoming", "work", "done"]
 Source = Literal["manual", "donationalerts"]
 # merged — карточку слили в другую карточку того же донатера,
-# rejected — стример отказался выполнять просьбу (причина лежит в archive_note)
+# rejected — стример отказался выполнять просьбу или донат отсеян настройками приёма
+# (причина лежит в archive_note)
 ArchiveReason = Literal["done", "deleted", "merged", "rejected"]
 
 
@@ -63,6 +64,17 @@ class AutoMerge(BaseModel):
     """Галочка «Объединять донаты одного донатера автоматически»."""
 
     enabled: bool
+
+
+class IntakeSettings(BaseModel):
+    """Раздел «Приём донатов»: какие донаты становятся карточками (см. intake.py)."""
+
+    # Принимать заказы. Выключено — донаты сразу уходят в историю с пометкой «приём закрыт».
+    open: bool
+    # Донаты меньше этой суммы (в валюте стримера) на доску не попадают. 0 — без минимума.
+    min_amount: float = Field(ge=0)
+    # Донаты без ника на доску не попадают
+    ignore_anonymous: bool
 
 
 class CardCreate(BaseModel):
@@ -143,7 +155,8 @@ class Card(BaseModel):
     moved_at: str
     archived_at: str | None
     archive_reason: ArchiveReason | None
-    # Пояснение к пометке: у «Отклонено» — причина отказа. Пусто, если пояснения нет.
+    # Пояснение к пометке: у «Отклонено» — причина отказа (её пишет стример или
+    # ставят настройки приёма, см. intake.py). Пусто, если пояснения нет.
     archive_note: str | None
     merge_count: int
     merged_into_id: int | None
@@ -152,3 +165,15 @@ class Card(BaseModel):
     last_donation_at: str | None = None
     # Когда в карточку последний раз слили другую (None — не сливали). Тоже считает list_cards.
     last_merged_at: str | None = None
+
+
+class LatestDonations(BaseModel):
+    """
+    Когда пришли самые свежие донаты. По этим временам фронт ставит точку «есть новое»
+    у вкладок «Доска» и «История». None — таких донатов ещё не было.
+    """
+
+    # Самый свежий донат, который попал на доску
+    on_board: str | None
+    # Самый свежий донат, который сразу ушёл в историю (отсеян настройками приёма)
+    to_history: str | None

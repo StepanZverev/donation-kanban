@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from 'react'
 import type { BoardColumn, Card } from '../../types/card'
 import { useNow } from '../../hooks/useNow'
+import { getDonorName } from '../../utils/donor'
 import { formatMoney } from '../../utils/money'
 import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
-import { formatTimeAgo, pluralize } from '../../utils/time'
+import { formatTimeAgo, GLOW_SECONDS, pluralize } from '../../utils/time'
 import { CardMenu } from '../CardMenu/CardMenu'
 import styles from './CardItem.module.css'
 
@@ -15,15 +16,14 @@ const MERGE_SEPARATOR = '\n⸻\n'
 // Сама функция осталась, чтобы вернуть пункт, достаточно поставить true.
 const SHOW_UNMERGE = false
 
-// Сколько секунд карточка светится после нового доната или слияния
-const GLOW_SECONDS = 5
-
 type CardItemProps = {
   card: Card
   // Уровни приоритета из настроек: по ним выбирается цвет полоски слева и суммы
   priorityLevels: PriorityLevel[]
   // Приглушённая карточка — так выглядят карточки в «Выполнено»
   isMuted: boolean
+  // Донат пришёл, пока стример был на другой вкладке: карточка мигнёт подсветкой
+  isNew: boolean
   // Колонки, в которые карточку можно перенести через меню «⋯»
   moveTargets: BoardColumn[]
   onEdit: (card: Card) => void
@@ -51,6 +51,7 @@ export function CardItem(props: CardItemProps) {
     card,
     priorityLevels,
     isMuted,
+    isNew,
     moveTargets,
     onEdit,
     onMove,
@@ -84,7 +85,7 @@ export function CardItem(props: CardItemProps) {
   const priority = getPriorityLevel(card.streamerAmount ?? 0, priorityLevels)
   // У доната заголовок — это обрезанное начало сообщения, а целиком оно лежит в описании.
   // Показываем сообщение один раз: описание, а если его нет — заголовок.
-  const heading = isDonation ? card.donorName : card.title
+  const heading = isDonation ? getDonorName(card) : card.title
   const text = isDonation ? card.description || card.title : card.description
   // Тексты объединённых донатов по отдельности: между ними нарисуем пунктир
   const textParts = text.split(MERGE_SEPARATOR)
@@ -100,7 +101,7 @@ export function CardItem(props: CardItemProps) {
     new Date(lastDonationAt).getTime(),
     card.lastMergedAt ? new Date(card.lastMergedAt).getTime() : 0,
   )
-  const isGlowing = !isMuted && now - lastEventTime < GLOW_SECONDS * 1000
+  const isGlowing = !isMuted && (isNew || now - lastEventTime < GLOW_SECONDS * 1000)
   // Подпись внизу: «3 мин назад · 2 доната»
   const donationsWord = `${card.mergeCount} ${pluralize(card.mergeCount, ['донат', 'доната', 'донатов'])}`
   const meta = isDonation

@@ -29,6 +29,7 @@ from ..schemas import (
     CardMove,
     CardUnmerge,
     CardUpdate,
+    LatestDonations,
 )
 
 router = APIRouter(prefix="/api/cards", tags=["Карточки"])
@@ -49,6 +50,27 @@ def list_cards(db: sqlite3.Connection = Depends(get_db)) -> list[Card]:
         column_cards = [card for card in cards if card.column_id == column.id]
         result.extend(sort_column_cards(column, column_cards))
     return result
+
+
+@router.get("/latest-donations")
+def latest_donations(db: sqlite3.Connection = Depends(get_db)) -> LatestDonations:
+    """
+    Когда пришёл самый свежий донат на доску и самый свежий отсеянный (сразу в историю).
+    Отсеянный донат узнаём по тому, что его отклонили в момент создания.
+    """
+    row = db.execute(
+        """
+        SELECT
+            MAX(CASE WHEN is_filtered THEN NULL ELSE created_at END) AS on_board,
+            MAX(CASE WHEN is_filtered THEN created_at END) AS to_history
+        FROM (
+            SELECT created_at, archive_reason = 'rejected' AND archived_at = created_at AS is_filtered
+            FROM cards
+            WHERE source = 'donationalerts'
+        )
+        """
+    ).fetchone()
+    return LatestDonations(on_board=row["on_board"], to_history=row["to_history"])
 
 
 @router.post("", status_code=201)

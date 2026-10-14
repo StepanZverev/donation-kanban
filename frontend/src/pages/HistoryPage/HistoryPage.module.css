@@ -119,6 +119,27 @@
   font-size: 14px;
 }
 
+/* Отсеянный донат, который пришёл, пока история была закрыта: мигает, как новая карточка на доске */
+.fresh {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--color-accent) 60%, transparent),
+    0 0 14px -2px var(--color-accent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fresh {
+    animation: fresh-pulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes fresh-pulse {
+  50% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--color-accent) 25%, transparent),
+      0 0 4px -4px var(--color-accent);
+  }
+}
+
 .time {
   font-family: var(--font-numbers);
   font-size: 12px;

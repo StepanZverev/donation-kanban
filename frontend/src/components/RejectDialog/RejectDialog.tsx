@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { Card } from '../../types/card'
+import { getDonorName } from '../../utils/donor'
 import { formatMoney } from '../../utils/money'
 import styles from './RejectDialog.module.css'
 
@@ -19,7 +20,7 @@ export function RejectDialog(props: RejectDialogProps) {
   // О какой карточке речь: «Вася · 500 ₽» или заголовок ручной карточки
   const cardLabel =
     card.source === 'donationalerts' && card.amount !== null
-      ? `${card.donorName} · ${formatMoney(card.amount, card.currency)}`
+      ? `${getDonorName(card)} · ${formatMoney(card.amount, card.currency)}`
       : card.title
 
   // showModal() открывает окно поверх страницы и затемняет фон

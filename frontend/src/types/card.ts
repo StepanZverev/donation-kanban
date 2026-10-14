@@ -22,6 +22,7 @@ export type Card = {
   columnId: number | null
   source: CardSource
   donationId: number | null
+  // Пустая строка — анонимный донат. На экран ник выводим через getDonorName (utils/donor.ts).
   donorName: string | null
   amount: number | null
   currency: string | null
@@ -33,9 +34,10 @@ export type Card = {
   movedAt: string
   archivedAt: string | null
   // merged — карточку слили в другую карточку того же донатера,
-  // rejected — стример отказался выполнять просьбу
+  // rejected — стример отказался выполнять просьбу или донат отсеян настройками приёма
   archiveReason: 'done' | 'deleted' | 'merged' | 'rejected' | null
-  // Пояснение к пометке: у «Отклонено» — причина отказа (null — без пояснения)
+  // Пояснение к пометке: у «Отклонено» — причина отказа, её пишет стример или ставят
+  // настройки приёма («Приём был закрыт»). null — без пояснения.
   archiveNote: string | null
   // Сколько донатов слито в карточку: 1 — обычная, 2 и больше — объединённая
   mergeCount: number
