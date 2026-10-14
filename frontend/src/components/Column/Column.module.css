@@ -88,6 +88,39 @@
   /* Запас по краям, чтобы прокрутка не обрезала свечение свежей карточки */
   margin: -6px;
   padding: 6px;
+  /* Справа список заходит в поле колонки: полоса прокрутки (6px) встаёт туда,
+     а карточки остаются той же ширины, что и шапка. Место под полосу держим всегда
+     (scrollbar-gutter), чтобы карточки не меняли ширину, когда она появляется. */
+  margin-right: -10px;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+}
+
+/* Тонкая полоса прокрутки: прозрачная дорожка и бледный ползунок,
+   который становится заметнее, когда курсор над колонкой */
+.cards::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cards::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cards::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--color-text-secondary) 25%, transparent);
+}
+
+.column:hover .cards::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--color-text-secondary) 50%, transparent);
+}
+
+/* Firefox не знает ::-webkit-scrollbar — ему хватает этих двух свойств */
+@supports not selector(::-webkit-scrollbar) {
+  .cards {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--color-text-secondary) 40%, transparent) transparent;
+  }
 }
 
 .empty {
