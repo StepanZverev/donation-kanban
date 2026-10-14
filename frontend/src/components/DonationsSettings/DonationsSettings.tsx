@@ -1,9 +1,11 @@
 import { AutoMergeSettings } from '../AutoMergeSettings/AutoMergeSettings'
 import { IntakeSettingsFields } from '../IntakeSettingsFields/IntakeSettingsFields'
+import { ResetBoardSettings } from '../ResetBoardSettings/ResetBoardSettings'
+import { SoundSettings } from '../SoundSettings/SoundSettings'
 import styles from './DonationsSettings.module.css'
 
 // Раздел «Приём донатов» на странице настроек: какие донаты становятся карточками
-// и что делать с повторными донатами. Позже сюда добавится звук нового доната.
+// что делать с повторными донатами, звук нового доната и сброс доски в конце стрима.
 export function DonationsSettings() {
   return (
     <section className={styles.section}>
@@ -11,6 +13,8 @@ export function DonationsSettings() {
       <p className={styles.hint}>Что происходит с новым донатом, когда он приходит.</p>
       <IntakeSettingsFields />
       <AutoMergeSettings />
+      <SoundSettings />
+      <ResetBoardSettings />
     </section>
   )
 }

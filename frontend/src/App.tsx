@@ -1,5 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router'
 import { AppHeader } from './components/AppHeader/AppHeader'
+import { FakeDonationButton } from './components/FakeDonationButton/FakeDonationButton'
+import { useDonationSound } from './hooks/useDonationSound'
 import { useNewDonations } from './hooks/useNewDonations'
 import { BoardPage } from './pages/BoardPage/BoardPage'
 import { HistoryPage } from './pages/HistoryPage/HistoryPage'
@@ -10,6 +12,8 @@ function App() {
   // Пришли ли донаты, пока стример был на другой вкладке: точки в навигации и подсветка
   const { pathname } = useLocation()
   const newDonations = useNewDonations(pathname)
+  // Звук нового доната — на любой вкладке
+  useDonationSound(newDonations.latestOnBoard)
 
   return (
     <main className="app">
@@ -33,6 +37,9 @@ function App() {
         {/* Любой неизвестный адрес отправляем на доску */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      {/* Только для проверки без настоящих донатов, потом уберём */}
+      <FakeDonationButton />
     </main>
   )
 }

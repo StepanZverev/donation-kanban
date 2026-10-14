@@ -1,0 +1,39 @@
+/* Строка как у остальных настроек раздела (ToggleField), справа кнопка */
+.field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.description {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+/* Кнопка красная: действие не отменить */
+.button {
+  flex-shrink: 0;
+  border-color: var(--color-error);
+  background-color: transparent;
+  color: var(--color-error);
+  white-space: nowrap;
+}
+
+.button:hover {
+  background-color: var(--color-error-background);
+}
