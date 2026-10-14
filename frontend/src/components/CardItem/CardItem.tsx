@@ -11,12 +11,12 @@ import styles from './CardItem.module.css'
 // На карточке вместо неё рисуем пунктирную линию.
 const MERGE_SEPARATOR = '\n⸻\n'
 
-// Сколько секунд после доната карточка светится как свежая
-const FRESH_SECONDS = 10
-
 // Пункт «Разъединить» в меню «⋯» пока спрятан: стримеру он не нужен.
 // Сама функция осталась, чтобы вернуть пункт, достаточно поставить true.
 const SHOW_UNMERGE = false
+
+// Сколько секунд карточка светится после нового доната или слияния
+const GLOW_SECONDS = 5
 
 type CardItemProps = {
   card: Card
@@ -73,8 +73,9 @@ export function CardItem(props: CardItemProps) {
   const [isTextCut, setIsTextCut] = useState(false)
   // Ссылка на абзац с текстом, чтобы померить его высоту
   const textRef = useRef<HTMLDivElement>(null)
-  // Текущее время раз в 5 секунд — чтобы «40 сек назад» обновлялось само
-  const now = useNow(5000)
+  // Текущее время раз в секунду — чтобы «40 сек назад» обновлялось само
+  // и подсветка гасла вовремя
+  const now = useNow(1000)
 
   const isDonation = card.source === 'donationalerts'
   // Цвет полоски и суммы зависит от суммы доната. Ручные карточки считаются суммой 0.
@@ -91,8 +92,13 @@ export function CardItem(props: CardItemProps) {
   const isMerged = card.mergeCount > 1
   // Когда пришёл последний донат: у ручной карточки — когда её создали
   const lastDonationAt = card.lastDonationAt ?? card.createdAt
-  // Свежий донат подсвечиваем, чтобы стример его заметил. В «Выполнено» не нужно.
-  const isFresh = !isMuted && now - new Date(lastDonationAt).getTime() < FRESH_SECONDS * 1000
+  // Новый донат или слияние подсвечиваем, чтобы стример заметил. В «Выполнено» не нужно.
+  // Отсчёт идёт от того, что случилось позже.
+  const lastEventTime = Math.max(
+    new Date(lastDonationAt).getTime(),
+    card.lastMergedAt ? new Date(card.lastMergedAt).getTime() : 0,
+  )
+  const isGlowing = !isMuted && now - lastEventTime < GLOW_SECONDS * 1000
   // Подпись внизу: «3 мин назад · 2 доната»
   const donationsWord = `${card.mergeCount} ${pluralize(card.mergeCount, ['донат', 'доната', 'донатов'])}`
   const meta = isDonation
@@ -120,7 +126,7 @@ export function CardItem(props: CardItemProps) {
         styles.card,
         isDragging ? styles.dragging : '',
         showMergeDrop ? styles.mergeDrop : '',
-        isFresh ? styles.fresh : '',
+        isGlowing ? styles.fresh : '',
         isMuted ? styles.muted : '',
       ].join(' ')}
       // CSS-переменная с цветом уровня: ей красятся полоска слева и сумма (CardItem.module.css)

@@ -254,3 +254,17 @@ def test_last_donation_time_is_newest_of_merged(client):
 
     merged = card_by_message(client, "Первый")
     assert merged["last_donation_at"] == second["created_at"]
+
+
+def test_last_merged_time_is_when_merged(client):
+    donate("Вася", 100, "Первый")
+    donate("Вася", 200, "Второй")
+    first = card_by_message(client, "Первый")
+    second = card_by_message(client, "Второй")
+    assert first["last_merged_at"] is None
+
+    merge(client, first, second)
+
+    merged = card_by_message(client, "Первый")
+    # Слияние случилось позже, чем пришёл любой из донатов
+    assert merged["last_merged_at"] >= second["created_at"]

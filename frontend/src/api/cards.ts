@@ -24,6 +24,7 @@ export type CardFromApi = {
   merge_count: number
   merged_into_id: number | null
   last_donation_at?: string | null
+  last_merged_at?: string | null
 }
 
 export function toCard(card: CardFromApi): Card {
@@ -46,6 +47,7 @@ export function toCard(card: CardFromApi): Card {
     mergeCount: card.merge_count,
     mergedIntoId: card.merged_into_id,
     lastDonationAt: card.last_donation_at ?? null,
+    lastMergedAt: card.last_merged_at ?? null,
   }
 }
 

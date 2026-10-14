@@ -145,3 +145,5 @@ class Card(BaseModel):
     # Когда пришёл последний донат карточки: у объединённой — самый свежий из слитых.
     # В базе такого столбца нет, его считает list_cards (board.add_last_donation_times).
     last_donation_at: str | None = None
+    # Когда в карточку последний раз слили другую (None — не сливали). Тоже считает list_cards.
+    last_merged_at: str | None = None

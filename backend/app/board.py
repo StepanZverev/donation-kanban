@@ -87,14 +87,24 @@ def add_last_donation_times(db: sqlite3.Connection, cards: list[Card]) -> None:
     среди неё самой и всех слитых в неё карточек (они лежат в истории с пометкой merged
     и ссылкой merged_into_id). Слитая карточка могла и сама быть объединённой,
     поэтому идём по ссылкам вглубь.
+
+    Заодно заполняет last_merged_at — когда в карточку последний раз что-то слили.
+    Это время, когда слитая карточка ушла в историю (archived_at). Фронт по нему
+    подсвечивает карточку после слияния.
     """
     rows = db.execute(
-        "SELECT id, merged_into_id, created_at FROM cards WHERE archive_reason = 'merged'"
+        "SELECT id, merged_into_id, created_at, archived_at FROM cards"
+        " WHERE archive_reason = 'merged'"
     ).fetchall()
     # Для каждой карточки — список слитых в неё: id основной → [(id слитой, время создания)]
     merged_into: dict[int, list[tuple[int, str]]] = {}
     for row in rows:
         merged_into.setdefault(row["merged_into_id"], []).append((row["id"], row["created_at"]))
+    # Когда в карточку слили последнюю: id основной → самое позднее archived_at слитых в неё
+    last_merge: dict[int, str] = {}
+    for row in rows:
+        target_id = row["merged_into_id"]
+        last_merge[target_id] = max(last_merge.get(target_id, ""), row["archived_at"])
 
     def latest(card_id: int, created_at: str) -> str:
         times = [created_at]
@@ -105,3 +115,4 @@ def add_last_donation_times(db: sqlite3.Connection, cards: list[Card]) -> None:
 
     for card in cards:
         card.last_donation_at = latest(card.id, card.created_at)
+        card.last_merged_at = last_merge.get(card.id)

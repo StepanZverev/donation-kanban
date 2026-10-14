@@ -172,7 +172,7 @@
   border-color: var(--color-accent);
 }
 
-/* Свежий донат: карточка мягко светится акцентным цветом */
+/* Новый донат или слияние: карточка мягко светится акцентным цветом */
 .fresh {
   box-shadow:
     0 0 0 2px color-mix(in srgb, var(--color-accent) 60%, transparent),
