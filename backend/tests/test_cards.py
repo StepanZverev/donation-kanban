@@ -10,7 +10,7 @@ def columns(client):
 
 
 def create(client, title, column_id=None):
-    response = client.post("/api/cards", json={"title": title, "column_id": column_id})
+    response = client.post("/api/cards", json={"text": title, "column_id": column_id})
     assert response.status_code == 201
     return response.json()
 
@@ -52,13 +52,9 @@ def test_create_goes_to_incoming_by_default(client):
     assert column(client, columns(client)["incoming"]) == ["Спеть песню"]
 
 
-def test_empty_title_is_rejected(client):
-    assert client.post("/api/cards", json={"title": ""}).status_code == 422
-
-
 def test_update(client):
     card = create(client, "Старое")
-    response = client.patch(f"/api/cards/{card['id']}", json={"title": "Новое"})
+    response = client.patch(f"/api/cards/{card['id']}", json={"text": "Новое"})
     assert response.json()["title"] == "Новое"
     assert response.json()["description"] == ""
 
@@ -175,7 +171,7 @@ def test_delete_forever(client):
 
 
 def test_unknown_card_returns_404(client):
-    assert client.patch("/api/cards/999", json={"title": "x"}).status_code == 404
+    assert client.patch("/api/cards/999", json={"text": "x"}).status_code == 404
     assert client.post("/api/history/999/restore").status_code == 404
 
 

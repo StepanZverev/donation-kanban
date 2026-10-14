@@ -83,16 +83,24 @@ class CardCreate(BaseModel):
     Если column_id не прислали, карточка попадёт в «Очередь».
     """
 
-    title: str = Field(min_length=1, max_length=200)
-    description: str = ""
+    # Карточка — как донат: ник, текст и сумма. Без ника — аноним, без текста —
+    # «Донат без сообщения». Сумма — в валюте стримера (рубли), её можно не указывать.
+    donor_name: str | None = Field(default=None, max_length=100)
+    text: str = Field(default="", max_length=2000)
+    amount: float | None = Field(default=None, ge=0)
     column_id: int | None = None
 
 
 class CardUpdate(BaseModel):
-    """Редактирование. Любое поле можно не присылать — тогда оно не изменится."""
+    """
+    Редактирование. Любое поле можно не присылать — тогда оно не изменится.
+    Прислать donor_name или amount равными null — значит стереть ник или сумму.
+    """
 
-    title: str | None = Field(default=None, min_length=1, max_length=200)
-    description: str | None = None
+    donor_name: str | None = Field(default=None, max_length=100)
+    text: str | None = Field(default=None, max_length=2000)
+    # Сумма в валюте карточки: у доната в долларах — в долларах (см. routes/cards.py)
+    amount: float | None = Field(default=None, ge=0)
 
 
 class CardMove(BaseModel):

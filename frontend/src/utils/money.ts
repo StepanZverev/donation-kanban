@@ -13,3 +13,9 @@ export function formatMoney(amount: number, currency: string | null) {
     return `${amount} ${currency ?? ''}`.trim()
   }
 }
+
+// Значок валюты для подписи у поля суммы: RUB → «₽», USD → «$»
+export function getCurrencySymbol(currency: string | null) {
+  const parts = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: currency || 'RUB' }).formatToParts(0)
+  return parts.find((part) => part.type === 'currency')?.value ?? currency ?? '₽'
+}

@@ -19,7 +19,8 @@ from ..board import (
     sort_column_cards,
 )
 from ..db import get_db, now
-from ..merging import merge_cards, split_cards
+from ..donations import split_message
+from ..merging import STREAMER_CURRENCY, merge_cards, split_cards
 from ..realtime import notify_board_changed
 from ..schemas import (
     Card,
@@ -81,13 +82,33 @@ def create_card(data: CardCreate, db: sqlite3.Connection = Depends(get_db)) -> C
     else:
         column_id = get_column(db, data.column_id).id
 
+    # Как у доната: короткий текст — заголовок, длинный обрезается в заголовке,
+    # а целиком лежит в описании (см. split_message)
+    title, description = split_message(data.text)
+
     timestamp = now()
+    # Сумму ручной карточки стример пишет в своей валюте
+    currency = STREAMER_CURRENCY if data.amount is not None else None
     cursor = db.execute(
         """
-        INSERT INTO cards (title, description, column_id, source, created_at, updated_at, moved_at)
-        VALUES (?, ?, ?, 'manual', ?, ?, ?)
+        INSERT INTO cards (
+            title, description, column_id, source, donor_name, amount, currency, streamer_amount,
+            created_at, updated_at, moved_at
+        )
+        VALUES (?, ?, ?, 'manual', ?, ?, ?, ?, ?, ?, ?)
         """,
-        (data.title, data.description, column_id, timestamp, timestamp, timestamp),
+        (
+            title,
+            description,
+            column_id,
+            clean_donor_name(data.donor_name),
+            data.amount,
+            currency,
+            data.amount,
+            timestamp,
+            timestamp,
+            timestamp,
+        ),
     )
     notify_board_changed(db)
     return get_card(db, cursor.lastrowid)
@@ -120,19 +141,66 @@ def clear_column(db: sqlite3.Connection, kind: str, reason: str) -> int:
 
 @router.patch("/{card_id}")
 def update_card(card_id: int, data: CardUpdate, db: sqlite3.Connection = Depends(get_db)) -> Card:
-    """Редактирует заголовок и/или описание."""
+    """Редактирует ник, текст и сумму. Что не прислали, не меняется."""
     card = get_card(db, card_id)
+    # model_fields_set — поля, которые фронт прислал. Так отличаем «не прислал»
+    # от «прислал null» (стереть ник или сумму).
+    sent = data.model_fields_set
+
+    donor_name = clean_donor_name(data.donor_name) if "donor_name" in sent else card.donor_name
+
+    title, description = card.title, card.description
+    if data.text is not None:
+        title, description = split_message(data.text)
+
+    amount, currency, streamer_amount = card.amount, card.currency, card.streamer_amount
+    if "amount" in sent:
+        amount, currency, streamer_amount = new_amount_fields(card, data.amount)
+
     db.execute(
-        "UPDATE cards SET title = ?, description = ?, updated_at = ? WHERE id = ?",
+        """
+        UPDATE cards
+        SET title = ?, description = ?, donor_name = ?,
+            amount = ?, currency = ?, streamer_amount = ?, updated_at = ?
+        WHERE id = ?
+        """,
         (
-            data.title if data.title is not None else card.title,
-            data.description if data.description is not None else card.description,
+            title,
+            description,
+            donor_name,
+            amount,
+            currency,
+            streamer_amount,
             now(),
             card_id,
         ),
     )
     notify_board_changed(db)
     return get_card(db, card_id)
+
+
+def clean_donor_name(name: str | None) -> str:
+    """
+    Ник без пробелов по краям. Нет ника — аноним: как и у доната, храним пустую строку,
+    а «Аноним» пишет фронт.
+    """
+    return (name or "").strip()
+
+
+def new_amount_fields(card: Card, amount: float | None) -> tuple[float | None, str | None, float | None]:
+    """
+    Новая сумма карточки → (amount, currency, streamer_amount).
+
+    Сумму пишут в валюте карточки. Если это не валюта стримера (донат в долларах),
+    сумму в валюте стримера пересчитываем по тому же курсу, что был у доната:
+    было 5 $ = 450 ₽, стало 10 $ — значит 900 ₽. По ней сортируем и считаем итоги.
+    """
+    if amount is None:
+        return None, None, None
+    if card.currency is None or card.currency == STREAMER_CURRENCY or not card.amount:
+        return amount, card.currency or STREAMER_CURRENCY, amount
+    rate = (card.streamer_amount or card.amount) / card.amount
+    return amount, card.currency, round(amount * rate, 2)
 
 
 @router.post("/{card_id}/move")

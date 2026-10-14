@@ -3,6 +3,7 @@ import { useCards } from '../../hooks/useCards'
 import { useHighlightSince } from '../../hooks/useHighlightSince'
 import { usePriorityLevels } from '../../hooks/usePriorityLevels'
 import type { Card, CardDraft } from '../../types/card'
+import { getEditableText } from '../../utils/donor'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
 import { Column } from '../../components/Column/Column'
 import { DropZone } from '../../components/DropZone/DropZone'
@@ -127,9 +128,14 @@ export function BoardPage({ seenAt }: BoardPageProps) {
           heading={form.mode === 'create' ? 'Новая карточка' : 'Редактирование'}
           initialDraft={
             form.mode === 'edit'
-              ? { title: form.card.title, description: form.card.description }
-              : { title: '', description: '' }
+              ? {
+                  donorName: form.card.donorName ?? '',
+                  text: getEditableText(form.card),
+                  amount: form.card.amount,
+                }
+              : { donorName: '', text: '', amount: null }
           }
+          currency={form.mode === 'edit' ? form.card.currency : null}
           onSubmit={handleFormSubmit}
           onClose={handleFormClose}
         />

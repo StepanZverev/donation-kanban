@@ -10,8 +10,8 @@ def titles(response):
 def make_history(client):
     """Три карточки в истории: выполненная, удалённая и донат от Васи (удалённый)."""
     incoming = next(c["id"] for c in client.get("/api/columns").json() if c["kind"] == "incoming")
-    done = client.post("/api/cards", json={"title": "Спеть песню", "description": "", "column_id": incoming}).json()
-    deleted = client.post("/api/cards", json={"title": "Сыграть катку", "description": "на пистолетах", "column_id": incoming}).json()
+    done = client.post("/api/cards", json={"text": "Спеть песню", "column_id": incoming}).json()
+    deleted = client.post("/api/cards", json={"text": "Сыграть катку на пистолетах", "column_id": incoming}).json()
     client.post(f"/api/cards/{done['id']}/archive", json={"reason": "done"})
     client.delete(f"/api/cards/{deleted['id']}")
     donate("Вася", 100, "Привет")
@@ -23,7 +23,7 @@ def test_history_filter_by_reason(client):
     make_history(client)
 
     assert titles(client.get("/api/history", params={"reason": "done"})) == ["Спеть песню"]
-    assert titles(client.get("/api/history", params={"reason": "deleted"})) == ["Привет", "Сыграть катку"]
+    assert titles(client.get("/api/history", params={"reason": "deleted"})) == ["Привет", "Сыграть катку на пистолетах"]
     assert len(client.get("/api/history").json()) == 3
 
 
@@ -33,7 +33,7 @@ def test_history_search_ignores_case_and_looks_everywhere(client):
     # По нику, без учёта регистра русских букв
     assert titles(client.get("/api/history", params={"q": "вася"})) == ["Привет"]
     # По тексту карточки
-    assert titles(client.get("/api/history", params={"q": "ПИСТОЛЕТ"})) == ["Сыграть катку"]
+    assert titles(client.get("/api/history", params={"q": "ПИСТОЛЕТ"})) == ["Сыграть катку на пистолетах"]
     # Поиск и фильтр вместе
     assert titles(client.get("/api/history", params={"q": "катку", "reason": "done"})) == []
 
@@ -44,7 +44,7 @@ def test_history_rejects_unknown_reason(client):
 
 def test_reject_with_reason_and_restore(client):
     incoming = next(c["id"] for c in client.get("/api/columns").json() if c["kind"] == "incoming")
-    card = client.post("/api/cards", json={"title": "Удали игру", "description": "", "column_id": incoming}).json()
+    card = client.post("/api/cards", json={"text": "Удали игру", "column_id": incoming}).json()
 
     rejected = client.post(
         f"/api/cards/{card['id']}/archive", json={"reason": "rejected", "note": "  не по правилам канала "}
@@ -63,6 +63,6 @@ def test_reject_with_reason_and_restore(client):
 
 def test_note_is_kept_only_for_rejected(client):
     incoming = next(c["id"] for c in client.get("/api/columns").json() if c["kind"] == "incoming")
-    card = client.post("/api/cards", json={"title": "A", "description": "", "column_id": incoming}).json()
+    card = client.post("/api/cards", json={"text": "A", "column_id": incoming}).json()
     done = client.post(f"/api/cards/{card['id']}/archive", json={"reason": "done", "note": "лишнее"}).json()
     assert done["archive_note"] is None

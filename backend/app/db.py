@@ -121,6 +121,7 @@ def init_db() -> None:
         rename_pile_to_queue(db)
         add_new_card_fields(db)
         rename_filtered_to_rejected(db)
+        join_manual_card_texts(db)
 
 
 def rename_pile_to_queue(db: sqlite3.Connection) -> None:
@@ -165,6 +166,30 @@ def rename_filtered_to_rejected(db: sqlite3.Connection) -> None:
             (new_note, old_note),
         )
     db.execute("UPDATE cards SET archive_reason = 'rejected' WHERE archive_reason = 'filtered'")
+
+
+def join_manual_card_texts(db: sqlite3.Connection) -> None:
+    """
+    Раньше у ручной карточки были отдельные «Заголовок» и «Описание». Теперь у неё,
+    как у доната, один текст: короткий лежит в заголовке, длинный — целиком в описании,
+    а в заголовке его начало (см. split_message).
+
+    Старые карточки узнаём по тому, что описание не начинается с заголовка.
+    Склеиваем «заголовок + описание» в один текст и раскладываем заново.
+    """
+    # Импорт внутри функции: donations.py сам импортирует этот файл
+    from .donations import split_message
+
+    rows = db.execute(
+        "SELECT id, title, description FROM cards WHERE source = 'manual' AND description != ''"
+    ).fetchall()
+    for row in rows:
+        if row["description"].startswith(row["title"].removesuffix("…")):
+            continue
+        title, description = split_message(f"{row['title']}\n{row['description']}")
+        db.execute(
+            "UPDATE cards SET title = ?, description = ? WHERE id = ?", (title, description, row["id"])
+        )
 
 
 def create_default_columns(db: sqlite3.Connection) -> None:

@@ -29,9 +29,8 @@ export function groupByDay(cards: Card[], now: Date): HistoryDay[] {
     }
 
     day.cards.push(card)
-    if (card.source === 'donationalerts') {
-      day.donationCount += 1
-    }
+    // Ручные карточки считаем наравне с донатами
+    day.donationCount += 1
     // Сумму слитой карточки уже включила в себя та, в которую её слили, — не считаем дважды
     if (card.archiveReason !== 'merged') {
       day.total += card.streamerAmount ?? 0

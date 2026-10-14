@@ -19,9 +19,10 @@ def test_stream_total_counts_donations(client):
 
     donate(1, amount=100)
     donate(2, amount=250)
-    client.post("/api/cards", json={"title": "Ручная"})
+    client.post("/api/cards", json={"text": "Ручная"})
 
-    assert stream_total(client) == {"total": 350, "donation_count": 2, "board_card_count": 3}
+    # Ручная карточка считается донатом наравне с остальными
+    assert stream_total(client) == {"total": 350, "donation_count": 3, "board_card_count": 3}
 
 
 def test_clearing_columns_keeps_stream_total(client):

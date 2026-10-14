@@ -31,13 +31,14 @@ def get_stream_total(db: sqlite3.Connection = Depends(get_db)) -> StreamTotal:
 
     Слитые карточки (merged) не считаем: их сумма уже вошла в карточку, в которую их слили.
     Зато число донатов берём из merge_count: в объединённой карточке их несколько.
+    Ручные карточки считаем наравне с донатами.
     """
     started_at = get_setting(db, STREAM_STARTED_AT_KEY) or ""
     row = db.execute(
         """
         SELECT
             COALESCE(SUM(streamer_amount), 0) AS total,
-            COALESCE(SUM(CASE WHEN source = 'donationalerts' THEN merge_count ELSE 0 END), 0) AS donation_count
+            COALESCE(SUM(merge_count), 0) AS donation_count
         FROM cards
         WHERE created_at > ? AND (archive_reason IS NULL OR archive_reason != 'merged')
         """,
