@@ -1,4 +1,4 @@
-from app.db import connect
+from app.db import connect, init_db
 from app.donationalerts.listener import to_donation
 from app.donations import Donation, add_donation_card
 
@@ -107,3 +107,17 @@ def test_rejected_by_streamer_is_not_counted_as_filtered(client):
     [card] = client.get("/api/cards").json()
     client.post(f"/api/cards/{card['id']}/archive", json={"reason": "rejected", "note": "нет"})
     assert client.get("/api/cards/latest-donations").json()["to_history"] is None
+
+
+def test_old_filtered_cards_become_rejected(client):
+    set_intake(client, open=False)
+    donate(1)
+    # Так отсеянный донат лежал в базе в первой версии
+    with connect() as db:
+        db.execute("UPDATE cards SET archive_reason = 'filtered', archive_note = 'closed'")
+
+    init_db()
+
+    [card] = client.get("/api/history").json()
+    assert card["archive_reason"] == "rejected"
+    assert card["archive_note"] == "Приём был закрыт"
