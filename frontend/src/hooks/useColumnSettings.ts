@@ -6,8 +6,8 @@ import * as columnsApi from '../api/columns'
 import type { BoardColumn } from '../types/card'
 import { useBoardUpdates } from './useBoardUpdates'
 
-// Столько же, сколько разрешает бэкенд (backend/app/routes/columns.py)
-export const MIN_WORK_COLUMNS = 1
+// Столько же, сколько разрешает бэкенд (backend/app/routes/columns.py).
+// Меньше всего — ни одной: тогда на доске только «Очередь» и «Выполнено».
 export const MAX_WORK_COLUMNS = 3
 
 export function useColumnSettings() {

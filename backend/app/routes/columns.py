@@ -17,8 +17,8 @@ from ..schemas import BoardColumn, ColumnCreate, ColumnOrder, ColumnUpdate
 
 router = APIRouter(prefix="/api/columns", tags=["Колонки"])
 
-# Сколько может быть промежуточных колонок
-MIN_WORK_COLUMNS = 1
+# Сколько может быть промежуточных колонок. Меньше всего — ни одной:
+# тогда на доске остаются только «Очередь» и «Выполнено».
 MAX_WORK_COLUMNS = 3
 
 
@@ -70,12 +70,10 @@ def rename_column(column_id: int, data: ColumnUpdate, db: sqlite3.Connection = D
 def delete_column(column_id: int, db: sqlite3.Connection = Depends(get_db)) -> None:
     """
     Удаляет промежуточную колонку. Её карточки не пропадают, а возвращаются в «Очередь».
-    Последнюю промежуточную колонку удалить нельзя.
+    Удалить можно и все промежуточные колонки.
     """
     get_work_column(db, column_id)
     work_ids = get_work_column_ids(db)
-    if len(work_ids) <= MIN_WORK_COLUMNS:
-        raise HTTPException(status_code=400, detail="Нужна хотя бы одна промежуточная колонка")
 
     # Все карточки колонки (и с доски, и из истории) переезжают в «Очередь»,
     # чтобы ни одна не ссылалась на удалённую колонку.

@@ -27,26 +27,12 @@
 }
 
 .fixedTitle,
-.titleButton {
+.title {
   font-size: 15px;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* Название промежуточной колонки — кнопка, которая выглядит как текст */
-.titleButton {
-  padding: 2px 6px;
-  margin: -2px -6px;
-  border: none;
-  border-radius: 6px;
-  background-color: transparent;
-  text-align: left;
-}
-
-.titleButton:hover {
-  background-color: var(--color-column);
 }
 
 .stubs {
@@ -99,7 +85,8 @@
   opacity: 0.3;
 }
 
-.dangerButton {
+/* Карандаш и корзина прижаты к правому краю, стрелки — к левому */
+.editButton {
   margin-left: auto;
 }
 

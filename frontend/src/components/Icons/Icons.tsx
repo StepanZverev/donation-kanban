@@ -55,3 +55,18 @@ export function BroomIcon() {
     </svg>
   )
 }
+
+// Карандаш — «редактировать»
+export function PencilIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M10.5 2.5l3 3L5.5 13.5H2.5v-3zM9 4l3 3"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}

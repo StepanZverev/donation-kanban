@@ -1,5 +1,5 @@
 import { useState, type FormEvent, type KeyboardEvent } from 'react'
-import { MAX_WORK_COLUMNS, MIN_WORK_COLUMNS, useColumnSettings } from '../../hooks/useColumnSettings'
+import { MAX_WORK_COLUMNS, useColumnSettings } from '../../hooks/useColumnSettings'
 import type { BoardColumn } from '../../types/card'
 import { ColumnDialog } from '../ColumnDialog/ColumnDialog'
 import { ColumnsBoardView } from '../ColumnsBoardView/ColumnsBoardView'
@@ -22,15 +22,14 @@ export function ColumnsSettings() {
   const incomingColumn = columns.find((column) => column.kind === 'incoming')
   const doneColumn = columns.find((column) => column.kind === 'done')
   const canAdd = workColumns.length < MAX_WORK_COLUMNS
-  const canRemove = workColumns.length > MIN_WORK_COLUMNS
 
   return (
     <section className={styles.section}>
       <h2 className={styles.title}>Колонки доски</h2>
       <p className={styles.hint}>
         «{incomingColumn?.title ?? 'Очередь'}» и «{doneColumn?.title ?? 'Выполнено'}» есть всегда.
-        Между ними от {MIN_WORK_COLUMNS} до {MAX_WORK_COLUMNS} колонок. Если удалить колонку, её
-        карточки вернутся в «{incomingColumn?.title ?? 'Очередь'}».
+        Между ними можно поставить до {MAX_WORK_COLUMNS} колонок, а можно ни одной. Если удалить
+        колонку, её карточки вернутся в «{incomingColumn?.title ?? 'Очередь'}».
       </p>
 
       {error && <p className={styles.error}>{error}</p>}
@@ -41,7 +40,6 @@ export function ColumnsSettings() {
           workColumns={workColumns}
           doneColumn={doneColumn}
           canAdd={canAdd}
-          canRemove={canRemove}
           onAddClick={() => setDialog({ mode: 'create' })}
           onEditClick={(column) => setDialog({ mode: 'edit', column })}
           onMove={moveColumn}
@@ -62,8 +60,7 @@ export function ColumnsSettings() {
               column={column}
               isFirst={index === 0}
               isLast={index === workColumns.length - 1}
-              canRemove={canRemove}
-              onRename={renameColumn}
+                  onRename={renameColumn}
               onMove={moveColumn}
               onRemove={handleRemove}
             />
@@ -147,7 +144,6 @@ type WorkColumnRowProps = {
   column: BoardColumn
   isFirst: boolean
   isLast: boolean
-  canRemove: boolean
   onRename: (id: number, title: string) => void
   onMove: (id: number, step: -1 | 1) => void
   onRemove: (column: BoardColumn) => void
@@ -156,7 +152,7 @@ type WorkColumnRowProps = {
 // Промежуточная колонка: название можно править прямо в поле,
 // сохраняется, когда уходишь из поля или жмёшь Enter.
 function WorkColumnRow(props: WorkColumnRowProps) {
-  const { column, isFirst, isLast, canRemove, onRename, onMove, onRemove } = props
+  const { column, isFirst, isLast, onRename, onMove, onRemove } = props
   const [title, setTitle] = useState(column.title)
 
   return (
@@ -195,9 +191,8 @@ function WorkColumnRow(props: WorkColumnRowProps) {
         <button
           type="button"
           className={`${styles.iconButton} ${styles.dangerButton}`}
-          title={canRemove ? 'Удалить колонку' : 'Нужна хотя бы одна колонка'}
+          title="Удалить колонку"
           aria-label="Удалить колонку"
-          disabled={!canRemove}
           onClick={() => onRemove(column)}
         >
           <TrashIcon />

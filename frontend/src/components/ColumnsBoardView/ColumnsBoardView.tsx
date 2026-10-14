@@ -1,5 +1,5 @@
 import type { BoardColumn } from '../../types/card'
-import { PlusIcon, TrashIcon } from '../Icons/Icons'
+import { PencilIcon, PlusIcon, TrashIcon } from '../Icons/Icons'
 import styles from './ColumnsBoardView.module.css'
 
 type ColumnsBoardViewProps = {
@@ -7,7 +7,6 @@ type ColumnsBoardViewProps = {
   workColumns: BoardColumn[]
   doneColumn: BoardColumn | undefined
   canAdd: boolean
-  canRemove: boolean
   onAddClick: () => void
   onEditClick: (column: BoardColumn) => void
   onMove: (id: number, step: -1 | 1) => void
@@ -15,7 +14,7 @@ type ColumnsBoardViewProps = {
 }
 
 // Колонки доски в настройках так, как они стоят на доске: слева направо.
-// Крайние закреплены, промежуточные можно переименовать, сдвинуть и удалить.
+// Крайние закреплены, промежуточные можно переименовать, сдвинуть и удалить (хоть все).
 // Пунктирная плитка «+» в конце добавляет новую колонку.
 export function ColumnsBoardView(props: ColumnsBoardViewProps) {
   const {
@@ -23,7 +22,6 @@ export function ColumnsBoardView(props: ColumnsBoardViewProps) {
     workColumns,
     doneColumn,
     canAdd,
-    canRemove,
     onAddClick,
     onEditClick,
     onMove,
@@ -36,15 +34,7 @@ export function ColumnsBoardView(props: ColumnsBoardViewProps) {
 
       {workColumns.map((column, index) => (
         <div key={column.id} className={styles.column}>
-          {/* Клик по названию открывает окно с настройками колонки */}
-          <button
-            type="button"
-            className={styles.titleButton}
-            title="Переименовать"
-            onClick={() => onEditClick(column)}
-          >
-            {column.title}
-          </button>
+          <span className={styles.title}>{column.title}</span>
 
           <CardStubs />
 
@@ -69,12 +59,21 @@ export function ColumnsBoardView(props: ColumnsBoardViewProps) {
             >
               ›
             </button>
+            {/* Карандаш открывает окно с настройками колонки */}
+            <button
+              type="button"
+              className={`${styles.iconButton} ${styles.editButton}`}
+              title="Изменить колонку"
+              aria-label="Изменить колонку"
+              onClick={() => onEditClick(column)}
+            >
+              <PencilIcon />
+            </button>
             <button
               type="button"
               className={`${styles.iconButton} ${styles.dangerButton}`}
-              title={canRemove ? 'Удалить колонку' : 'Нужна хотя бы одна колонка'}
+              title="Удалить колонку"
               aria-label="Удалить колонку"
-              disabled={!canRemove}
               onClick={() => onRemove(column)}
             >
               <TrashIcon />

@@ -69,9 +69,14 @@ def test_delete_column_returns_cards_to_incoming(client):
     assert [(c["id"], c["column_id"]) for c in cards] == [(card["id"], column_id(client, "Очередь"))]
 
 
-def test_last_work_column_cannot_be_deleted(client):
+def test_all_work_columns_can_be_deleted(client):
     work = column_id(client, "В работе")
-    assert client.delete(f"/api/columns/{work}").status_code == 400
+    assert client.delete(f"/api/columns/{work}").status_code == 204
+    assert titles(client) == ["Очередь", "Выполнено"]
+
+    # Без промежуточных колонок всё работает: можно добавить новую
+    assert add_column(client, "Отложено").status_code == 201
+    assert titles(client) == ["Очередь", "Отложено", "Выполнено"]
 
 
 # ----- Уровни приоритета -----
