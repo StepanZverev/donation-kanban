@@ -71,6 +71,7 @@ export function ColumnsSettings() {
 
         <form className={styles.addForm} onSubmit={handleAddSubmit}>
           <input
+            autoComplete="off"
             className={styles.input}
             value={newTitle}
             onChange={(event) => setNewTitle(event.target.value)}
@@ -158,6 +159,7 @@ function WorkColumnRow(props: WorkColumnRowProps) {
   return (
     <li className={styles.row}>
       <input
+        autoComplete="off"
         className={styles.input}
         value={title}
         onChange={(event) => setTitle(event.target.value)}

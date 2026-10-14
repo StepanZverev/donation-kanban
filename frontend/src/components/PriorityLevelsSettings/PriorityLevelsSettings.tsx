@@ -55,7 +55,10 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
             style={{ '--level-color': level.color } as CSSProperties}
           >
             <div className={styles.top}>
+              {/* autoComplete="off" во всех полях приложения: иначе Chrome принимает их
+                  за адрес или номер машины и предлагает «сохранить данные» */}
               <input
+                autoComplete="off"
                 className={styles.nameInput}
                 value={level.name}
                 maxLength={30}
@@ -85,6 +88,7 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
                   <span className={styles.zero}>0 ₽, всегда</span>
                 ) : (
                   <input
+                    autoComplete="off"
                     type="number"
                     className={styles.amountInput}
                     min={1}

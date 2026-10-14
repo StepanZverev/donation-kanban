@@ -32,6 +32,7 @@ export function ColumnDialog(props: ColumnDialogProps) {
         <label className={styles.field}>
           Название
           <input
+            autoComplete="off"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             maxLength={40}
