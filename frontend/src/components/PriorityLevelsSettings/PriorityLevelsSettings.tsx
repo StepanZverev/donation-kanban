@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { usePriorityLevels } from '../../hooks/usePriorityLevels'
 import { formatMoney } from '../../utils/money'
 import type { PriorityLevel } from '../../utils/priority'
@@ -32,7 +32,7 @@ type PriorityLevelsEditorProps = {
   onSave: (levels: PriorityLevel[]) => Promise<void>
 }
 
-// Таблица уровней. Правки копятся в черновике и уходят на сервер кнопкой «Сохранить».
+// Список уровней. Правки копятся в черновике и уходят на сервер кнопкой «Сохранить».
 function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
   const { levels, onSave } = props
   const [draft, setDraft] = useState(levels)
@@ -44,62 +44,67 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
 
   return (
     <>
-      <div className={styles.table}>
-        <div className={styles.headerRow}>
-          <span>Цвет</span>
-          <span>От суммы</span>
-          <span>Название</span>
-          <span>Как выглядит</span>
-          <span />
-        </div>
-
+      {/* Каждый уровень нарисован как карточка доната этого уровня:
+          полоска слева и сумма его цветом. Так сразу видно, как будет выглядеть доска. */}
+      <div className={styles.list}>
         {draft.map((level, index) => (
-          <div key={index} className={styles.row}>
-            <input
-              type="color"
-              className={styles.colorInput}
-              value={level.color}
-              onChange={(event) => handleChange(index, { color: event.target.value })}
-              aria-label="Цвет уровня"
-            />
-
-            {/* Первый уровень всегда с 0, его сумму не меняем */}
-            {index === 0 ? (
-              <span className={styles.zero}>0</span>
-            ) : (
+          <div
+            key={index}
+            className={styles.card}
+            // CSS-переменная с цветом уровня, её используют .card и .amount
+            style={{ '--level-color': level.color } as CSSProperties}
+          >
+            <div className={styles.top}>
               <input
-                type="number"
-                className={styles.input}
-                min={1}
-                value={level.minAmount}
-                onChange={(event) => handleChange(index, { minAmount: Number(event.target.value) })}
-                aria-label="От суммы"
+                className={styles.nameInput}
+                value={level.name}
+                maxLength={30}
+                onChange={(event) => handleChange(index, { name: event.target.value })}
+                aria-label="Название уровня"
               />
-            )}
+              {/* Пример: так будет выглядеть сумма на карточке этого уровня */}
+              <span className={styles.amount}>{formatMoney(level.minAmount, 'RUB')}</span>
+            </div>
 
-            <input
-              className={styles.input}
-              value={level.name}
-              maxLength={30}
-              onChange={(event) => handleChange(index, { name: event.target.value })}
-              aria-label="Название уровня"
-            />
+            <div className={styles.bottom}>
+              {/* Встроенный в браузер выбор цвета: по клику открывается палитра */}
+              <label className={styles.field}>
+                Цвет
+                <input
+                  type="color"
+                  className={styles.colorInput}
+                  value={level.color}
+                  onChange={(event) => handleChange(index, { color: event.target.value })}
+                />
+              </label>
 
-            {/* Пример: так будет выглядеть сумма на карточке этого уровня */}
-            <span className={styles.preview} style={{ backgroundColor: level.color }}>
-              {formatMoney(level.minAmount, 'RUB')}
-            </span>
+              <label className={styles.field}>
+                От суммы
+                {/* Первый уровень всегда с 0, его сумму не меняем */}
+                {index === 0 ? (
+                  <span className={styles.zero}>0 ₽, всегда</span>
+                ) : (
+                  <input
+                    type="number"
+                    className={styles.amountInput}
+                    min={1}
+                    value={level.minAmount}
+                    onChange={(event) => handleChange(index, { minAmount: Number(event.target.value) })}
+                  />
+                )}
+              </label>
 
-            <button
-              type="button"
-              className={styles.iconButton}
-              title={index === 0 ? 'Первый уровень удалить нельзя' : 'Удалить уровень'}
-              aria-label="Удалить уровень"
-              disabled={index === 0}
-              onClick={() => handleRemove(index)}
-            >
-              <TrashIcon />
-            </button>
+              <button
+                type="button"
+                className={styles.iconButton}
+                title={index === 0 ? 'Первый уровень удалить нельзя' : 'Удалить уровень'}
+                aria-label="Удалить уровень"
+                disabled={index === 0}
+                onClick={() => handleRemove(index)}
+              >
+                <TrashIcon />
+              </button>
+            </div>
           </div>
         ))}
       </div>
