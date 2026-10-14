@@ -129,6 +129,20 @@ def test_clear_done_moves_cards_to_history(client):
     assert {card["title"]: card["archive_reason"] for card in history} == {"A": "done", "B": "done"}
 
 
+def test_clear_queue_deletes_only_queue_cards(client):
+    ids = columns(client)
+    create(client, "A")
+    create(client, "B")
+    move(client, create(client, "В работе"), ids["work"])
+
+    assert client.post("/api/cards/clear-queue").json() == {"cleared": 2}
+
+    assert column(client, ids["incoming"]) == []
+    assert column(client, ids["work"]) == ["В работе"]
+    history = client.get("/api/history").json()
+    assert {card["title"]: card["archive_reason"] for card in history} == {"A": "deleted", "B": "deleted"}
+
+
 def test_remove_moves_card_to_history(client):
     ids = columns(client)
     card = create(client, "A")

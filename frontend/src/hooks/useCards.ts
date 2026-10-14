@@ -52,7 +52,8 @@ export function useCards() {
   // Изменения от других вкладок и новые донаты.
   useBoardUpdates(reload)
 
-  // Колонка «Выполнено» — для кнопки «Очистить»
+  // Колонки «Очередь» и «Выполнено» — для кнопок «Очистить»
+  const incomingColumn = columns.find((column) => column.kind === 'incoming')
   const doneColumn = columns.find((column) => column.kind === 'done')
 
   // После каждого изменения заново забираем карточки с сервера.
@@ -142,6 +143,15 @@ export function useCards() {
     return runAndReload(() => cardsApi.clearDone())
   }
 
+  // «Очистить очередь» — все карточки из «Очереди» в историю как удалённые.
+  function clearQueue() {
+    if (incomingColumn) {
+      const queueCards = getColumnCards(incomingColumn.id)
+      rememberRestore(`Очищена очередь: ${queueCards.length}`, queueCards, incomingColumn.id)
+    }
+    return runAndReload(() => cardsApi.clearQueue())
+  }
+
   // Кладёт действие в стопку для «Отменить». undo — как его откатить.
   function rememberAction(message: string, undo: () => Promise<unknown>) {
     const action: UndoableAction = { id: nextActionId.current, message, undo }
@@ -191,6 +201,7 @@ export function useCards() {
     mergeOnDrop,
     unmergeCard,
     clearDone,
+    clearQueue,
     undoableActions,
     undoAction,
     forgetAction,

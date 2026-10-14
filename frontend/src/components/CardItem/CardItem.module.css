@@ -1,4 +1,4 @@
-/* Обводка цвета уровня приоритета (--priority-color задаёт CardItem.tsx).
+/* Тонкая рамка и полоска слева цвета уровня приоритета (--priority-color задаёт CardItem.tsx).
    Карточка — три части в ряд: стрелка ‹, содержимое, стрелка ›. */
 .card {
   /* relative — чтобы подсказка «+ Объединить» легла поверх карточки */
@@ -6,8 +6,9 @@
   display: flex;
   /* Не сжиматься, когда карточек больше, чем влезает в колонку: колонка прокручивается */
   flex-shrink: 0;
-  border: 2px solid var(--priority-color, var(--color-border));
-  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--priority-color, var(--color-border));
+  border-radius: 10px;
   background-color: var(--color-surface);
   overflow: hidden;
 }
@@ -15,9 +16,7 @@
 .content {
   flex: 1;
   min-width: 0;
-  /* Снизу отступ чуть больше: у последней строки текста нет ничего плотного
-     (как бейдж суммы сверху), и на глаз низ без добавки кажется теснее */
-  padding: 12px 4px 16px;
+  padding: 10px 4px 10px;
 }
 
 /* Первая строка: ник и меню «⋯» слева, сумма справа — самое важное для стримера */
@@ -25,6 +24,8 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  /* Высота строки как у кнопки «⋯», чтобы карточка не прыгала, когда меню появляется */
+  min-height: 24px;
 }
 
 /* Ник в одну строку: если колонка узкая, конец обрезается многоточием
@@ -33,28 +34,34 @@
   flex: 0 1 auto;
   min-width: 0;
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Сумма в бейдже с заливкой цвета уровня — того же, что и обводка */
+/* Сумма цветом уровня — того же, что и полоска слева */
 .amount {
   flex-shrink: 0;
   /* Прижимает сумму к правому краю */
   margin-left: auto;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background-color: var(--priority-color, var(--color-border));
-  color: #ffffff;
+  color: var(--priority-color, var(--color-text));
   font-family: var(--font-numbers);
   font-size: 15px;
   font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Нижняя строка: «3 мин назад · 2 доната» */
+.meta {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
 }
 
 .text {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   font-size: 14px;
   color: var(--color-text-secondary);
   white-space: pre-wrap;
@@ -147,7 +154,7 @@
 }
 
 /* Карточка, которую сейчас тащат, остаётся на месте полупрозрачной */
-.dragging {
+.card.dragging {
   opacity: 0.4;
 }
 
@@ -159,18 +166,43 @@
   border-top: 1px dashed color-mix(in srgb, var(--color-text-secondary) 45%, transparent);
 }
 
-/* «+2» рядом с ником: сколько донатов слито в карточку. Просто текст цвета обводки. */
-.mergedMark {
-  flex-shrink: 0;
-  color: var(--priority-color, var(--color-text-secondary));
-  font-size: 14px;
-  font-weight: 700;
-}
-
 /* Над карточкой держат другую, и их можно объединить: пунктирная обводка акцентным цветом */
 .mergeDrop {
   border-style: dashed;
   border-color: var(--color-accent);
+}
+
+/* Новый донат или слияние: карточка мягко светится акцентным цветом */
+.fresh {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--color-accent) 60%, transparent),
+    0 0 14px -2px var(--color-accent);
+}
+
+/* Пульсирует, только если человек не просил в системе поменьше анимаций */
+@media (prefers-reduced-motion: no-preference) {
+  .fresh {
+    animation: fresh-pulse 2.4s ease-in-out infinite;
+  }
+}
+
+/* В середине пульса свечение почти гаснет, остаётся тонкое кольцо */
+@keyframes fresh-pulse {
+  50% {
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--color-accent) 25%, transparent),
+      0 0 4px -4px var(--color-accent);
+  }
+}
+
+/* Карточки в «Выполнено» приглушены: дело сделано. При наведении — как обычно. */
+.muted {
+  opacity: 0.7;
+}
+
+.muted:hover,
+.muted:focus-within {
+  opacity: 1;
 }
 
 /* Подсказка «+ Объединить» поверх всей карточки.

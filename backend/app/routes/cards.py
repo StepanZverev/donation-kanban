@@ -10,6 +10,7 @@ import sqlite3
 from fastapi import APIRouter, Depends
 
 from ..board import (
+    add_last_donation_times,
     archive_card,
     get_card,
     get_column,
@@ -41,6 +42,7 @@ def list_cards(db: sqlite3.Connection = Depends(get_db)) -> list[Card]:
     """
     rows = db.execute("SELECT * FROM cards WHERE archived_at IS NULL").fetchall()
     cards = [Card(**row) for row in rows]
+    add_last_donation_times(db, cards)
 
     result: list[Card] = []
     for column in get_columns(db):
@@ -71,16 +73,27 @@ def create_card(data: CardCreate, db: sqlite3.Connection = Depends(get_db)) -> C
 
 @router.post("/clear-done")
 def clear_done(db: sqlite3.Connection = Depends(get_db)) -> dict[str, int]:
-    """Кнопка «Очистить»: все карточки из «Выполнено» уходят в историю как выполненные."""
-    done_column_id = get_column_id_by_kind(db, "done")
+    """Веник у «Выполнено»: все карточки оттуда уходят в историю как выполненные."""
+    return {"cleared": clear_column(db, "done", "done")}
+
+
+@router.post("/clear-queue")
+def clear_queue(db: sqlite3.Connection = Depends(get_db)) -> dict[str, int]:
+    """Веник у «Очереди»: все карточки оттуда уходят в историю как удалённые."""
+    return {"cleared": clear_column(db, "incoming", "deleted")}
+
+
+def clear_column(db: sqlite3.Connection, kind: str, reason: str) -> int:
+    """Убирает в историю все карточки колонки вида kind с пометкой reason. Возвращает, сколько убрали."""
+    column_id = get_column_id_by_kind(db, kind)
     rows = db.execute(
-        "SELECT id FROM cards WHERE column_id = ? AND archived_at IS NULL", (done_column_id,)
+        "SELECT id FROM cards WHERE column_id = ? AND archived_at IS NULL", (column_id,)
     ).fetchall()
     for row in rows:
-        archive_card(db, row["id"], "done")
+        archive_card(db, row["id"], reason)
 
     notify_board_changed(db)
-    return {"cleared": len(rows)}
+    return len(rows)
 
 
 @router.patch("/{card_id}")

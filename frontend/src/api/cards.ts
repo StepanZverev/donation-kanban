@@ -23,6 +23,8 @@ export type CardFromApi = {
   archive_reason: Card['archiveReason']
   merge_count: number
   merged_into_id: number | null
+  last_donation_at?: string | null
+  last_merged_at?: string | null
 }
 
 export function toCard(card: CardFromApi): Card {
@@ -44,6 +46,8 @@ export function toCard(card: CardFromApi): Card {
     archiveReason: card.archive_reason,
     mergeCount: card.merge_count,
     mergedIntoId: card.merged_into_id,
+    lastDonationAt: card.last_donation_at ?? null,
+    lastMergedAt: card.last_merged_at ?? null,
   }
 }
 
@@ -116,4 +120,9 @@ export async function unmergeCards(targetId: number, cardIds: number[] | null): 
 // Кнопка «Очистить»: все карточки из «Выполнено» уходят в историю.
 export async function clearDone(): Promise<void> {
   await request('POST', '/api/cards/clear-done')
+}
+
+// Кнопка «Очистить очередь»: все карточки из «Очереди» уходят в историю как удалённые.
+export async function clearQueue(): Promise<void> {
+  await request('POST', '/api/cards/clear-queue')
 }

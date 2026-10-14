@@ -1,0 +1,43 @@
+/* relative — чтобы окошко встало прямо под кнопкой */
+.wrapper {
+  position: relative;
+}
+
+/* Маленькое окошко под кнопкой, прижато к её правому краю */
+.popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 10;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background-color: var(--color-surface);
+  box-shadow: 0 8px 24px var(--color-shadow);
+  /* Шапка колонки может быть жирной — текст в окошке всегда обычный */
+  font-weight: 400;
+}
+
+.question {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* Красная кнопка подтверждения: действие убирает карточки с доски */
+.confirmButton {
+  border-color: var(--color-error);
+  background-color: var(--color-error);
+  color: #ffffff;
+  font-weight: 600;
+}
