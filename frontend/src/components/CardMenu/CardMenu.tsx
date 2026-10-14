@@ -8,6 +8,8 @@ type CardMenuProps = {
   onEdit: () => void
   onMove: (columnId: number) => void
   onDelete: () => void
+  // «Отклонить…»: откроется окно с причиной
+  onReject: () => void
   // «Объединить все донаты в эту карточку» и «Разъединить». Не передали — пункта в меню нет.
   onMergeAll?: () => void
   onUnmerge?: () => void
@@ -18,7 +20,7 @@ const DROPDOWN_HEIGHT_GUESS = 240
 
 // Маленькое меню «⋯» на карточке: редкие действия, которые нужны больше модератору.
 export function CardMenu(props: CardMenuProps) {
-  const { moveTargets, onEdit, onMove, onDelete, onMergeAll, onUnmerge } = props
+  const { moveTargets, onEdit, onMove, onDelete, onReject, onMergeAll, onUnmerge } = props
   // Где показать открытое меню (координаты на экране). null — меню закрыто.
   const [dropdownPosition, setDropdownPosition] = useState<CSSProperties | null>(null)
   const isOpen = dropdownPosition !== null
@@ -69,6 +71,14 @@ export function CardMenu(props: CardMenuProps) {
             </button>
           ))}
 
+          <button
+            type="button"
+            className={styles.danger}
+            title="Не буду выполнять: карточка уйдёт в историю с пометкой «Отклонено» и причиной"
+            onClick={handleReject}
+          >
+            Отклонить…
+          </button>
           <button type="button" className={styles.danger} onClick={handleDelete}>
             Удалить
           </button>
@@ -118,6 +128,11 @@ export function CardMenu(props: CardMenuProps) {
   function handleMove(columnId: number) {
     setDropdownPosition(null)
     onMove(columnId)
+  }
+
+  function handleReject() {
+    setDropdownPosition(null)
+    onReject()
   }
 
   function handleDelete() {

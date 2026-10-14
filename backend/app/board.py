@@ -57,12 +57,16 @@ def sort_column_cards(column: BoardColumn, cards: list[Card]) -> list[Card]:
     return sorted(cards, key=lambda card: (-(card.streamer_amount or 0), card.created_at, card.id))
 
 
-def archive_card(db: sqlite3.Connection, card_id: int, reason: str) -> None:
-    """Убирает карточку с доски в историю. reason: 'done' (выполнена) или 'deleted' (выкинута)."""
+def archive_card(db: sqlite3.Connection, card_id: int, reason: str, note: str | None = None) -> None:
+    """
+    Убирает карточку с доски в историю. reason: 'done' (выполнена), 'deleted' (выкинута),
+    'rejected' (отклонена) и т. д. note — пояснение к пометке, например причина отказа.
+    """
     timestamp = now()
     db.execute(
-        "UPDATE cards SET archived_at = ?, archive_reason = ?, updated_at = ? WHERE id = ?",
-        (timestamp, reason, timestamp, card_id),
+        "UPDATE cards SET archived_at = ?, archive_reason = ?, archive_note = ?, updated_at = ?"
+        " WHERE id = ?",
+        (timestamp, reason, note or None, timestamp, card_id),
     )
 
 
@@ -72,7 +76,8 @@ def return_to_board(db: sqlite3.Connection, card_id: int, column_id: int) -> Non
     db.execute(
         """
         UPDATE cards
-        SET archived_at = NULL, archive_reason = NULL, column_id = ?, moved_at = ?, updated_at = ?
+        SET archived_at = NULL, archive_reason = NULL, archive_note = NULL,
+            column_id = ?, moved_at = ?, updated_at = ?
         WHERE id = ?
         """,
         (column_id, timestamp, timestamp, card_id),

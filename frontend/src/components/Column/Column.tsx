@@ -20,6 +20,8 @@ type ColumnProps = {
   // В историю с пометкой «удалено» / «выполнено»
   onDeleteCard: (card: Card) => void
   onFinishCard: (card: Card) => void
+  // «Отклонить…» в меню карточки
+  onRejectCard: (card: Card) => void
   onDropCard: (cardId: number, columnId: number) => void
   // Есть ли на доске другие карточки того же донатера, и «Объединить все донаты в эту карточку»
   canMergeAll: (card: Card) => boolean
@@ -42,6 +44,7 @@ export function Column(props: ColumnProps) {
     onEditCard,
     onDeleteCard,
     onFinishCard,
+    onRejectCard,
     onDropCard,
     canMergeAll,
     onMergeAll,
@@ -128,6 +131,7 @@ export function Column(props: ColumnProps) {
             onEdit={onEditCard}
             onMove={onDropCard}
             onDelete={onDeleteCard}
+            onReject={onRejectCard}
             canMergeAll={canMergeAll(card)}
             onMergeAll={onMergeAll}
             onUnmerge={onUnmerge}

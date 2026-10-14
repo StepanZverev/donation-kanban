@@ -29,6 +29,7 @@ type CardItemProps = {
   onEdit: (card: Card) => void
   onMove: (cardId: number, columnId: number) => void
   onDelete: (card: Card) => void
+  onReject: (card: Card) => void
   // Есть ли у донатера другие карточки, которые можно слить в эту
   canMergeAll: boolean
   onMergeAll: (card: Card) => void
@@ -54,6 +55,7 @@ export function CardItem(props: CardItemProps) {
     onEdit,
     onMove,
     onDelete,
+    onReject,
     canMergeAll,
     onMergeAll,
     onUnmerge,
@@ -160,6 +162,7 @@ export function CardItem(props: CardItemProps) {
               onEdit={handleEdit}
               onMove={handleMove}
               onDelete={handleDelete}
+              onReject={handleReject}
               onMergeAll={canMergeAll ? handleMergeAll : undefined}
               onUnmerge={SHOW_UNMERGE && isMerged ? handleUnmerge : undefined}
             />
@@ -290,5 +293,9 @@ export function CardItem(props: CardItemProps) {
 
   function handleDelete() {
     onDelete(card)
+  }
+
+  function handleReject() {
+    onReject(card)
   }
 }

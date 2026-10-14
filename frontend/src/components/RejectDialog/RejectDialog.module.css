@@ -1,0 +1,67 @@
+.dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--color-surface);
+  color: inherit;
+}
+
+.dialog::backdrop {
+  background-color: var(--color-backdrop);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 18px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.field input {
+  margin-top: 2px;
+  font: inherit;
+  padding: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: var(--color-background);
+  color: inherit;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Красная кнопка: карточка уходит с доски */
+.submit {
+  border-color: var(--color-error);
+  background-color: var(--color-error);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* О какой карточке речь — под заголовком */
+.card {
+  margin: -8px 0 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}

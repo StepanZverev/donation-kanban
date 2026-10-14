@@ -12,12 +12,14 @@ import styles from './HistoryPage.module.css'
 const FILTERS: { reason: HistoryFilter['reason']; label: string }[] = [
   { reason: null, label: 'Все' },
   { reason: 'done', label: 'Выполнено' },
+  { reason: 'rejected', label: 'Отклонено' },
   { reason: 'deleted', label: 'Удалено' },
   { reason: 'merged', label: 'Объединено' },
 ]
 
 const archiveReasonLabels = {
   done: 'Выполнено',
+  rejected: 'Отклонено',
   deleted: 'Удалено',
   merged: 'Объединено',
 }
@@ -137,6 +139,11 @@ export function HistoryPage() {
                       <TrashIcon />
                     </button>
                   </span>
+
+                  {/* Причина отказа — отдельной строкой под текстом */}
+                  {card.archiveReason === 'rejected' && card.archiveNote && (
+                    <span className={styles.note}>Причина: {card.archiveNote}</span>
+                  )}
                 </li>
               ))}
             </ul>

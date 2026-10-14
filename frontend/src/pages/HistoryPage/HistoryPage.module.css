@@ -162,6 +162,21 @@
   color: var(--color-text-secondary);
 }
 
+/* «Отклонено» — стример отказался выполнять просьбу */
+.rejected {
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
+/* Причина отказа под текстом, в той же колонке, что и текст */
+.note {
+  grid-column: 3 / -1;
+  margin-top: -6px;
+  font-size: 12px;
+  color: var(--color-error);
+  overflow-wrap: anywhere;
+}
+
 /* «Объединено» — карточку слили в другую карточку того же донатера */
 .merged {
   background-color: var(--color-accent-light);
@@ -204,6 +219,11 @@
   .what {
     grid-column: 1 / -1;
     grid-row: 2;
+  }
+
+  .note {
+    grid-column: 1 / -1;
+    margin-top: 0;
   }
 }
 

@@ -12,8 +12,9 @@ from pydantic import BaseModel, Field
 # Literal значит «только одно из этих значений».
 ColumnKind = Literal["incoming", "work", "done"]
 Source = Literal["manual", "donationalerts"]
-# merged — карточку слили в другую карточку того же донатера
-ArchiveReason = Literal["done", "deleted", "merged"]
+# merged — карточку слили в другую карточку того же донатера,
+# rejected — стример отказался выполнять просьбу (причина лежит в archive_note)
+ArchiveReason = Literal["done", "deleted", "merged", "rejected"]
 
 
 class BoardColumn(BaseModel):
@@ -94,11 +95,13 @@ class CardMove(BaseModel):
 class CardArchive(BaseModel):
     """
     Убрать карточку в историю с нужной пометкой. Так работают зоны по краям доски:
-    красная («удалено») и зелёная («выполнено»).
+    красная («удалено») и зелёная («выполнено»), а ещё «Отклонить» в меню карточки.
     """
 
     # «Объединена» сюда не входит: так карточка попадает в историю только через объединение
-    reason: Literal["done", "deleted"]
+    reason: Literal["done", "deleted", "rejected"]
+    # Причина отказа для «Отклонено», например «не по правилам канала». Можно не писать.
+    note: str = Field(default="", max_length=200)
 
 
 class CardMerge(BaseModel):
@@ -140,6 +143,8 @@ class Card(BaseModel):
     moved_at: str
     archived_at: str | None
     archive_reason: ArchiveReason | None
+    # Пояснение к пометке: у «Отклонено» — причина отказа. Пусто, если пояснения нет.
+    archive_note: str | None
     merge_count: int
     merged_into_id: int | None
     # Когда пришёл последний донат карточки: у объединённой — самый свежий из слитых.
