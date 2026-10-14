@@ -127,9 +127,15 @@ export function BoardPage({ seenAt }: BoardPageProps) {
           heading={form.mode === 'create' ? 'Новая карточка' : 'Редактирование'}
           initialDraft={
             form.mode === 'edit'
-              ? { title: form.card.title, description: form.card.description }
-              : { title: '', description: '' }
+              ? {
+                  title: form.card.title,
+                  description: form.card.description,
+                  donorName: form.card.donorName ?? '',
+                  amount: form.card.amount,
+                }
+              : { title: '', description: '', donorName: '', amount: null }
           }
+          currency={form.mode === 'edit' ? form.card.currency : null}
           onSubmit={handleFormSubmit}
           onClose={handleFormClose}
         />

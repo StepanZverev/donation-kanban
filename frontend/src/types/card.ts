@@ -54,4 +54,8 @@ export type Card = {
 export type CardDraft = {
   title: string
   description: string
+  // Ник донатера. Пустая строка — без ника (у доната — аноним).
+  donorName: string
+  // Сумма в валюте карточки, null — без суммы
+  amount: number | null
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { Card } from '../../types/card'
-import { getDonorName } from '../../utils/donor'
+import { getDonorName, hasDonor } from '../../utils/donor'
 import { formatMoney } from '../../utils/money'
 import styles from './RejectDialog.module.css'
 
@@ -19,7 +19,7 @@ export function RejectDialog(props: RejectDialogProps) {
   const [reason, setReason] = useState('')
   // О какой карточке речь: «Вася · 500 ₽» или заголовок ручной карточки
   const cardLabel =
-    card.source === 'donationalerts' && card.amount !== null
+    hasDonor(card) && card.amount !== null
       ? `${getDonorName(card)} · ${formatMoney(card.amount, card.currency)}`
       : card.title
 

@@ -75,13 +75,23 @@ export async function getCards(): Promise<Card[]> {
   return cards.map(toCard)
 }
 
+// Форма → то, что ждёт бэкенд (snake_case). Пустой ник отправляем как null — «без ника».
+function draftToApi(draft: CardDraft) {
+  return {
+    title: draft.title,
+    description: draft.description,
+    donor_name: draft.donorName || null,
+    amount: draft.amount,
+  }
+}
+
 export async function createCard(draft: CardDraft, columnId: number): Promise<Card> {
-  const card = await request<CardFromApi>('POST', '/api/cards', { ...draft, column_id: columnId })
+  const card = await request<CardFromApi>('POST', '/api/cards', { ...draftToApi(draft), column_id: columnId })
   return toCard(card)
 }
 
 export async function updateCard(id: number, draft: CardDraft): Promise<Card> {
-  const card = await request<CardFromApi>('PATCH', `/api/cards/${id}`, draft)
+  const card = await request<CardFromApi>('PATCH', `/api/cards/${id}`, draftToApi(draft))
   return toCard(card)
 }
 

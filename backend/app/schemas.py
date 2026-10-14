@@ -86,13 +86,22 @@ class CardCreate(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     description: str = ""
     column_id: int | None = None
+    # Ник и сумму можно не указывать. Сумма — в валюте стримера (рубли).
+    donor_name: str | None = Field(default=None, max_length=100)
+    amount: float | None = Field(default=None, ge=0)
 
 
 class CardUpdate(BaseModel):
-    """Редактирование. Любое поле можно не присылать — тогда оно не изменится."""
+    """
+    Редактирование. Любое поле можно не присылать — тогда оно не изменится.
+    Прислать donor_name или amount равными null — значит стереть ник или сумму.
+    """
 
     title: str | None = Field(default=None, min_length=1, max_length=200)
     description: str | None = None
+    donor_name: str | None = Field(default=None, max_length=100)
+    # Сумма в валюте карточки: у доната в долларах — в долларах (см. routes/cards.py)
+    amount: float | None = Field(default=None, ge=0)
 
 
 class CardMove(BaseModel):

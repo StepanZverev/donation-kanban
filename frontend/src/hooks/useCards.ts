@@ -6,7 +6,7 @@ import * as cardsApi from '../api/cards'
 import * as columnsApi from '../api/columns'
 import * as historyApi from '../api/history'
 import type { BoardColumn, Card, CardDraft } from '../types/card'
-import { getDonorName } from '../utils/donor'
+import { getDonorName, hasDonor } from '../utils/donor'
 import { findSameDonorCards, isSameDonor } from '../utils/merging'
 import { formatMoney } from '../utils/money'
 import { useBoardUpdates } from './useBoardUpdates'
@@ -218,7 +218,7 @@ export function useCards() {
 
 // Короткое описание карточки для плашки «Отменить»: чтобы было понятно, что именно отменяешь.
 function describeCard(card: Card) {
-  if (card.source === 'donationalerts' && card.amount !== null) {
+  if (hasDonor(card) && card.amount !== null) {
     return `${getDonorName(card)} · ${formatMoney(card.amount, card.currency)}`
   }
   const maxLength = 40

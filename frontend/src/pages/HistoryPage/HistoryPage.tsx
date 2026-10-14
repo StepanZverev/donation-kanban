@@ -4,7 +4,7 @@ import { useHighlightSince } from '../../hooks/useHighlightSince'
 import { useHistoryCards } from '../../hooks/useHistoryCards'
 import { useNow } from '../../hooks/useNow'
 import type { Card } from '../../types/card'
-import { getDonorName } from '../../utils/donor'
+import { getCardText, getDonorName, hasDonor } from '../../utils/donor'
 import { groupByDay } from '../../utils/historyDays'
 import { formatMoney } from '../../utils/money'
 import { pluralize } from '../../utils/time'
@@ -122,8 +122,8 @@ export function HistoryPage({ seenAt }: HistoryPageProps) {
 
                   {/* Длинный текст обрезается многоточием, целиком — во всплывающей подсказке */}
                   <span className={styles.what} title={getFullText(card)}>
-                    {card.source === 'donationalerts' && <b className={styles.who}>{getDonorName(card)}</b>}
-                    {card.source === 'donationalerts' && ' · '}
+                    {hasDonor(card) && <b className={styles.who}>{getDonorName(card)}</b>}
+                    {hasDonor(card) && ' · '}
                     {getText(card)}
                   </span>
 
@@ -183,19 +183,15 @@ export function HistoryPage({ seenAt }: HistoryPageProps) {
   }
 }
 
-// Что показать в строке после ника. У доната заголовок — обрезанное начало сообщения,
-// а целиком оно в описании. У ручной карточки — заголовок.
+// Что показать в строке после ника. У карточки без ника — заголовок.
 function getText(card: Card) {
-  if (card.source === 'donationalerts') {
-    return card.description || card.title
-  }
-  return card.title
+  return hasDonor(card) ? getCardText(card) : card.title
 }
 
 // Полный текст для всплывающей подсказки
 function getFullText(card: Card) {
-  if (card.source === 'donationalerts') {
-    return `${getDonorName(card)}: ${card.description || card.title}`
+  if (hasDonor(card)) {
+    return `${getDonorName(card)}: ${getCardText(card)}`
   }
   return card.description ? `${card.title}\n${card.description}` : card.title
 }

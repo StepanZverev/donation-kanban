@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from 'react'
 import type { BoardColumn, Card } from '../../types/card'
 import { useNow } from '../../hooks/useNow'
-import { getDonorName } from '../../utils/donor'
+import { getCardText, getDonorName, hasDonor } from '../../utils/donor'
 import { formatMoney } from '../../utils/money'
 import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
 import { formatTimeAgo, GLOW_SECONDS, pluralize } from '../../utils/time'
@@ -83,10 +83,9 @@ export function CardItem(props: CardItemProps) {
   const isDonation = card.source === 'donationalerts'
   // Цвет полоски и суммы зависит от суммы доната. Ручные карточки считаются суммой 0.
   const priority = getPriorityLevel(card.streamerAmount ?? 0, priorityLevels)
-  // У доната заголовок — это обрезанное начало сообщения, а целиком оно лежит в описании.
-  // Показываем сообщение один раз: описание, а если его нет — заголовок.
-  const heading = isDonation ? getDonorName(card) : card.title
-  const text = isDonation ? card.description || card.title : card.description
+  // Сверху ник, если он есть, иначе заголовок. Что под ним — см. getCardText.
+  const heading = hasDonor(card) ? getDonorName(card) : card.title
+  const text = getCardText(card)
   // Тексты объединённых донатов по отдельности: между ними нарисуем пунктир
   const textParts = text.split(MERGE_SEPARATOR)
   // Обводку «+ Объединить» показываем, только пока над карточкой держат подходящую

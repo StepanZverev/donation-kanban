@@ -30,6 +30,38 @@
   font-size: 14px;
 }
 
+/* Ник и сумма рядом: ник забирает всё место, сумма узкая */
+.row {
+  display: flex;
+  gap: 12px;
+}
+
+.nick {
+  flex: 1;
+  min-width: 0;
+}
+
+.amount {
+  width: 140px;
+}
+
+/* Поле суммы и значок валюты справа от него */
+.amountInput {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.amountInput input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-numbers);
+}
+
+.currency {
+  color: var(--color-text-secondary);
+}
+
 .field input,
 .field textarea {
   font: inherit;
