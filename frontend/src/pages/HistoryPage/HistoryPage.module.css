@@ -7,7 +7,7 @@
   gap: 16px;
 }
 
-/* Фильтр слева, поиск справа; на узком экране поиск уходит на следующую строку */
+/* Фильтр слева, поиск справа */
 .toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -41,6 +41,18 @@
   font-weight: 600;
 }
 
+/* Выпадающий список фильтра — только на узком экране, см. ниже */
+.filterSelect {
+  display: none;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background-color: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+}
+
 .search {
   flex: 0 1 280px;
   min-width: 200px;
@@ -50,6 +62,27 @@
   border-radius: 8px;
   font: inherit;
   font-size: 14px;
+}
+
+/* На узком экране капсулы не помещаются: фильтр — выпадающий список,
+   поиск в той же строке справа и забирает всё оставшееся место */
+@media (max-width: 800px) {
+  .toolbar {
+    flex-wrap: nowrap;
+  }
+
+  .filters {
+    display: none;
+  }
+
+  .filterSelect {
+    display: block;
+  }
+
+  .search {
+    flex: 1 1 0;
+    min-width: 0;
+  }
 }
 
 .list {
@@ -247,11 +280,6 @@
     margin-top: 0;
   }
 
-  /* Поиск переносится под фильтры — пусть займёт всю строку */
-  .search {
-    flex-basis: 100%;
-    margin-left: 0;
-  }
 }
 
 .empty {

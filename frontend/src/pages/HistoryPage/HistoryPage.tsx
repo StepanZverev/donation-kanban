@@ -1,3 +1,4 @@
+import type { ChangeEvent } from 'react'
 import type { HistoryFilter } from '../../api/history'
 import { RestoreIcon, TrashIcon } from '../../components/Icons/Icons'
 import { useHighlightSince } from '../../hooks/useHighlightSince'
@@ -75,6 +76,20 @@ export function HistoryPage(props: HistoryPageProps) {
             </button>
           ))}
         </div>
+
+        {/* На узком экране вместо капсул — выпадающий список, чтобы поиск поместился рядом */}
+        <select
+          className={styles.filterSelect}
+          aria-label="Что показать"
+          value={reason ?? 'all'}
+          onChange={handleFilterChange}
+        >
+          {FILTERS.map((filter) => (
+            <option key={filter.label} value={filter.reason ?? 'all'}>
+              {filter.label}
+            </option>
+          ))}
+        </select>
 
         <input
           autoComplete="off"
@@ -171,6 +186,12 @@ export function HistoryPage(props: HistoryPageProps) {
   function isNewCard(card: Card) {
     const isFiltered = card.archiveReason === 'rejected' && card.archivedAt === card.createdAt
     return highlightSince !== null && isFiltered && card.createdAt > highlightSince
+  }
+
+  // В выпадающем списке «Все» записано как 'all': у option значение — всегда строка
+  function handleFilterChange(event: ChangeEvent<HTMLSelectElement>) {
+    const value = event.target.value
+    setReason(value === 'all' ? null : (value as HistoryFilter['reason']))
   }
 
   function handleRestore(card: Card) {
