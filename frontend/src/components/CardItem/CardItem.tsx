@@ -7,6 +7,7 @@ import { formatMoney } from '../../utils/money'
 import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
 import { GLOW_SECONDS, pluralize } from '../../utils/time'
 import { CardMenu } from '../CardMenu/CardMenu'
+import { ChevronLeftIcon, ChevronRightIcon } from '../Icons/Icons'
 import styles from './CardItem.module.css'
 
 // Этой строкой бэкенд разделяет тексты объединённых донатов (MERGE_SEPARATOR в merging.py).
@@ -145,7 +146,7 @@ export function CardItem(props: CardItemProps) {
         title={leftArrow === 'delete' ? 'Удалить' : 'В колонку слева'}
         onClick={handleLeftClick}
       >
-        ‹
+        <ChevronLeftIcon />
       </button>
 
       <div className={styles.content}>
@@ -208,7 +209,7 @@ export function CardItem(props: CardItemProps) {
         title={rightArrow === 'finish' ? 'Выполнено, убрать в историю' : 'В колонку справа'}
         onClick={handleRightClick}
       >
-        ›
+        <ChevronRightIcon />
       </button>
 
       {/* Подсказка поверх карточки: отпустишь — объединятся */}
