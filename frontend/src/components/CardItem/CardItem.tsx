@@ -71,9 +71,9 @@ export function CardItem(props: CardItemProps) {
   const [isDragging, setIsDragging] = useState(false)
   // Держат ли над этой карточкой другую (чтобы показать «+ Объединить»)
   const [isDragOver, setIsDragOver] = useState(false)
-  // Длинное сообщение свёрнуто до трёх строк; «Показать полностью» разворачивает его.
+  // Длинное сообщение свёрнуто до четырёх строк; «Показать полностью» разворачивает его.
   const [isExpanded, setIsExpanded] = useState(false)
-  // Не влез ли текст в три строки — тогда под ним нужна ссылка «Показать полностью».
+  // Не влез ли текст в четыре строки — тогда под ним нужна ссылка «Показать полностью».
   const [isTextCut, setIsTextCut] = useState(false)
   // Ссылка на абзац с текстом, чтобы померить его высоту
   const textRef = useRef<HTMLDivElement>(null)

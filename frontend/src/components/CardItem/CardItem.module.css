@@ -61,26 +61,28 @@
 }
 
 /* Нижняя строка: «3 мин назад · 2 доната» */
+/* Бледнее текста доната, чтобы не спорила с ним */
 .meta {
   margin: 6px 0 0;
   font-size: 12px;
   color: var(--color-text-secondary);
+  opacity: 0.7;
 }
 
 .text {
-  margin: 4px 0 0;
+  margin: 8px 0 0;
   font-size: 14px;
   color: var(--color-text-secondary);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-/* Свёрнутый текст: не больше трёх строк, дальше многоточие */
+/* Свёрнутый текст: не больше четырёх строк, дальше многоточие */
 .collapsed {
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
   overflow: hidden;
 }
 
@@ -91,7 +93,8 @@
   border: none;
   background: none;
   color: var(--color-accent);
-  font-size: 13px;
+  font-size: 12px;
+  text-align: left;
   font-weight: 600;
 }
 
