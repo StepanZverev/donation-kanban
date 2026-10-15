@@ -10,10 +10,11 @@
   --color-text-secondary: #6a6680;
   --color-accent: #7c4dff;
   --color-accent-light: #ece5ff;
-  --color-error: #d23045;
-  --color-error-background: #fde4e7;
-  --color-success: #1f8a4c;
-  --color-success-background: #dcf5e6;
+  /* Красный и зелёный слегка приглушены, чтобы не резали глаз */
+  --color-error: #c04a5a;
+  --color-error-background: #f8e6e9;
+  --color-success: #2f8059;
+  --color-success-background: #e2f1e8;
   --color-warning: #c98a00;
   /* Тень у всплывающих окошек: меню «⋯», плашки «Отменить» */
   --color-shadow: rgb(29 27 38 / 14%);
@@ -72,10 +73,10 @@
   --color-text-secondary: #9a95b3;
   --color-accent: #9b78ff;
   --color-accent-light: #2c2348;
-  --color-error: #ff5c72;
-  --color-error-background: #3a1820;
-  --color-success: #4cc47f;
-  --color-success-background: #173326;
+  --color-error: #e0727f;
+  --color-error-background: #33202a;
+  --color-success: #62ad85;
+  --color-success-background: #1c2e27;
   --color-warning: #f0b429;
   --color-shadow: rgb(0 0 0 / 45%);
   --color-backdrop: rgb(0 0 0 / 60%);
