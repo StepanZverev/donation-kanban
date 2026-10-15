@@ -27,7 +27,7 @@
   font-weight: 600;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 800px) {
   .name {
     display: none;
   }
