@@ -68,7 +68,7 @@ def save_priority_levels(
     set_board_setting(db, board_id, PRIORITY_LEVELS_KEY, saved)
 
     # Открытые доски перезагрузят уровни и перекрасят карточки
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return sorted_levels
 
 
@@ -88,7 +88,7 @@ def save_auto_merge(
     board_id: int = Depends(get_board_id),
 ) -> AutoMerge:
     set_board_setting(db, board_id, AUTO_MERGE_KEY, "1" if data.enabled else "0")
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return data
 
 
@@ -113,5 +113,5 @@ def save_intake(
     """
     save_intake_settings(db, board_id, data)
     # Шапка и настройки в других вкладках увидят, что приём закрыли или открыли
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return data

@@ -91,7 +91,7 @@ pytest
 | `GET /api/auth/login` | перейти на вход в DonationAlerts |
 | `GET /api/auth/callback` | сюда DonationAlerts возвращает после входа |
 | `POST /api/auth/logout` | отключить DonationAlerts |
-| `WS /api/ws` | WebSocket: сервер шлёт `{"type": "board_changed"}` при любом изменении доски |
+| `WS /api/ws` | WebSocket: сервер шлёт `{"type": "board_changed"}` при любом изменении твоей доски. Доску узнаёт по cookie сессии, без неё закрывает соединение |
 
 Статусы: `queue` (в очереди), `in_progress` (в работе), `done` (выполнено).
 

@@ -4,10 +4,12 @@ import asyncio
 from urllib.parse import parse_qs, urlparse
 
 import pytest
+from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
 
 from app.db import connect, init_db
 from app.donationalerts import listener
+from app.realtime import BoardUpdates, board_updates
 
 
 @pytest.fixture
@@ -243,3 +245,57 @@ def test_old_donationalerts_tokens_move_to_board_owner(client, other):
     )
     with connect() as db:
         assert db.execute("SELECT COUNT(*) FROM settings WHERE key LIKE 'da_%'").fetchone()[0] == 0
+
+
+
+class FakeTab:
+    """Вкладка браузера для проверки комнат: просто запоминает, что ей прислали."""
+
+    def __init__(self) -> None:
+        self.messages: list[dict] = []
+
+    async def accept(self) -> None:
+        pass
+
+    async def send_json(self, message: dict) -> None:
+        self.messages.append(message)
+
+
+def test_board_change_reaches_only_tabs_of_that_board():
+    updates = BoardUpdates()
+    mine, mine_on_phone, others = FakeTab(), FakeTab(), FakeTab()
+
+    async def scenario():
+        await updates.connect(mine, 1)
+        await updates.connect(mine_on_phone, 1)
+        await updates.connect(others, 2)
+        await updates.broadcast(1, {"type": "board_changed"})
+        updates.disconnect(others, 2)
+
+    asyncio.run(scenario())
+
+    assert mine.messages == mine_on_phone.messages == [{"type": "board_changed"}]
+    assert others.messages == []
+    assert updates.rooms == {1: {mine, mine_on_phone}}  # пустая комната доски 2 удалена
+
+
+def test_each_browser_listens_to_its_own_board(client, other):
+    client.get("/api/me")
+    other.get("/api/me")
+    with client.websocket_connect("/api/ws") as mine, other.websocket_connect("/api/ws"):
+        # У каждого браузера своя доска, значит, и своя комната
+        assert len(board_updates.rooms) == 2
+        client.post("/api/cards", json={"text": "Моя"})
+        assert mine.receive_json() == {"type": "board_changed"}
+
+        user_id = client.get("/api/me").json()["id"]
+        data = {"id": 1, "username": "Вася", "amount": 100, "currency": "RUB"}
+        asyncio.run(listener.save_donation(user_id, data))
+        assert mine.receive_json() == {"type": "board_changed"}
+
+
+def test_live_updates_need_a_session(client):
+    with pytest.raises(WebSocketDisconnect) as error:
+        with client.websocket_connect("/api/ws") as websocket:
+            websocket.receive_json()
+    assert error.value.code == 1008

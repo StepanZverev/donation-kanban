@@ -42,20 +42,25 @@ def get_board_id(
     user: sqlite3.Row = Depends(get_current_user),
     db: sqlite3.Connection = Depends(get_db),
 ) -> int:
+    """Доска того, кто прислал запрос. Подключается так: `board_id = Depends(get_board_id)`."""
+    return find_or_create_user_board(db, user["id"])
+
+
+def find_or_create_user_board(db: sqlite3.Connection, user_id: int) -> int:
     """
-    Доска того, кто прислал запрос. Если доски ещё нет:
+    id доски пользователя. Если доски ещё нет:
     - есть старая доска без хозяина (база из времён, когда доска была одна) — забираем её;
     - иначе создаём новую.
     """
-    board_id = find_user_board(db, user["id"])
+    board_id = find_user_board(db, user_id)
     if board_id is not None:
         return board_id
 
     ownerless = db.execute("SELECT id FROM boards WHERE owner_id IS NULL ORDER BY id LIMIT 1").fetchone()
     if ownerless is not None:
-        db.execute("UPDATE boards SET owner_id = ? WHERE id = ?", (user["id"], ownerless["id"]))
+        db.execute("UPDATE boards SET owner_id = ? WHERE id = ?", (user_id, ownerless["id"]))
         return ownerless["id"]
-    return create_board(db, user["id"])
+    return create_board(db, user_id)
 
 
 def move_cards_to_board(db: sqlite3.Connection, from_board_id: int, to_board_id: int) -> None:

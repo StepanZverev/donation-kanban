@@ -45,5 +45,5 @@ def create_fake_donation(
         streamer_amount=amount,
     )
     add_donation_card(db, board_id, donation)
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return {"status": "ok"}

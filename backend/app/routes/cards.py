@@ -125,7 +125,7 @@ def create_card(
             timestamp,
         ),
     )
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return get_card(db, board_id, cursor.lastrowid)
 
 
@@ -156,7 +156,7 @@ def clear_column(db: sqlite3.Connection, board_id: int, kind: str, reason: str) 
     for row in rows:
         archive_card(db, row["id"], reason)
 
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return len(rows)
 
 
@@ -201,7 +201,7 @@ def update_card(
             card_id,
         ),
     )
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return get_card(db, board_id, card_id)
 
 
@@ -248,7 +248,7 @@ def move_card(
         "UPDATE cards SET column_id = ?, moved_at = ?, updated_at = ? WHERE id = ?",
         (column.id, timestamp, timestamp, card_id),
     )
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return get_card(db, board_id, card_id)
 
 
@@ -269,7 +269,7 @@ def archive(
     note = data.note.strip() if data.reason == "rejected" else None
     archive_card(db, card_id, data.reason, note)
 
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return get_card(db, board_id, card_id)
 
 
@@ -286,7 +286,7 @@ def merge(
     """
     target = merge_cards(db, board_id, get_card(db, board_id, card_id), data.card_ids)
 
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return target
 
 
@@ -304,7 +304,7 @@ def unmerge(
     """
     restored = split_cards(db, board_id, get_card(db, board_id, card_id), data.card_ids)
 
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return restored
 
 
@@ -324,5 +324,5 @@ def remove_card(
     reason = "done" if card.column_id == done_column_id else "deleted"
     archive_card(db, card_id, reason)
 
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return get_card(db, board_id, card_id)

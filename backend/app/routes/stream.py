@@ -74,5 +74,5 @@ def reset_board(
         archive_card(db, row["id"], "done" if row["column_id"] == done_column_id else "deleted")
 
     set_board_setting(db, board_id, STREAM_STARTED_AT_KEY, now())
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return get_stream_total(db, board_id)

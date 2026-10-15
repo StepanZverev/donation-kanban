@@ -40,6 +40,7 @@ def test_split_message():
 
 
 def test_websocket_gets_notified_about_changes(client):
+    client.get("/api/me")  # первый запрос создаёт гостя и cookie сессии
     with client.websocket_connect("/api/ws") as websocket:
         client.post("/api/cards", json={"text": "Новая"})
         assert websocket.receive_json() == {"type": "board_changed"}

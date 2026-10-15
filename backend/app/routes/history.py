@@ -80,7 +80,7 @@ def restore_card(
         column_id = get_column(db, board_id, data.column_id).id
 
     return_to_board(db, card_id, column_id)
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return get_card(db, board_id, card_id)
 
 
@@ -93,4 +93,4 @@ def delete_forever(
     """Удаляет карточку из истории окончательно, без возможности вернуть."""
     get_archived_card(db, board_id, card_id)
     db.execute("DELETE FROM cards WHERE id = ?", (card_id,))
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
