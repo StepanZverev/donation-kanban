@@ -127,26 +127,26 @@
   color: var(--color-text);
 }
 
-/* Крайняя стрелка из «Очереди»: удалить */
+/* Крайняя стрелка из «Очереди»: удалить.
+   Фон как у обычной стрелки, красная только сама стрелка — чтобы карточка не пестрила.
+   color-mix смешивает цвет с прозрачным: 20% красного = лёгкая красная подложка. */
 .danger {
-  background-color: var(--color-error-background);
   color: var(--color-error);
 }
 
 .danger:hover {
-  background-color: var(--color-error);
-  color: #ffffff;
+  background-color: color-mix(in srgb, var(--color-error) 20%, transparent);
+  color: var(--color-error);
 }
 
 /* Крайняя стрелка из «Выполнено»: в историю выполненной */
 .success {
-  background-color: var(--color-success-background);
   color: var(--color-success);
 }
 
 .success:hover {
-  background-color: var(--color-success);
-  color: #ffffff;
+  background-color: color-mix(in srgb, var(--color-success) 20%, transparent);
+  color: var(--color-success);
 }
 
 /* Меню «⋯» у правого края первой строки, появляется только при наведении */
