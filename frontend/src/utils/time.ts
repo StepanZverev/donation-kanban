@@ -1,4 +1,4 @@
-// Подписи вида «40 сек назад», «3 мин назад», «1 ч 10 мин назад» и склонение слов по числу.
+// Подписи вида «только что», «3 мин назад», «2 ч назад» и склонение слов по числу.
 
 // Сколько секунд светится карточка после нового доната или слияния
 // и сколько мигают новые донаты, когда заходишь на вкладку
@@ -21,27 +21,46 @@ export function pluralize(count: number, forms: [string, string, string]) {
   return forms[2]
 }
 
-// Сколько прошло от времени isoTime до now, коротко: «только что», «40 сек назад»,
-// «3 мин назад», «1 ч 10 мин назад», «2 ч назад».
-export function formatTimeAgo(isoTime: string, now: number) {
-  const seconds = Math.max(0, Math.floor((now - new Date(isoTime).getTime()) / 1000))
+const MINUTE = 60_000
+const HOUR = 60 * MINUTE
+const DAY = 24 * HOUR
+// Первые 10 секунд пишем «только что»
+const JUST_NOW = 10_000
 
-  if (seconds < 10) {
+// Сколько прошло от времени isoTime до now, коротко и с точностью до самой крупной единицы:
+// «только что», «меньше минуты», «3 мин назад», «2 ч назад», «5 дней назад».
+export function formatTimeAgo(isoTime: string, now: number) {
+  const age = getAge(isoTime, now)
+
+  if (age < JUST_NOW) {
     return 'только что'
   }
-  if (seconds < 60) {
-    return `${seconds} сек назад`
+  if (age < MINUTE) {
+    return 'меньше минуты'
   }
+  if (age < HOUR) {
+    return `${Math.floor(age / MINUTE)} мин назад`
+  }
+  if (age < DAY) {
+    return `${Math.floor(age / HOUR)} ч назад`
+  }
+  const days = Math.floor(age / DAY)
+  return `${days} ${pluralize(days, ['день', 'дня', 'дней'])} назад`
+}
 
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) {
-    return `${minutes} мин назад`
-  }
+// Через сколько миллисекунд подпись formatTimeAgo сменится: «только что» — через 10 секунд,
+// дальше — когда наберётся следующая целая минута, час или день.
+export function getTimeAgoChangeDelay(isoTime: string, now: number) {
+  const age = getAge(isoTime, now)
 
-  const hours = Math.floor(minutes / 60)
-  const restMinutes = minutes % 60
-  if (restMinutes === 0) {
-    return `${hours} ч назад`
+  if (age < JUST_NOW) {
+    return JUST_NOW - age
   }
-  return `${hours} ч ${restMinutes} мин назад`
+  const step = age < HOUR ? MINUTE : age < DAY ? HOUR : DAY
+  return step - (age % step)
+}
+
+// Сколько миллисекунд прошло; время из будущего (часы разошлись) считаем за «только что»
+function getAge(isoTime: string, now: number) {
+  return Math.max(0, now - new Date(isoTime).getTime())
 }

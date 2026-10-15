@@ -1,10 +1,11 @@
 /* Страница доски — те же три полосы, что и у всего приложения (--layout-columns в index.css):
    в средней — колонки, в боковых — зоны «Удалить» и «Выполнено».
-   Строки: ошибка, доска. Доска забирает всю оставшуюся высоту экрана. */
+   Строки: ошибка, вкладки колонок (только на узком экране), доска.
+   Доска забирает всю оставшуюся высоту экрана. */
 .page {
   display: grid;
   grid-template-columns: var(--layout-columns);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   column-gap: var(--side-gap);
 }
 
@@ -20,23 +21,42 @@
 /* Колонки во всю высоту доски; лишние карточки прокручиваются внутри колонки */
 .board {
   grid-column: 2;
-  grid-row: 2;
+  grid-row: 3;
   min-height: 0;
   display: flex;
   gap: 16px;
 }
 
 /* Колонки делят ширину поровну, сколько бы их ни было */
-.board > section {
+.columnSlot {
   flex: 1 1 0;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-/* На узких экранах колонки идут друг под другом, и прокручивается вся доска */
+/* Колонка заполняет обёртку по высоте */
+.columnSlot > section {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Вкладки колонок нужны только на узком экране */
+.tabs {
+  grid-column: 2;
+  grid-row: 2;
+  display: none;
+}
+
+/* На узком экране колонки рядом не помещаются: показываем одну, открытую во вкладках */
 @media (max-width: 800px) {
-  .board {
-    flex-direction: column;
-    overflow-y: auto;
+  .tabs {
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .hiddenOnNarrow {
+    display: none;
   }
 }
 

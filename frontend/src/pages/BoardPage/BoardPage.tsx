@@ -6,6 +6,7 @@ import type { Card, CardDraft } from '../../types/card'
 import { getEditableText } from '../../utils/donor'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
 import { Column } from '../../components/Column/Column'
+import { ColumnTabs } from '../../components/ColumnTabs/ColumnTabs'
 import { DropZone } from '../../components/DropZone/DropZone'
 import { RejectDialog } from '../../components/RejectDialog/RejectDialog'
 import { UndoToast } from '../../components/UndoToast/UndoToast'
@@ -27,7 +28,8 @@ type BoardPageProps = {
   seenAt: string | null
 }
 
-export function BoardPage({ seenAt }: BoardPageProps) {
+export function BoardPage(props: BoardPageProps) {
+  const { seenAt } = props
   const {
     isLoading,
     error,
@@ -62,6 +64,13 @@ export function BoardPage({ seenAt }: BoardPageProps) {
   // Где по горизонтали курсор был в последний раз, пока тащили карточку.
   // useRef — потому что значение меняется много раз в секунду и перерисовка не нужна.
   const lastDragX = useRef<number | null>(null)
+  // Какая колонка открыта во вкладках на узком экране (на широком видны все сразу).
+  // Пока ничего не выбрали или выбранную колонку удалили — первая, «Очередь».
+  const [selectedColumnId, setSelectedColumnId] = useState<number | null>(null)
+  const activeColumnId =
+    selectedColumnId !== null && columns.some((column) => column.id === selectedColumnId)
+      ? selectedColumnId
+      : columns[0]?.id
 
   if (isLoading) {
     return <p>Загружаю карточки…</p>
@@ -72,6 +81,17 @@ export function BoardPage({ seenAt }: BoardPageProps) {
     <div className={`${styles.page} full-width`} onDragOver={handleDragMove}>
       {error && <p className={styles.error}>{error}</p>}
 
+      {activeColumnId !== undefined && (
+        <div className={styles.tabs}>
+          <ColumnTabs
+            columns={columns}
+            getCardCount={(columnId) => getColumnCards(columnId).length}
+            activeColumnId={activeColumnId}
+            onSelect={setSelectedColumnId}
+          />
+        </div>
+      )}
+
       {/* События перетаскивания всплывают от карточек и колонок до доски,
           поэтому здесь удобно следить, тащат ли что-то прямо сейчас. */}
       <div
@@ -81,26 +101,35 @@ export function BoardPage({ seenAt }: BoardPageProps) {
         onDrop={handleDrop}
       >
         {columns.map((column) => (
-          <Column
+          // Обёртка нужна, чтобы на узком экране прятать все колонки, кроме открытой во вкладках
+          <div
             key={column.id}
-            column={column}
-            allColumns={columns}
-            cards={getColumnCards(column.id)}
-            priorityLevels={levels}
-            onAddClick={() => handleAddClick(column.id)}
-            onEditCard={handleEditCard}
-            onDeleteCard={handleDeleteCard}
-            onFinishCard={handleFinishCard}
-            onRejectCard={setRejectingCard}
-            onDropCard={moveCard}
-            canMergeAll={(card) => getMergeableCards(card).length > 0}
-            onMergeAll={mergeAllInto}
-            onUnmerge={unmergeCard}
-            canMergeOnDrop={canMergeDraggedOn}
-            onMergeDrop={handleMergeDrop}
-            onClearClick={column.kind === 'incoming' ? clearQueue : clearDone}
-            isNewCard={isNewCard}
-          />
+            className={
+              column.id === activeColumnId
+                ? styles.columnSlot
+                : `${styles.columnSlot} ${styles.hiddenOnNarrow}`
+            }
+          >
+            <Column
+              column={column}
+              allColumns={columns}
+              cards={getColumnCards(column.id)}
+              priorityLevels={levels}
+              onAddClick={() => handleAddClick(column.id)}
+              onEditCard={handleEditCard}
+              onDeleteCard={handleDeleteCard}
+              onFinishCard={handleFinishCard}
+              onRejectCard={setRejectingCard}
+              onDropCard={moveCard}
+              canMergeAll={(card) => getMergeableCards(card).length > 0}
+              onMergeAll={mergeAllInto}
+              onUnmerge={unmergeCard}
+              canMergeOnDrop={canMergeDraggedOn}
+              onMergeDrop={handleMergeDrop}
+              onClearClick={column.kind === 'incoming' ? clearQueue : clearDone}
+              isNewCard={isNewCard}
+            />
+          </div>
         ))}
       </div>
 

@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useState, type KeyboardEvent } from 'react'
 import { MAX_WORK_COLUMNS, useColumnSettings } from '../../hooks/useColumnSettings'
 import type { BoardColumn } from '../../types/card'
 import { ColumnDialog } from '../ColumnDialog/ColumnDialog'
@@ -15,8 +15,6 @@ type DialogState = { mode: 'create' } | { mode: 'edit'; column: BoardColumn } | 
 export function ColumnsSettings() {
   const { columns, workColumns, error, addColumn, renameColumn, removeColumn, moveColumn } =
     useColumnSettings()
-  // Название новой колонки в поле внизу списка
-  const [newTitle, setNewTitle] = useState('')
   const [dialog, setDialog] = useState<DialogState>(null)
 
   const incomingColumn = columns.find((column) => column.kind === 'incoming')
@@ -60,7 +58,7 @@ export function ColumnsSettings() {
               column={column}
               isFirst={index === 0}
               isLast={index === workColumns.length - 1}
-                  onRename={renameColumn}
+              onRename={renameColumn}
               onMove={moveColumn}
               onRemove={handleRemove}
             />
@@ -69,22 +67,15 @@ export function ColumnsSettings() {
           {doneColumn && <FixedColumnRow column={doneColumn} note="всегда последняя" />}
         </ol>
 
-        <form className={styles.addForm} onSubmit={handleAddSubmit}>
-          <input
-            autoComplete="off"
-            className={styles.input}
-            value={newTitle}
-            onChange={(event) => setNewTitle(event.target.value)}
-            placeholder={
-              canAdd ? 'Название новой колонки' : `Уже ${MAX_WORK_COLUMNS} колонки, больше нельзя`
-            }
-            maxLength={40}
-            disabled={!canAdd}
-          />
-          <button type="submit" disabled={!canAdd || newTitle.trim() === ''}>
-            + Добавить
-          </button>
-        </form>
+        {/* Новая колонка — через то же окно, что и на широком экране */}
+        <button
+          type="button"
+          className={styles.addButton}
+          disabled={!canAdd}
+          onClick={() => setDialog({ mode: 'create' })}
+        >
+          {canAdd ? '+ Новая колонка' : `Уже ${MAX_WORK_COLUMNS} колонки, больше нельзя`}
+        </button>
       </div>
 
       {dialog && (
@@ -107,13 +98,6 @@ export function ColumnsSettings() {
       renameColumn(dialog.column.id, title)
     }
     setDialog(null)
-  }
-
-  function handleAddSubmit(event: FormEvent) {
-    // Без preventDefault браузер перезагрузил бы страницу, отправляя форму
-    event.preventDefault()
-    addColumn(newTitle.trim())
-    setNewTitle('')
   }
 
   function handleRemove(column: BoardColumn) {

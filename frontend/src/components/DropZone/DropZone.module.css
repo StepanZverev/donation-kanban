@@ -1,5 +1,7 @@
-/* Зона стоит в боковом поле доски (см. .page в BoardPage.module.css): от края экрана
-   до рабочей области и по высоте как колонки. Видна только во время перетаскивания. */
+/* Цвета зон полупрозрачные (color-mix с transparent), чтобы во время перетаскивания
+   по бокам не горели два ярких пятна.
+   Зона стоит в боковом поле доски, в строке с колонками (см. .page в BoardPage.module.css):
+   от края экрана до рабочей области и по высоте как колонки. Видна только во время перетаскивания. */
 .zone {
   box-sizing: border-box;
   display: flex;
@@ -18,29 +20,38 @@
 /* Левая зона: прижата к левому краю экрана, скруглена только справа */
 .delete {
   grid-column: 1;
-  grid-row: 2;
-  border-left: none;
+  grid-row: 3;
+  /* Ширина 0, а не border: none: при наведении рамка становится сплошной (border-style),
+     и «none» превратилось бы обратно в рамку 2px — текст сдвинулся бы */
+  border-left-width: 0;
   border-radius: 0 10px 10px 0;
-  border-color: var(--color-error);
-  background-color: var(--color-error-background);
+  border-color: color-mix(in srgb, var(--color-error) 40%, transparent);
+  background-color: color-mix(in srgb, var(--color-error) 6%, transparent);
   color: var(--color-error);
 }
 
 /* Правая зона: прижата к правому краю экрана, скруглена только слева */
 .done {
   grid-column: 3;
-  grid-row: 2;
-  border-right: none;
+  grid-row: 3;
+  border-right-width: 0;
   border-radius: 10px 0 0 10px;
-  border-color: var(--color-success);
-  background-color: var(--color-success-background);
+  border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
+  background-color: color-mix(in srgb, var(--color-success) 6%, transparent);
   color: var(--color-success);
 }
 
-/* Карточку держат прямо над зоной — делаем её ярче */
-.dragOver {
+/* Карточку держат прямо над зоной — сплошная рамка и подложка чуть плотнее */
+.delete.dragOver {
   border-style: solid;
-  filter: saturate(2);
+  border-color: var(--color-error);
+  background-color: color-mix(in srgb, var(--color-error) 14%, transparent);
+}
+
+.done.dragOver {
+  border-style: solid;
+  border-color: var(--color-success);
+  background-color: color-mix(in srgb, var(--color-success) 14%, transparent);
 }
 
 .icon {
@@ -58,5 +69,12 @@
 @media (min-width: 1500px) {
   .label {
     writing-mode: horizontal-tb;
+  }
+}
+
+/* На узком экране боковых полей нет — и зон тоже */
+@media (max-width: 800px) {
+  .zone {
+    display: none;
   }
 }

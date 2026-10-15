@@ -20,9 +20,3 @@
   color: var(--color-text-secondary);
 }
 
-/* На узком экране число донатов прячем, остаётся сумма */
-@media (max-width: 1000px) {
-  .count {
-    display: none;
-  }
-}

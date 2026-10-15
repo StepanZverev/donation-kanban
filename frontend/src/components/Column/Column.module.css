@@ -98,7 +98,11 @@
 
 .empty {
   margin: 0;
-  padding: 16px 0;
+  padding: 16px 12px;
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.45;
   text-align: center;
   color: var(--color-text-secondary);
 }

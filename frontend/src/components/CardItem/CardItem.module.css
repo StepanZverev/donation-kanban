@@ -19,20 +19,28 @@
   padding: 10px 4px 10px;
 }
 
-/* Первая строка: ник и меню «⋯» слева, сумма справа — самое важное для стримера */
+/* Шапка карточки: ник и сумма под ним, у правого края меню «⋯» */
 .header {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  /* Высота строки как у кнопки «⋯», чтобы карточка не прыгала, когда меню появляется */
-  min-height: 24px;
+  align-items: flex-start;
+  gap: 8px;
 }
 
-/* Ник в одну строку: если колонка узкая, конец обрезается многоточием
+/* Ник и под ним сумма — как заголовок колонки и сумма под ним (Column.module.css) */
+.titleLine {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* Ник в одну строку. Обрезается многоточием, только если не влезает даже в строку целиком
    (целиком ник виден во всплывающей подсказке) */
 .heading {
   flex: 0 1 auto;
   min-width: 0;
+  max-width: 100%;
   margin: 0;
   font-size: 15px;
   font-weight: 600;
@@ -41,39 +49,40 @@
   text-overflow: ellipsis;
 }
 
-/* Сумма цветом уровня — того же, что и полоска слева */
+/* Сумма под ником: размер и отступ как у суммы колонки, цвет — уровня приоритета,
+   того же, что и полоска слева */
 .amount {
-  flex-shrink: 0;
-  /* Прижимает сумму к правому краю */
-  margin-left: auto;
+  margin-top: 2px;
   color: var(--priority-color, var(--color-text));
   font-family: var(--font-numbers);
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
 }
 
 /* Нижняя строка: «3 мин назад · 2 доната» */
+/* Бледнее текста доната, чтобы не спорила с ним */
 .meta {
   margin: 6px 0 0;
   font-size: 12px;
   color: var(--color-text-secondary);
+  opacity: 0.7;
 }
 
 .text {
-  margin: 4px 0 0;
+  margin: 8px 0 0;
   font-size: 14px;
   color: var(--color-text-secondary);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-/* Свёрнутый текст: не больше трёх строк, дальше многоточие */
+/* Свёрнутый текст: не больше четырёх строк, дальше многоточие */
 .collapsed {
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
   overflow: hidden;
 }
 
@@ -84,7 +93,8 @@
   border: none;
   background: none;
   color: var(--color-accent);
-  font-size: 13px;
+  font-size: 12px;
+  text-align: left;
   font-weight: 600;
 }
 
@@ -101,12 +111,14 @@
    Место под них есть всегда, а видно их только при наведении на карточку. */
 .arrow {
   flex: 0 0 20px;
+  /* Иконка ровно по центру поля, и по высоте, и по ширине */
+  display: grid;
+  place-items: center;
   padding: 0;
   border: none;
   border-radius: 0;
   background-color: var(--color-column);
   color: var(--color-text-secondary);
-  font-size: 18px;
   opacity: 0;
 }
 
@@ -115,30 +127,34 @@
   color: var(--color-text);
 }
 
-/* Крайняя стрелка из «Очереди»: удалить */
+/* Крайняя стрелка из «Очереди»: удалить.
+   Лёгкая красная подложка, при наведении чуть ярче — как зона «Удалить» при переносе.
+   color-mix смешивает цвет с прозрачным: 12% красного = бледная красная подложка. */
 .danger {
-  background-color: var(--color-error-background);
+  background-color: color-mix(in srgb, var(--color-error) 12%, transparent);
   color: var(--color-error);
 }
 
 .danger:hover {
-  background-color: var(--color-error);
-  color: #ffffff;
+  background-color: color-mix(in srgb, var(--color-error) 24%, transparent);
+  color: var(--color-error);
 }
 
-/* Крайняя стрелка из «Выполнено»: в историю выполненной */
+/* Крайняя стрелка из «Выполнено»: в историю выполненной, то же самое в зелёном */
 .success {
-  background-color: var(--color-success-background);
+  background-color: color-mix(in srgb, var(--color-success) 12%, transparent);
   color: var(--color-success);
 }
 
 .success:hover {
-  background-color: var(--color-success);
-  color: #ffffff;
+  background-color: color-mix(in srgb, var(--color-success) 24%, transparent);
+  color: var(--color-success);
 }
 
-/* Меню «⋯» тоже появляется только при наведении */
+/* Меню «⋯» у правого края первой строки, появляется только при наведении */
 .menuSlot {
+  flex: none;
+  width: 26px;
   opacity: 0;
 }
 

@@ -1,11 +1,13 @@
-/* Капсула в шапке, как у статуса DonationAlerts: маленький переключатель и подпись */
+/* Правая половина капсулы в шапке (рамку рисует AppHeader): маленький переключатель
+   и подпись. Слева — разделитель со статусом DonationAlerts */
 .toggle {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 12px 4px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: 999px;
+  padding: 4px 12px 4px 10px;
+  border: none;
+  border-left: 1px solid var(--color-border);
+  border-radius: 0 999px 999px 0;
   background-color: transparent;
   white-space: nowrap;
 }
@@ -14,9 +16,8 @@
   background-color: var(--color-column);
 }
 
-/* Приём закрыт — капсула красная, чтобы не забыть открыть */
+/* Приём закрыт — половина капсулы красная, чтобы не забыть открыть */
 .closed {
-  border-color: var(--color-error);
   background-color: var(--color-error-background);
   color: var(--color-error);
 }
@@ -56,13 +57,17 @@
   transform: none;
 }
 
-/* На узком экране подпись прячем, остаётся переключатель */
-@media (max-width: 1000px) {
-  .toggle {
-    padding: 4px 8px;
-  }
+/* Короткая подпись «Приём» — только на узком экране, вместо полной */
+.shortLabel {
+  display: none;
+}
 
+@media (max-width: 800px) {
   .label {
     display: none;
+  }
+
+  .shortLabel {
+    display: inline;
   }
 }

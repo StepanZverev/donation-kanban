@@ -9,7 +9,7 @@
   max-width: 560px;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 800px) {
   .boardView {
     display: none;
   }
@@ -128,13 +128,18 @@
   color: var(--color-error);
 }
 
-/* Поле «Название новой колонки» и кнопка «Добавить» */
-.addForm {
-  display: flex;
-  gap: 8px;
+/* «+ Новая колонка» под списком — во всю ширину, пунктиром, как плитка на широком экране */
+.addButton {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: 14px;
 }
 
-.addForm .input {
-  border-color: var(--color-border);
-  background-color: var(--color-surface);
+.addButton:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }

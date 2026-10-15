@@ -9,7 +9,8 @@ type NickInputProps = {
 
 // Поле «Ник» с подсказками: под полем список ников с доски и из истории.
 // Выбрать — кликом или стрелками и Enter. Esc закрывает список, а не окно.
-export function NickInput({ value, onChange }: NickInputProps) {
+export function NickInput(props: NickInputProps) {
+  const { value, onChange } = props
   const suggestions = useDonorSuggestions(value)
   const [isOpen, setIsOpen] = useState(false)
   // Какая подсказка выбрана стрелками (-1 — никакая)

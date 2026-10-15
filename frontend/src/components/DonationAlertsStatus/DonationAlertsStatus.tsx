@@ -1,4 +1,4 @@
-import { useState, type FocusEvent } from 'react'
+import { useState, type FocusEvent, type KeyboardEvent } from 'react'
 import { LOGIN_URL, type ListenerStatus } from '../../api/auth'
 import { useDonationAlertsStatus } from '../../hooks/useDonationAlertsStatus'
 import styles from './DonationAlertsStatus.module.css'
@@ -36,7 +36,8 @@ export function DonationAlertsStatus() {
 
   return (
     // onBlur на обёртке: фокус ушёл за пределы выпадашки (кликнули мимо) — закрываем
-    <div className={styles.wrapper} onBlur={handleBlur}>
+    // Esc закрывает выпадашку
+    <div className={styles.wrapper} onBlur={handleBlur} onKeyDown={handleKeyDown}>
       <button
         type="button"
         className={styles.status}
@@ -46,6 +47,7 @@ export function DonationAlertsStatus() {
       >
         <span className={`${styles.dot} ${styles[status.listener]}`} />
         <span className={styles.name}>DonationAlerts</span>
+        <span className={styles.shortName}>DA</span>
       </button>
 
       {isOpen && (
@@ -75,6 +77,12 @@ export function DonationAlertsStatus() {
   function handleBlur(event: FocusEvent<HTMLDivElement>) {
     // relatedTarget — элемент, куда ушёл фокус. Если он внутри выпадашки, не закрываем.
     if (!event.currentTarget.contains(event.relatedTarget)) {
+      setIsOpen(false)
+    }
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'Escape') {
       setIsOpen(false)
     }
   }

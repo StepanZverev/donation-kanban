@@ -1,5 +1,5 @@
 import { useState, type DragEvent } from 'react'
-import type { BoardColumn, Card } from '../../types/card'
+import type { BoardColumn, Card, ColumnKind } from '../../types/card'
 import type { PriorityLevel } from '../../utils/priority'
 import { formatMoney } from '../../utils/money'
 import { pluralize } from '../../utils/time'
@@ -7,6 +7,13 @@ import { CardItem } from '../CardItem/CardItem'
 import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
 import { BroomIcon, PlusIcon } from '../Icons/Icons'
 import styles from './Column.module.css'
+
+// Подсказка в пустой колонке: что сюда попадает
+const emptyHints: Record<ColumnKind, string> = {
+  incoming: 'Здесь появятся новые донаты',
+  work: 'Перетащи сюда карточку, за которую взялся',
+  done: 'Перетащи сюда то, что уже сделал',
+}
 
 type ColumnProps = {
   column: BoardColumn
@@ -149,7 +156,9 @@ export function Column(props: ColumnProps) {
         ))}
 
         {cards.length === 0 && (
-          <p className={`${styles.empty} ${isDragOver ? styles.emptyDropTarget : ''}`}>Пусто</p>
+          <p className={`${styles.empty} ${isDragOver ? styles.emptyDropTarget : ''}`}>
+            {isDragOver ? 'Отпусти, чтобы положить сюда' : emptyHints[column.kind]}
+          </p>
         )}
       </div>
     </section>
