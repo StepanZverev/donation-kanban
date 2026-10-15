@@ -1,6 +1,7 @@
 """Объединение карточек одного донатера."""
 
 from app.db import connect
+from app.donationalerts.listener import donations_board_id
 from app.donations import Donation, add_donation_card
 
 next_donation_id = iter(range(1, 1000))
@@ -16,7 +17,7 @@ def donate(username, amount, message, currency="RUB", streamer_amount=None):
         streamer_amount=amount if streamer_amount is None else streamer_amount,
     )
     with connect() as db:
-        add_donation_card(db, donation)
+        add_donation_card(db, donations_board_id(db), donation)
 
 
 def columns(client):

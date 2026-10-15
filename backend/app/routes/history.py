@@ -6,7 +6,7 @@ import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..board import get_card, get_column, get_column_id_by_kind, return_to_board
+from ..board import get_board_id, get_card, get_column, get_column_id_by_kind, return_to_board
 from ..db import get_db
 from ..merging import unmerge_card
 from ..realtime import notify_board_changed
@@ -15,8 +15,8 @@ from ..schemas import ArchiveReason, Card, CardRestore
 router = APIRouter(prefix="/api/history", tags=["История"])
 
 
-def get_archived_card(db: sqlite3.Connection, card_id: int) -> Card:
-    card = get_card(db, card_id)
+def get_archived_card(db: sqlite3.Connection, board_id: int, card_id: int) -> Card:
+    card = get_card(db, board_id, card_id)
     if card.archived_at is None:
         raise HTTPException(status_code=404, detail="Карточки нет в истории")
     return card
@@ -27,6 +27,7 @@ def list_history(
     reason: ArchiveReason | None = None,
     q: str = "",
     db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
 ) -> list[Card]:
     """
     История, сначала самые недавние.
@@ -35,8 +36,8 @@ def list_history(
     q — поиск: остаются карточки, у которых ник, заголовок или текст содержат эти буквы
     (большие и маленькие не различаем).
     """
-    sql = "SELECT * FROM cards WHERE archived_at IS NOT NULL"
-    params: list[str] = []
+    sql = "SELECT * FROM cards WHERE board_id = ? AND archived_at IS NOT NULL"
+    params: list[str | int] = [board_id]
     if reason is not None:
         sql += " AND archive_reason = ?"
         params.append(reason)
@@ -64,27 +65,32 @@ def restore_card(
     card_id: int,
     data: CardRestore | None = None,
     db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
 ) -> Card:
     """
     Переоткрывает карточку: возвращает её на доску в указанную колонку или в «Очередь».
     У объединённой карточки сначала вычитаем её сумму и текст из основной.
     """
-    card = get_archived_card(db, card_id)
+    card = get_archived_card(db, board_id, card_id)
     if card.archive_reason == "merged" and card.merged_into_id is not None:
         unmerge_card(db, card)
     if data is None or data.column_id is None:
-        column_id = get_column_id_by_kind(db, "incoming")
+        column_id = get_column_id_by_kind(db, board_id, "incoming")
     else:
-        column_id = get_column(db, data.column_id).id
+        column_id = get_column(db, board_id, data.column_id).id
 
     return_to_board(db, card_id, column_id)
     notify_board_changed(db)
-    return get_card(db, card_id)
+    return get_card(db, board_id, card_id)
 
 
 @router.delete("/{card_id}", status_code=204)
-def delete_forever(card_id: int, db: sqlite3.Connection = Depends(get_db)) -> None:
+def delete_forever(
+    card_id: int,
+    db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
+) -> None:
     """Удаляет карточку из истории окончательно, без возможности вернуть."""
-    get_archived_card(db, card_id)
+    get_archived_card(db, board_id, card_id)
     db.execute("DELETE FROM cards WHERE id = ?", (card_id,))
     notify_board_changed(db)

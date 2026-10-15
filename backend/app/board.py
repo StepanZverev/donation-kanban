@@ -1,44 +1,126 @@
 """
 Общие операции с доской, которые нужны и карточкам, и истории.
+
+У каждого пользователя своя доска. Она создаётся сама, когда пользователь впервые
+что-то открывает на сайте. В каждом эндпоинте доски есть параметр
+`board_id: int = Depends(get_board_id)` — FastAPI сам находит доску того,
+кто прислал запрос.
+
+Почти каждая функция ниже принимает board_id и ищет только внутри этой доски:
+карточку или колонку чужой доски она «не найдёт» и ответит 404.
 """
 
 import sqlite3
 
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException
 
-from .db import now
+from .db import create_default_columns, get_db, now
 from .schemas import BoardColumn, Card
+from .users import get_current_user
 
 # Заголовок карточки доната, если донатер ничего не написал
 EMPTY_MESSAGE_TITLE = "Донат без сообщения"
 
 
-def get_card(db: sqlite3.Connection, card_id: int) -> Card:
-    """Находит карточку по id или отвечает фронту ошибкой 404 «не найдено»."""
-    row = db.execute("SELECT * FROM cards WHERE id = ?", (card_id,)).fetchone()
+def create_board(db: sqlite3.Connection, owner_id: int | None) -> int:
+    """
+    Создаёт пользователю доску с колонками по умолчанию и возвращает её id.
+    owner_id = None — доска без хозяина: её заберёт первый, кто откроет сайт.
+    """
+    cursor = db.execute("INSERT INTO boards (owner_id, created_at) VALUES (?, ?)", (owner_id, now()))
+    create_default_columns(db, cursor.lastrowid)
+    return cursor.lastrowid
+
+
+def find_user_board(db: sqlite3.Connection, user_id: int) -> int | None:
+    """id доски пользователя или None, если доски у него ещё нет."""
+    row = db.execute("SELECT id FROM boards WHERE owner_id = ? ORDER BY id LIMIT 1", (user_id,)).fetchone()
+    return row["id"] if row else None
+
+
+def get_board_id(
+    user: sqlite3.Row = Depends(get_current_user),
+    db: sqlite3.Connection = Depends(get_db),
+) -> int:
+    """
+    Доска того, кто прислал запрос. Если доски ещё нет:
+    - есть старая доска без хозяина (база из времён, когда доска была одна) — забираем её;
+    - иначе создаём новую.
+    """
+    board_id = find_user_board(db, user["id"])
+    if board_id is not None:
+        return board_id
+
+    ownerless = db.execute("SELECT id FROM boards WHERE owner_id IS NULL ORDER BY id LIMIT 1").fetchone()
+    if ownerless is not None:
+        db.execute("UPDATE boards SET owner_id = ? WHERE id = ?", (user["id"], ownerless["id"]))
+        return ownerless["id"]
+    return create_board(db, user["id"])
+
+
+def move_cards_to_board(db: sqlite3.Connection, from_board_id: int, to_board_id: int) -> None:
+    """
+    Переносит все карточки (с доски и из истории) с одной доски на другую и удаляет
+    опустевшую доску. Так гость, который поработал и потом вошёл в свой аккаунт
+    через DonationAlerts, не теряет карточки.
+
+    Колонки сопоставляем по виду: «Очередь» → «Очередь», «Выполнено» → «Выполнено»,
+    промежуточные → в первую промежуточную (а если её нет — в «Очередь»).
+    """
+    work_column_ids = [column.id for column in get_columns(db, to_board_id) if column.kind == "work"]
+    incoming_id = get_column_id_by_kind(db, to_board_id, "incoming")
+    target_by_kind = {
+        "incoming": incoming_id,
+        "work": work_column_ids[0] if work_column_ids else incoming_id,
+        "done": get_column_id_by_kind(db, to_board_id, "done"),
+    }
+    for column in get_columns(db, from_board_id):
+        db.execute(
+            "UPDATE cards SET board_id = ?, column_id = ? WHERE board_id = ? AND column_id = ?",
+            (to_board_id, target_by_kind[column.kind], from_board_id, column.id),
+        )
+    # Карточки без колонки (такие бывают только в старых базах) — в «Очередь»
+    db.execute(
+        "UPDATE cards SET board_id = ?, column_id = ? WHERE board_id = ?",
+        (to_board_id, incoming_id, from_board_id),
+    )
+
+    db.execute("DELETE FROM board_columns WHERE board_id = ?", (from_board_id,))
+    db.execute("DELETE FROM board_settings WHERE board_id = ?", (from_board_id,))
+    db.execute("DELETE FROM boards WHERE id = ?", (from_board_id,))
+
+
+def get_card(db: sqlite3.Connection, board_id: int, card_id: int) -> Card:
+    """Находит карточку доски по id или отвечает фронту ошибкой 404 «не найдено»."""
+    row = db.execute("SELECT * FROM cards WHERE id = ? AND board_id = ?", (card_id, board_id)).fetchone()
     if row is None:
         raise HTTPException(status_code=404, detail="Карточка не найдена")
     return Card(**row)
 
 
-def get_columns(db: sqlite3.Connection) -> list[BoardColumn]:
+def get_columns(db: sqlite3.Connection, board_id: int) -> list[BoardColumn]:
     """Все колонки доски слева направо."""
-    rows = db.execute("SELECT * FROM board_columns ORDER BY position, id").fetchall()
+    rows = db.execute(
+        "SELECT * FROM board_columns WHERE board_id = ? ORDER BY position, id", (board_id,)
+    ).fetchall()
     return [BoardColumn(**row) for row in rows]
 
 
-def get_column(db: sqlite3.Connection, column_id: int) -> BoardColumn:
-    """Находит колонку по id или отвечает ошибкой 404."""
-    row = db.execute("SELECT * FROM board_columns WHERE id = ?", (column_id,)).fetchone()
+def get_column(db: sqlite3.Connection, board_id: int, column_id: int) -> BoardColumn:
+    """Находит колонку доски по id или отвечает ошибкой 404."""
+    row = db.execute(
+        "SELECT * FROM board_columns WHERE id = ? AND board_id = ?", (column_id, board_id)
+    ).fetchone()
     if row is None:
         raise HTTPException(status_code=404, detail="Колонка не найдена")
     return BoardColumn(**row)
 
 
-def get_column_id_by_kind(db: sqlite3.Connection, kind: str) -> int:
-    """id колонки нужного вида, например «Очереди» (kind = 'incoming')."""
+def get_column_id_by_kind(db: sqlite3.Connection, board_id: int, kind: str) -> int:
+    """id колонки доски нужного вида, например «Очереди» (kind = 'incoming')."""
     row = db.execute(
-        "SELECT id FROM board_columns WHERE kind = ? ORDER BY position, id LIMIT 1", (kind,)
+        "SELECT id FROM board_columns WHERE board_id = ? AND kind = ? ORDER BY position, id LIMIT 1",
+        (board_id, kind),
     ).fetchone()
     return row["id"]
 
@@ -61,6 +143,7 @@ def archive_card(db: sqlite3.Connection, card_id: int, reason: str, note: str | 
     """
     Убирает карточку с доски в историю. reason: 'done' (выполнена), 'deleted' (выкинута),
     'rejected' (отклонена) и т. д. note — пояснение к пометке, например причина отказа.
+    Карточку перед этим уже нашли на этой доске (get_card), здесь доску не проверяем.
     """
     timestamp = now()
     db.execute(
@@ -71,7 +154,10 @@ def archive_card(db: sqlite3.Connection, card_id: int, reason: str, note: str | 
 
 
 def return_to_board(db: sqlite3.Connection, card_id: int, column_id: int) -> None:
-    """Возвращает карточку из истории на доску в колонку column_id."""
+    """
+    Возвращает карточку из истории на доску в колонку column_id.
+    Карточку и колонку перед этим уже нашли на этой доске, здесь не проверяем.
+    """
     timestamp = now()
     db.execute(
         """
@@ -84,7 +170,7 @@ def return_to_board(db: sqlite3.Connection, card_id: int, column_id: int) -> Non
     )
 
 
-def add_last_donation_times(db: sqlite3.Connection, cards: list[Card]) -> None:
+def add_last_donation_times(db: sqlite3.Connection, board_id: int, cards: list[Card]) -> None:
     """
     Заполняет у карточек last_donation_at — когда пришёл их последний донат.
 
@@ -99,7 +185,8 @@ def add_last_donation_times(db: sqlite3.Connection, cards: list[Card]) -> None:
     """
     rows = db.execute(
         "SELECT id, merged_into_id, created_at, archived_at FROM cards"
-        " WHERE archive_reason = 'merged'"
+        " WHERE board_id = ? AND archive_reason = 'merged'",
+        (board_id,),
     ).fetchall()
     # Для каждой карточки — список слитых в неё: id основной → [(id слитой, время создания)]
     merged_into: dict[int, list[tuple[int, str]]] = {}

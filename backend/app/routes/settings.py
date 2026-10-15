@@ -10,7 +10,8 @@ import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..db import get_db, get_setting, set_setting
+from ..board import get_board_id
+from ..db import get_board_setting, get_db, set_board_setting
 from ..intake import get_intake_settings, save_intake_settings
 from ..merging import AUTO_MERGE_KEY, is_auto_merge_enabled
 from ..realtime import notify_board_changed
@@ -18,7 +19,7 @@ from ..schemas import AutoMerge, IntakeSettings, PriorityLevel
 
 router = APIRouter(prefix="/api/settings", tags=["Настройки"])
 
-# Ключ в таблице settings, под которым уровни лежат одной строкой JSON
+# Ключ в таблице board_settings, под которым уровни лежат одной строкой JSON
 PRIORITY_LEVELS_KEY = "priority_levels"
 
 # Уровни, пока стример ничего не менял. Такие же лежат во фронте: src/utils/priority.ts.
@@ -32,9 +33,12 @@ DEFAULT_PRIORITY_LEVELS = [
 
 
 @router.get("/priority-levels")
-def get_priority_levels(db: sqlite3.Connection = Depends(get_db)) -> list[PriorityLevel]:
+def get_priority_levels(
+    db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
+) -> list[PriorityLevel]:
     """Уровни приоритета по возрастанию суммы."""
-    saved = get_setting(db, PRIORITY_LEVELS_KEY)
+    saved = get_board_setting(db, board_id, PRIORITY_LEVELS_KEY)
     if saved is None:
         return DEFAULT_PRIORITY_LEVELS
     return [PriorityLevel(**level) for level in json.loads(saved)]
@@ -42,7 +46,9 @@ def get_priority_levels(db: sqlite3.Connection = Depends(get_db)) -> list[Priori
 
 @router.put("/priority-levels")
 def save_priority_levels(
-    levels: list[PriorityLevel], db: sqlite3.Connection = Depends(get_db)
+    levels: list[PriorityLevel],
+    db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
 ) -> list[PriorityLevel]:
     """
     Сохраняет уровни целиком. Порядок не важен: сервер сам отсортирует их по сумме.
@@ -58,7 +64,8 @@ def save_priority_levels(
         raise HTTPException(status_code=400, detail="У двух уровней одинаковая сумма «от»")
 
     sorted_levels = sorted(levels, key=lambda level: level.min_amount)
-    set_setting(db, PRIORITY_LEVELS_KEY, json.dumps([level.model_dump() for level in sorted_levels]))
+    saved = json.dumps([level.model_dump() for level in sorted_levels])
+    set_board_setting(db, board_id, PRIORITY_LEVELS_KEY, saved)
 
     # Открытые доски перезагрузят уровни и перекрасят карточки
     notify_board_changed(db)
@@ -66,31 +73,45 @@ def save_priority_levels(
 
 
 @router.get("/auto-merge")
-def get_auto_merge(db: sqlite3.Connection = Depends(get_db)) -> AutoMerge:
+def get_auto_merge(
+    db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
+) -> AutoMerge:
     """Включено ли автообъединение донатов одного донатера. По умолчанию выключено."""
-    return AutoMerge(enabled=is_auto_merge_enabled(db))
+    return AutoMerge(enabled=is_auto_merge_enabled(db, board_id))
 
 
 @router.put("/auto-merge")
-def save_auto_merge(data: AutoMerge, db: sqlite3.Connection = Depends(get_db)) -> AutoMerge:
-    set_setting(db, AUTO_MERGE_KEY, "1" if data.enabled else "0")
+def save_auto_merge(
+    data: AutoMerge,
+    db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
+) -> AutoMerge:
+    set_board_setting(db, board_id, AUTO_MERGE_KEY, "1" if data.enabled else "0")
     notify_board_changed(db)
     return data
 
 
 @router.get("/intake")
-def get_intake(db: sqlite3.Connection = Depends(get_db)) -> IntakeSettings:
+def get_intake(
+    db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
+) -> IntakeSettings:
     """Приём донатов: открыт ли, минимальная сумма, игнорировать ли анонимов."""
-    return get_intake_settings(db)
+    return get_intake_settings(db, board_id)
 
 
 @router.put("/intake")
-def save_intake(data: IntakeSettings, db: sqlite3.Connection = Depends(get_db)) -> IntakeSettings:
+def save_intake(
+    data: IntakeSettings,
+    db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
+) -> IntakeSettings:
     """
     Сохраняет настройки приёма целиком. Переключатель в шапке присылает их тоже целиком,
     поменяв только open.
     """
-    save_intake_settings(db, data)
+    save_intake_settings(db, board_id, data)
     # Шапка и настройки в других вкладках увидят, что приём закрыли или открыли
     notify_board_changed(db)
     return data

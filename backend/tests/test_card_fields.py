@@ -1,4 +1,5 @@
 from app.db import connect, init_db
+from app.donationalerts.listener import donations_board_id
 from app.donations import Donation, add_donation_card
 
 
@@ -12,7 +13,7 @@ def donate(donation_id: int, username: str = "Вася", amount: float = 100, cu
         streamer_amount=streamer_amount if streamer_amount is not None else amount,
     )
     with connect() as db:
-        add_donation_card(db, donation)
+        add_donation_card(db, donations_board_id(db), donation)
 
 
 def test_manual_card_with_nick_and_amount(client):

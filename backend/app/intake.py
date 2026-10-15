@@ -13,10 +13,10 @@
 
 import sqlite3
 
-from .db import get_setting, set_setting
+from .db import get_board_setting, set_board_setting
 from .schemas import IntakeSettings
 
-# Ключи в таблице settings
+# Ключи в таблице board_settings
 INTAKE_OPEN_KEY = "intake_open"
 MIN_AMOUNT_KEY = "min_amount"
 IGNORE_ANONYMOUS_KEY = "ignore_anonymous"
@@ -27,27 +27,32 @@ BELOW_MIN_NOTE = "Меньше минимальной суммы"
 ANONYMOUS_NOTE = "Анонимный донат"
 
 
-def get_intake_settings(db: sqlite3.Connection) -> IntakeSettings:
+def get_intake_settings(db: sqlite3.Connection, board_id: int) -> IntakeSettings:
     """Настройки приёма. Пока стример ничего не менял: приём открыт, минимума нет, анонимов принимаем."""
     return IntakeSettings(
-        open=get_setting(db, INTAKE_OPEN_KEY) != "0",
-        min_amount=float(get_setting(db, MIN_AMOUNT_KEY) or 0),
-        ignore_anonymous=get_setting(db, IGNORE_ANONYMOUS_KEY) == "1",
+        open=get_board_setting(db, board_id, INTAKE_OPEN_KEY) != "0",
+        min_amount=float(get_board_setting(db, board_id, MIN_AMOUNT_KEY) or 0),
+        ignore_anonymous=get_board_setting(db, board_id, IGNORE_ANONYMOUS_KEY) == "1",
     )
 
 
-def save_intake_settings(db: sqlite3.Connection, settings: IntakeSettings) -> None:
-    set_setting(db, INTAKE_OPEN_KEY, "1" if settings.open else "0")
-    set_setting(db, MIN_AMOUNT_KEY, str(settings.min_amount))
-    set_setting(db, IGNORE_ANONYMOUS_KEY, "1" if settings.ignore_anonymous else "0")
+def save_intake_settings(db: sqlite3.Connection, board_id: int, settings: IntakeSettings) -> None:
+    set_board_setting(db, board_id, INTAKE_OPEN_KEY, "1" if settings.open else "0")
+    set_board_setting(db, board_id, MIN_AMOUNT_KEY, str(settings.min_amount))
+    set_board_setting(db, board_id, IGNORE_ANONYMOUS_KEY, "1" if settings.ignore_anonymous else "0")
 
 
-def filter_reason(db: sqlite3.Connection, donor_name: str, streamer_amount: float) -> str | None:
+def filter_reason(
+    db: sqlite3.Connection,
+    board_id: int,
+    donor_name: str,
+    streamer_amount: float,
+) -> str | None:
     """
     Почему донат не должен попасть на доску (причина отказа), или None, если должен.
     Сумму сравниваем в валюте стримера: минимум стример задаёт в своей валюте.
     """
-    settings = get_intake_settings(db)
+    settings = get_intake_settings(db, board_id)
     if not settings.open:
         return CLOSED_NOTE
     if streamer_amount < settings.min_amount:
