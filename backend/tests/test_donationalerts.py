@@ -2,7 +2,6 @@ import asyncio
 import json
 from urllib.parse import parse_qs, urlparse
 
-import httpx2
 import pytest
 from websockets.asyncio.server import serve
 
@@ -24,30 +23,6 @@ def fake_donation(donation_id: int, message: str = "Привет") -> dict:
         "created_at": "2026-10-12 12:00:00",
         "shown_at": None,
     }
-
-
-@pytest.fixture
-def fake_da(monkeypatch):
-    """Подменяет сервер DonationAlerts: запросы уходят в handle(), а не в интернет."""
-    monkeypatch.setattr(config, "DA_CLIENT_ID", "test-id")
-    monkeypatch.setattr(config, "DA_CLIENT_SECRET", "test-secret")
-    donations: list[dict] = []
-
-    def handle(request: httpx2.Request) -> httpx2.Response:
-        if request.url.path == "/oauth/token":
-            return httpx2.Response(200, json={"access_token": "access-1", "refresh_token": "refresh-1"})
-        if request.url.path == "/api/v1/user/oauth":
-            return httpx2.Response(200, json={"data": {"id": 77, "socket_connection_token": "socket-token"}})
-        if request.url.path == "/api/v1/centrifuge/subscribe":
-            channel = json.loads(request.content)["channels"][0]
-            return httpx2.Response(200, json={"channels": [{"channel": channel, "token": "channel-token"}]})
-        if request.url.path == "/api/v1/alerts/donations":
-            page = int(request.url.params.get("page", 1))
-            return httpx2.Response(200, json={"data": donations[(page - 1) * 3 : page * 3]})
-        return httpx2.Response(404)
-
-    monkeypatch.setattr(client, "http", httpx2.AsyncClient(base_url=client.BASE_URL, transport=httpx2.MockTransport(handle)))
-    return donations
 
 
 def queue_titles(client_):
