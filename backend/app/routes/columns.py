@@ -10,7 +10,7 @@ import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..board import get_column, get_column_id_by_kind, get_columns
+from ..board import get_board_id, get_column, get_column_id_by_kind, get_columns
 from ..db import get_db, now
 from ..realtime import notify_board_changed
 from ..schemas import BoardColumn, ColumnCreate, ColumnOrder, ColumnUpdate
@@ -23,89 +23,114 @@ MAX_WORK_COLUMNS = 3
 
 
 @router.get("")
-def list_columns(db: sqlite3.Connection = Depends(get_db)) -> list[BoardColumn]:
+def list_columns(
+    db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
+) -> list[BoardColumn]:
     """Все колонки доски слева направо: «Очередь», промежуточные, «Выполнено»."""
-    return get_columns(db)
+    return get_columns(db, board_id)
 
 
 @router.post("", status_code=201)
-def create_column(data: ColumnCreate, db: sqlite3.Connection = Depends(get_db)) -> BoardColumn:
+def create_column(
+    data: ColumnCreate,
+    db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
+) -> BoardColumn:
     """Добавляет промежуточную колонку последней, прямо перед «Выполнено»."""
-    work_ids = get_work_column_ids(db)
+    work_ids = get_work_column_ids(db, board_id)
     if len(work_ids) >= MAX_WORK_COLUMNS:
         raise HTTPException(status_code=400, detail=f"Промежуточных колонок может быть не больше {MAX_WORK_COLUMNS}")
 
     cursor = db.execute(
-        "INSERT INTO board_columns (title, kind, position) VALUES (?, 'work', 0)", (data.title,)
+        "INSERT INTO board_columns (board_id, title, kind, position) VALUES (?, ?, 'work', 0)",
+        (board_id, data.title),
     )
-    put_columns_in_order(db, [*work_ids, cursor.lastrowid])
+    put_columns_in_order(db, board_id, [*work_ids, cursor.lastrowid])
 
     notify_board_changed(db)
-    return get_column(db, cursor.lastrowid)
+    return get_column(db, board_id, cursor.lastrowid)
 
 
 @router.put("/order")
-def reorder_columns(data: ColumnOrder, db: sqlite3.Connection = Depends(get_db)) -> list[BoardColumn]:
+def reorder_columns(
+    data: ColumnOrder,
+    db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
+) -> list[BoardColumn]:
     """Переставляет промежуточные колонки. Прислать нужно все их id, каждый по одному разу."""
-    if sorted(data.column_ids) != sorted(get_work_column_ids(db)):
+    if sorted(data.column_ids) != sorted(get_work_column_ids(db, board_id)):
         raise HTTPException(status_code=400, detail="Нужно прислать все промежуточные колонки ровно по одному разу")
 
-    put_columns_in_order(db, data.column_ids)
+    put_columns_in_order(db, board_id, data.column_ids)
 
     notify_board_changed(db)
-    return get_columns(db)
+    return get_columns(db, board_id)
 
 
 @router.patch("/{column_id}")
-def rename_column(column_id: int, data: ColumnUpdate, db: sqlite3.Connection = Depends(get_db)) -> BoardColumn:
+def rename_column(
+    column_id: int,
+    data: ColumnUpdate,
+    db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
+) -> BoardColumn:
     """Переименовывает промежуточную колонку."""
-    get_work_column(db, column_id)
+    get_work_column(db, board_id, column_id)
     db.execute("UPDATE board_columns SET title = ? WHERE id = ?", (data.title, column_id))
 
     notify_board_changed(db)
-    return get_column(db, column_id)
+    return get_column(db, board_id, column_id)
 
 
 @router.delete("/{column_id}", status_code=204)
-def delete_column(column_id: int, db: sqlite3.Connection = Depends(get_db)) -> None:
+def delete_column(
+    column_id: int,
+    db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
+) -> None:
     """
     Удаляет промежуточную колонку. Её карточки не пропадают, а возвращаются в «Очередь».
     Удалить можно и все промежуточные колонки.
     """
-    get_work_column(db, column_id)
-    work_ids = get_work_column_ids(db)
+    get_work_column(db, board_id, column_id)
+    work_ids = get_work_column_ids(db, board_id)
 
     # Все карточки колонки (и с доски, и из истории) переезжают в «Очередь»,
     # чтобы ни одна не ссылалась на удалённую колонку.
-    incoming_id = get_column_id_by_kind(db, "incoming")
+    incoming_id = get_column_id_by_kind(db, board_id, "incoming")
     db.execute(
         "UPDATE cards SET column_id = ?, moved_at = ? WHERE column_id = ?",
         (incoming_id, now(), column_id),
     )
     db.execute("DELETE FROM board_columns WHERE id = ?", (column_id,))
-    put_columns_in_order(db, [id for id in work_ids if id != column_id])
+    put_columns_in_order(db, board_id, [id for id in work_ids if id != column_id])
 
     notify_board_changed(db)
 
 
-def get_work_column(db: sqlite3.Connection, column_id: int) -> BoardColumn:
+def get_work_column(db: sqlite3.Connection, board_id: int, column_id: int) -> BoardColumn:
     """Находит колонку и проверяет, что она промежуточная: «Очередь» и «Выполнено» менять нельзя."""
-    column = get_column(db, column_id)
+    column = get_column(db, board_id, column_id)
     if column.kind != "work":
         raise HTTPException(status_code=400, detail="«Очередь» и «Выполнено» настраивать нельзя")
     return column
 
 
-def get_work_column_ids(db: sqlite3.Connection) -> list[int]:
+def get_work_column_ids(db: sqlite3.Connection, board_id: int) -> list[int]:
     """id промежуточных колонок слева направо."""
-    return [column.id for column in get_columns(db) if column.kind == "work"]
+    return [column.id for column in get_columns(db, board_id) if column.kind == "work"]
 
 
-def put_columns_in_order(db: sqlite3.Connection, work_ids: list[int]) -> None:
+def put_columns_in_order(db: sqlite3.Connection, board_id: int, work_ids: list[int]) -> None:
     """
     Заново нумерует колонки слева направо: «Очередь» — 0, потом промежуточные
     в порядке work_ids, «Выполнено» — последней.
     """
-    ordered_ids = [get_column_id_by_kind(db, "incoming"), *work_ids, get_column_id_by_kind(db, "done")]
+    ordered_ids = [
+        get_column_id_by_kind(db, board_id, "incoming"),
+        *work_ids,
+        get_column_id_by_kind(db, board_id, "done"),
+    ]
     for position, column_id in enumerate(ordered_ids):
         db.execute("UPDATE board_columns SET position = ? WHERE id = ?", (position, column_id))

@@ -1,5 +1,6 @@
 from app.db import connect
 from app.donationalerts.listener import to_donation
+from app.donationalerts.listener import donations_board_id
 from app.donations import Donation, add_donation_card, split_message
 
 
@@ -21,8 +22,8 @@ def test_same_donation_is_added_once(client):
         id=42, username="Вася", message="Привет", amount=100, currency="RUB", streamer_amount=100
     )
     with connect() as db:
-        assert add_donation_card(db, donation) is True
-        assert add_donation_card(db, donation) is False
+        assert add_donation_card(db, donations_board_id(db), donation) is True
+        assert add_donation_card(db, donations_board_id(db), donation) is False
 
     assert len(client.get("/api/cards").json()) == 1
 

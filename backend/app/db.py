@@ -22,6 +22,9 @@ def get_database_path() -> str:
     return os.environ.get("DATABASE_PATH", str(DEFAULT_DATABASE_PATH))
 
 
+# Доски. У каждого пользователя своя доска, в ней свои колонки, карточки и настройки
+# (поле board_id в таблицах ниже говорит, какой доске принадлежит строка).
+#
 # Колонки доски. Их три вида (поле kind):
 #   incoming — «Очередь», куда падают новые донаты (всегда одна, крайняя левая);
 #   work     — промежуточные колонки, например «В работе» (их может быть несколько);
@@ -31,8 +34,23 @@ def get_database_path() -> str:
 # Если archived_at пустой (NULL) — карточка на доске, в колонке column_id.
 # Если заполнен — карточка в истории.
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS boards (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    owner_id   INTEGER REFERENCES users (id),       -- чья доска; пусто — старая доска, хозяина ещё нет
+    created_at TEXT    NOT NULL
+);
+
+-- Настройки доски «ключ — значение»: уровни, автообъединение, приём заказов и т. п.
+CREATE TABLE IF NOT EXISTS board_settings (
+    board_id INTEGER NOT NULL REFERENCES boards (id),
+    key      TEXT    NOT NULL,
+    value    TEXT    NOT NULL,
+    PRIMARY KEY (board_id, key)
+);
+
 CREATE TABLE IF NOT EXISTS board_columns (
     id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    board_id INTEGER REFERENCES boards (id),
     title    TEXT    NOT NULL,
     kind     TEXT    NOT NULL,              -- incoming | work | done
     position INTEGER NOT NULL DEFAULT 0     -- порядок слева направо
@@ -40,6 +58,7 @@ CREATE TABLE IF NOT EXISTS board_columns (
 
 CREATE TABLE IF NOT EXISTS cards (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    board_id        INTEGER REFERENCES boards (id),
     title           TEXT    NOT NULL,
     description     TEXT    NOT NULL DEFAULT '',
     column_id       INTEGER REFERENCES board_columns (id),
@@ -88,8 +107,8 @@ CREATE TABLE IF NOT EXISTS sessions (
     expires_at TEXT    NOT NULL
 );
 
--- Простое хранилище «ключ — значение» для служебных данных,
--- например токенов DonationAlerts.
+-- Простое хранилище «ключ — значение» для служебных данных всего сервера,
+-- например токенов DonationAlerts. Настройки конкретной доски — в board_settings.
 CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -140,13 +159,14 @@ def open_db() -> Iterator[sqlite3.Connection]:
 
 def init_db() -> None:
     """
-    Готовит базу при старте сервера: переделывает старую базу под новую схему,
-    создаёт недостающие таблицы и колонки доски по умолчанию.
+    Готовит базу при старте сервера: переделывает старую базу под новую схему
+    и создаёт недостающие таблицы. Доски с колонками создаются позже,
+    когда пользователь впервые откроет сайт (см. boards.py).
     """
     with open_db() as db:
         migrate_from_fixed_statuses(db)
         db.executescript(SCHEMA)
-        create_default_columns(db)
+        move_to_boards(db)
         rename_pile_to_queue(db)
         add_new_card_fields(db)
         rename_filtered_to_rejected(db)
@@ -221,15 +241,71 @@ def join_manual_card_texts(db: sqlite3.Connection) -> None:
         )
 
 
-def create_default_columns(db: sqlite3.Connection) -> None:
-    """Если колонок ещё нет (новая база), создаёт «Очередь», «В работе» и «Выполнено»."""
-    if db.execute("SELECT COUNT(*) FROM board_columns").fetchone()[0] > 0:
-        return
+def create_default_columns(db: sqlite3.Connection, board_id: int | None) -> None:
+    """Создаёт доске колонки «Очередь», «В работе» и «Выполнено»."""
     for position, (title, kind) in enumerate(DEFAULT_COLUMNS):
         db.execute(
-            "INSERT INTO board_columns (title, kind, position) VALUES (?, ?, ?)",
-            (title, kind, position),
+            "INSERT INTO board_columns (board_id, title, kind, position) VALUES (?, ?, ?, ?)",
+            (board_id, title, kind, position),
         )
+
+
+# Настройки, которые раньше лежали в общей таблице settings, а теперь у каждой доски свои
+BOARD_SETTING_KEYS = [
+    "priority_levels",  # routes/settings.py
+    "auto_merge",  # merging.py
+    "intake_open",  # intake.py
+    "min_amount",
+    "ignore_anonymous",
+    "stream_started_at",  # routes/stream.py
+]
+
+
+def move_to_boards(db: sqlite3.Connection) -> None:
+    """
+    Раньше доска была одна на весь сервер. Теперь у каждого пользователя своя,
+    и у колонок и карточек есть поле board_id.
+
+    Для старой базы: добавляем поле board_id и собираем всё, что уже есть
+    (колонки, карточки, настройки), в одну доску. Её хозяином становится тот,
+    кто подключил DonationAlerts, а если такого нет — тот, кто заходил на сайт последним
+    (скорее всего, это сам стример со своего основного браузера).
+    Если пользователей ещё нет, доска остаётся без хозяина: её заберёт себе
+    первый, кто откроет сайт (см. boards.get_board_id).
+    """
+    for table in ["board_columns", "cards"]:
+        fields = [row["name"] for row in db.execute(f"PRAGMA table_info({table})")]
+        if "board_id" not in fields:
+            db.execute(f"ALTER TABLE {table} ADD COLUMN board_id INTEGER REFERENCES boards (id)")
+    # Индексы ускоряют поиск строк одной доски. Создаём их здесь, а не в SCHEMA:
+    # в старой базе поле board_id появляется только строчкой выше.
+    db.execute("CREATE INDEX IF NOT EXISTS board_columns_board ON board_columns (board_id)")
+    db.execute("CREATE INDEX IF NOT EXISTS cards_board ON cards (board_id)")
+
+    has_old_columns = db.execute("SELECT 1 FROM board_columns WHERE board_id IS NULL LIMIT 1").fetchone()
+    if has_old_columns is None:
+        return
+
+    owner = db.execute(
+        """
+        SELECT users.id FROM users
+        LEFT JOIN user_logins ON user_logins.user_id = users.id AND user_logins.provider = 'donationalerts'
+        ORDER BY user_logins.user_id IS NULL, users.last_seen_at DESC
+        LIMIT 1
+        """
+    ).fetchone()
+    cursor = db.execute(
+        "INSERT INTO boards (owner_id, created_at) VALUES (?, ?)",
+        (owner["id"] if owner else None, now()),
+    )
+    board_id = cursor.lastrowid
+    db.execute("UPDATE board_columns SET board_id = ? WHERE board_id IS NULL", (board_id,))
+    db.execute("UPDATE cards SET board_id = ? WHERE board_id IS NULL", (board_id,))
+    for key in BOARD_SETTING_KEYS:
+        value = get_setting(db, key)
+        if value is not None:
+            set_board_setting(db, board_id, key, value)
+            delete_setting(db, key)
 
 
 def migrate_from_fixed_statuses(db: sqlite3.Connection) -> None:
@@ -247,7 +323,7 @@ def migrate_from_fixed_statuses(db: sqlite3.Connection) -> None:
 
     # 1. Создаём таблицу колонок с колонками по умолчанию.
     db.executescript(SCHEMA)
-    create_default_columns(db)
+    create_default_columns(db, None)
 
     # 2. Добавляем карточкам новые поля.
     db.execute("ALTER TABLE cards ADD COLUMN column_id INTEGER REFERENCES board_columns (id)")
@@ -302,3 +378,17 @@ def set_setting(db: sqlite3.Connection, key: str, value: str) -> None:
 
 def delete_setting(db: sqlite3.Connection, key: str) -> None:
     db.execute("DELETE FROM settings WHERE key = ?", (key,))
+
+
+def get_board_setting(db: sqlite3.Connection, board_id: int, key: str) -> str | None:
+    row = db.execute(
+        "SELECT value FROM board_settings WHERE board_id = ? AND key = ?", (board_id, key)
+    ).fetchone()
+    return row["value"] if row else None
+
+
+def set_board_setting(db: sqlite3.Connection, board_id: int, key: str, value: str) -> None:
+    db.execute(
+        "INSERT OR REPLACE INTO board_settings (board_id, key, value) VALUES (?, ?, ?)",
+        (board_id, key, value),
+    )

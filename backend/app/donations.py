@@ -28,9 +28,9 @@ class Donation:
     streamer_amount: float
 
 
-def add_donation_card(db: sqlite3.Connection, donation: Donation) -> bool:
+def add_donation_card(db: sqlite3.Connection, board_id: int, donation: Donation) -> bool:
     """
-    Создаёт карточку в «Очереди». Место в колонке определит сумма доната.
+    Создаёт карточку в «Очереди» доски board_id. Место в колонке определит сумма доната.
     Возвращает False, если карточка для этого доната уже есть (защита от дублей).
 
     Если донат не проходит настройки приёма (приём закрыт, сумма меньше минимума,
@@ -44,7 +44,7 @@ def add_donation_card(db: sqlite3.Connection, donation: Donation) -> bool:
     timestamp = now()
     # Причина отказа, если донат отсеян. Колонку «Очередь» отсеянная карточка всё равно
     # запоминает: «Вернуть на доску» положит её туда.
-    reject_note = filter_reason(db, donation.username, donation.streamer_amount)
+    reject_note = filter_reason(db, board_id, donation.username, donation.streamer_amount)
     archived_at = timestamp if reject_note else None
     archive_reason = "rejected" if reject_note else None
 
@@ -52,16 +52,17 @@ def add_donation_card(db: sqlite3.Connection, donation: Donation) -> bool:
     cursor = db.execute(
         """
         INSERT OR IGNORE INTO cards (
-            title, description, column_id, source, donation_id, donor_name,
+            board_id, title, description, column_id, source, donation_id, donor_name,
             amount, currency, streamer_amount, created_at, updated_at, moved_at,
             archived_at, archive_reason, archive_note
         )
-        VALUES (?, ?, ?, 'donationalerts', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, 'donationalerts', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
+            board_id,
             title,
             description,
-            get_column_id_by_kind(db, "incoming"),
+            get_column_id_by_kind(db, board_id, "incoming"),
             donation.id,
             donation.username,
             donation.amount,
@@ -78,11 +79,11 @@ def add_donation_card(db: sqlite3.Connection, donation: Donation) -> bool:
     if cursor.rowcount == 0:
         return False
 
-    if reject_note is None and is_auto_merge_enabled(db):
-        card = get_card(db, cursor.lastrowid)
-        target = find_auto_merge_target(db, card)
+    if reject_note is None and is_auto_merge_enabled(db, board_id):
+        card = get_card(db, board_id, cursor.lastrowid)
+        target = find_auto_merge_target(db, board_id, card)
         if target is not None:
-            merge_cards(db, target, [card.id])
+            merge_cards(db, board_id, target, [card.id])
     return True
 
 

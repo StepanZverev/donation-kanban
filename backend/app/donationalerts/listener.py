@@ -12,10 +12,12 @@
 import asyncio
 import json
 import logging
+import sqlite3
 
 from websockets.asyncio.client import connect as websocket_connect
 
 from .. import config
+from ..board import create_board, find_user_board
 from ..db import delete_setting, get_setting, open_db, set_setting
 from ..donations import Donation, add_donation_card
 from ..realtime import board_updates
@@ -33,6 +35,9 @@ ACCESS_TOKEN = "da_access_token"
 REFRESH_TOKEN = "da_refresh_token"
 # id самого нового доната, который мы уже видели. Всё, что новее, — пропущенное.
 LAST_DONATION_ID = "da_last_donation_id"
+# Кто подключил DonationAlerts: на доску этого пользователя падают донаты.
+# Пока подключение DA одно на весь сервер; у каждого своё будет на следующем этапе.
+OWNER_USER_ID = "da_owner_user_id"
 
 
 class DonationListener:
@@ -147,7 +152,7 @@ def to_donation(data: dict) -> Donation:
 async def save_donation(data: dict) -> None:
     donation = to_donation(data)
     with open_db() as db:
-        added = add_donation_card(db, donation)
+        added = add_donation_card(db, donations_board_id(db), donation)
         last_id = int(get_setting(db, LAST_DONATION_ID) or 0)
         if donation.id > last_id:
             set_setting(db, LAST_DONATION_ID, str(donation.id))
@@ -211,6 +216,24 @@ def forget_tokens() -> None:
     with open_db() as db:
         delete_setting(db, ACCESS_TOKEN)
         delete_setting(db, REFRESH_TOKEN)
+        delete_setting(db, OWNER_USER_ID)
+
+
+def donations_board_id(db: sqlite3.Connection) -> int:
+    """
+    На какую доску класть донаты: на доску того, кто подключил DonationAlerts.
+    Если подключили ещё до появления пользователей и хозяин неизвестен —
+    на самую первую доску (это и есть старая общая доска).
+    """
+    owner_id = get_setting(db, OWNER_USER_ID)
+    if owner_id is not None:
+        return find_user_board(db, int(owner_id)) or create_board(db, int(owner_id))
+
+    first = db.execute("SELECT id FROM boards ORDER BY id LIMIT 1").fetchone()
+    if first is not None:
+        return first["id"]
+    # Досок ещё нет совсем: создаём без хозяина, её заберёт первый, кто откроет сайт
+    return create_board(db, None)
 
 
 def read_setting(key: str) -> str | None:

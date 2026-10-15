@@ -24,10 +24,10 @@ from .board import (
     get_columns,
     return_to_board,
 )
-from .db import get_setting, now
+from .db import get_board_setting, now
 from .schemas import Card
 
-# Ключ в таблице settings: объединять ли новые донаты автоматически ("1" — да)
+# Ключ в таблице board_settings: объединять ли новые донаты автоматически ("1" — да)
 AUTO_MERGE_KEY = "auto_merge"
 
 # Если валюты двух донатов разные (рубли и доллары), сумму считаем в валюте стримера.
@@ -40,8 +40,8 @@ STREAMER_CURRENCY = "RUB"
 MERGE_SEPARATOR = "⸻"
 
 
-def is_auto_merge_enabled(db: sqlite3.Connection) -> bool:
-    return get_setting(db, AUTO_MERGE_KEY) == "1"
+def is_auto_merge_enabled(db: sqlite3.Connection, board_id: int) -> bool:
+    return get_board_setting(db, board_id, AUTO_MERGE_KEY) == "1"
 
 
 def is_same_donor(card: Card, other: Card) -> bool:
@@ -56,24 +56,24 @@ def is_same_donor(card: Card, other: Card) -> bool:
     return card.donor_name.casefold() == other.donor_name.casefold()
 
 
-def find_same_donor_cards(db: sqlite3.Connection, card: Card) -> list[Card]:
+def find_same_donor_cards(db: sqlite3.Connection, board_id: int, card: Card) -> list[Card]:
     """Другие карточки того же донатера на доске, от старых к новым."""
     rows = db.execute(
-        "SELECT * FROM cards WHERE archived_at IS NULL AND id != ? ORDER BY created_at, id",
-        (card.id,),
+        "SELECT * FROM cards WHERE board_id = ? AND archived_at IS NULL AND id != ? ORDER BY created_at, id",
+        (board_id, card.id),
     ).fetchall()
     return [Card(**row) for row in rows if is_same_donor(card, Card(**row))]
 
 
-def find_auto_merge_target(db: sqlite3.Connection, card: Card) -> Card | None:
+def find_auto_merge_target(db: sqlite3.Connection, board_id: int, card: Card) -> Card | None:
     """
     Куда автоматически слить новый донат, или None, если некуда:
     - в карточку донатера в промежуточной колонке (например, «В работе»), самую старую из таких;
     - иначе в его самую старую карточку в «Очереди».
     В «Выполнено» не сливаем: иначе новая просьба затерялась бы среди сделанного.
     """
-    kinds = {column.id: column.kind for column in get_columns(db)}
-    same_donor = find_same_donor_cards(db, card)
+    kinds = {column.id: column.kind for column in get_columns(db, board_id)}
+    same_donor = find_same_donor_cards(db, board_id, card)
     for kind in ("work", "incoming"):
         for other in same_donor:
             if kinds.get(other.column_id) == kind:
@@ -81,12 +81,12 @@ def find_auto_merge_target(db: sqlite3.Connection, card: Card) -> Card | None:
     return None
 
 
-def merge_cards(db: sqlite3.Connection, target: Card, card_ids: list[int]) -> Card:
+def merge_cards(db: sqlite3.Connection, board_id: int, target: Card, card_ids: list[int]) -> Card:
     """
     Сливает карточки card_ids в target. Все они должны быть на доске и от того же донатера.
     Возвращает target после слияния.
     """
-    cards = [get_card(db, card_id) for card_id in card_ids]
+    cards = [get_card(db, board_id, card_id) for card_id in card_ids]
     for card in [target, *cards]:
         if card.archived_at is not None:
             raise HTTPException(status_code=400, detail="Карточка уже в истории")
@@ -96,8 +96,8 @@ def merge_cards(db: sqlite3.Connection, target: Card, card_ids: list[int]) -> Ca
 
     # Сливаем от старых к новым, чтобы тексты шли по порядку
     for card in sorted(cards, key=lambda card: (card.created_at, card.id)):
-        merge_one(db, get_card(db, target.id), card)
-    return get_card(db, target.id)
+        merge_one(db, get_card(db, board_id, target.id), card)
+    return get_card(db, board_id, target.id)
 
 
 def merge_one(db: sqlite3.Connection, target: Card, card: Card) -> None:
@@ -131,7 +131,12 @@ def merge_one(db: sqlite3.Connection, target: Card, card: Card) -> None:
     db.execute("UPDATE cards SET merged_into_id = ? WHERE id = ?", (target.id, card.id))
 
 
-def split_cards(db: sqlite3.Connection, target: Card, card_ids: list[int] | None) -> list[Card]:
+def split_cards(
+    db: sqlite3.Connection,
+    board_id: int,
+    target: Card,
+    card_ids: list[int] | None,
+) -> list[Card]:
     """
     Возвращает на доску карточки, слитые в target. Возвращает вернувшиеся карточки.
     - card_ids = None — «Разъединить»: все слитые карточки встают в ту же колонку, где target;
@@ -150,7 +155,7 @@ def split_cards(db: sqlite3.Connection, target: Card, card_ids: list[int] | None
     if not merged:
         raise HTTPException(status_code=400, detail="Карточка ни с чем не объединена")
 
-    column_ids = {column.id for column in get_columns(db)}
+    column_ids = {column.id for column in get_columns(db, board_id)}
     for card in merged:
         unmerge_card(db, card)
         if card_ids is None:
@@ -159,9 +164,9 @@ def split_cards(db: sqlite3.Connection, target: Card, card_ids: list[int] | None
             column_id = card.column_id
         else:
             # Колонку, где карточка была, могли удалить — тогда в «Очередь»
-            column_id = get_column_id_by_kind(db, "incoming")
+            column_id = get_column_id_by_kind(db, board_id, "incoming")
         return_to_board(db, card.id, column_id)
-    return [get_card(db, card.id) for card in merged]
+    return [get_card(db, board_id, card.id) for card in merged]
 
 
 def unmerge_card(db: sqlite3.Connection, card: Card) -> None:

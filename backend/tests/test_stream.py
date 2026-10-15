@@ -1,4 +1,5 @@
 from app.db import connect
+from app.donationalerts.listener import donations_board_id
 from app.donations import Donation, add_donation_card
 
 
@@ -7,7 +8,7 @@ def donate(donation_id: int, username: str = "Вася", amount: float = 100) ->
         id=donation_id, username=username, message="Привет", amount=amount, currency="RUB", streamer_amount=amount
     )
     with connect() as db:
-        add_donation_card(db, donation)
+        add_donation_card(db, donations_board_id(db), donation)
 
 
 def stream_total(client) -> dict:

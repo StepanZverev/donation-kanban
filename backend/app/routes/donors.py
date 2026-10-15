@@ -6,6 +6,7 @@ import sqlite3
 
 from fastapi import APIRouter, Depends
 
+from ..board import get_board_id
 from ..db import get_db
 
 router = APIRouter(prefix="/api/donors", tags=["Донатеры"])
@@ -15,7 +16,11 @@ SUGGESTIONS_LIMIT = 8
 
 
 @router.get("")
-def list_donors(q: str = "", db: sqlite3.Connection = Depends(get_db)) -> list[str]:
+def list_donors(
+    q: str = "",
+    db: sqlite3.Connection = Depends(get_db),
+    board_id: int = Depends(get_board_id),
+) -> list[str]:
     """
     Ники, в которых есть буквы q (большие и маленькие не различаем), — с доски и из истории.
     Сначала ники, которые начинаются с q, потом остальные. Внутри — кто донатил недавно, тот выше.
@@ -25,10 +30,11 @@ def list_donors(q: str = "", db: sqlite3.Connection = Depends(get_db)) -> list[s
         """
         SELECT donor_name, MAX(created_at) AS last_at
         FROM cards
-        WHERE donor_name IS NOT NULL AND donor_name != ''
+        WHERE board_id = ? AND donor_name IS NOT NULL AND donor_name != ''
         GROUP BY donor_name
         ORDER BY last_at DESC
-        """
+        """,
+        (board_id,),
     ).fetchall()
 
     # Как в поиске истории: сравниваем в Python, SQLite не понимает регистр русских букв

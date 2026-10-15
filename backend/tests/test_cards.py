@@ -1,6 +1,7 @@
 import sqlite3
 
 from app.db import connect, init_db
+from app.donationalerts.listener import donations_board_id
 from app.donations import Donation, add_donation_card
 
 
@@ -37,7 +38,7 @@ def donate(username, amount, message, donation_id, streamer_amount=None):
         streamer_amount=amount if streamer_amount is None else streamer_amount,
     )
     with connect() as db:
-        add_donation_card(db, donation)
+        add_donation_card(db, donations_board_id(db), donation)
 
 
 def test_default_columns(client):
