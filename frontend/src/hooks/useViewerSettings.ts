@@ -1,31 +1,34 @@
 // Раздел настроек «Для зрителей»: ссылка для зрителей и ссылка на донат.
 
 import { useCallback, useEffect, useState } from 'react'
+import { getBoardUpdatesPath } from '../api/boards'
 import * as viewerApi from '../api/viewer'
 import type { ViewerSettings } from '../api/viewer'
+import { useBoard } from './useBoard'
 import { useBoardUpdates } from './useBoardUpdates'
 
 export function useViewerSettings() {
+  const { id: boardId } = useBoard()
   // null — ещё не загрузили
   const [settings, setSettings] = useState<ViewerSettings | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const reload = useCallback(() => {
     return viewerApi
-      .getViewerSettings()
+      .getViewerSettings(boardId)
       .then((loaded) => {
         setSettings(loaded)
         setError(null)
       })
       .catch(() => setError('Не удалось загрузить настройки. Проверь, что бэкенд запущен.'))
-  }, [])
+  }, [boardId])
 
   useEffect(() => {
     reload()
   }, [reload])
 
   // Настройки могли поменять в другой вкладке
-  useBoardUpdates(reload)
+  useBoardUpdates(reload, getBoardUpdatesPath(boardId))
 
   // Все действия устроены одинаково: отправить запрос и показать то, что вернул сервер.
   // Ошибку показываем рядом с настройками. Возвращает true, если сохранилось.
@@ -41,15 +44,15 @@ export function useViewerSettings() {
   }
 
   function saveDonationUrl(url: string) {
-    return run(() => viewerApi.saveDonationUrl(url))
+    return run(() => viewerApi.saveDonationUrl(boardId, url))
   }
 
   function createPublicLink() {
-    return run(viewerApi.createPublicLink)
+    return run(() => viewerApi.createPublicLink(boardId))
   }
 
   function deletePublicLink() {
-    return run(viewerApi.deletePublicLink)
+    return run(() => viewerApi.deletePublicLink(boardId))
   }
 
   return { settings, error, saveDonationUrl, createPublicLink, deletePublicLink }

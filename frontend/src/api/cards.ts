@@ -70,8 +70,8 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
 
 // Бэкенд отдаёт карточки уже в нужном порядке: внутри колонки сверху самый крупный донат
 // (а в «Выполнено» — последний выполненный), поэтому фронт ничего не сортирует.
-export async function getCards(): Promise<Card[]> {
-  const cards = await request<CardFromApi[]>('GET', '/api/cards')
+export async function getCards(boardId: number): Promise<Card[]> {
+  const cards = await request<CardFromApi[]>('GET', `/api/boards/${boardId}/cards`)
   return cards.map(toCard)
 }
 
@@ -84,63 +84,64 @@ function draftToApi(draft: CardDraft) {
   }
 }
 
-export async function createCard(draft: CardDraft, columnId: number): Promise<Card> {
-  const card = await request<CardFromApi>('POST', '/api/cards', { ...draftToApi(draft), column_id: columnId })
+export async function createCard(boardId: number, draft: CardDraft, columnId: number): Promise<Card> {
+  const card = await request<CardFromApi>('POST', `/api/boards/${boardId}/cards`, { ...draftToApi(draft), column_id: columnId })
   return toCard(card)
 }
 
-export async function updateCard(id: number, draft: CardDraft): Promise<Card> {
-  const card = await request<CardFromApi>('PATCH', `/api/cards/${id}`, draftToApi(draft))
+export async function updateCard(boardId: number, id: number, draft: CardDraft): Promise<Card> {
+  const card = await request<CardFromApi>('PATCH', `/api/boards/${boardId}/cards/${id}`, draftToApi(draft))
   return toCard(card)
 }
 
 // Переносит карточку в другую колонку. Место в колонке бэкенд определит сам по сумме.
-export async function moveCard(id: number, columnId: number): Promise<Card> {
-  const card = await request<CardFromApi>('POST', `/api/cards/${id}/move`, { column_id: columnId })
+export async function moveCard(boardId: number, id: number, columnId: number): Promise<Card> {
+  const card = await request<CardFromApi>('POST', `/api/boards/${boardId}/cards/${id}/move`, { column_id: columnId })
   return toCard(card)
 }
 
 // Убирает карточку с доски в историю.
-export async function removeCard(id: number): Promise<Card> {
-  const card = await request<CardFromApi>('DELETE', `/api/cards/${id}`)
+export async function removeCard(boardId: number, id: number): Promise<Card> {
+  const card = await request<CardFromApi>('DELETE', `/api/boards/${boardId}/cards/${id}`)
   return toCard(card)
 }
 
 // Убирает карточку в историю с явной пометкой — так работают зоны по краям доски
 // и «Отклонить» в меню. note — причина отказа (нужна только для 'rejected').
 export async function archiveCard(
+  boardId: number,
   id: number,
   reason: 'done' | 'deleted' | 'rejected',
   note = '',
 ): Promise<Card> {
-  const card = await request<CardFromApi>('POST', `/api/cards/${id}/archive`, { reason, note })
+  const card = await request<CardFromApi>('POST', `/api/boards/${boardId}/cards/${id}/archive`, { reason, note })
   return toCard(card)
 }
 
 // Сливает карточки cardIds в карточку targetId (все — от одного донатера).
 // Возвращает карточку targetId после слияния.
-export async function mergeCards(targetId: number, cardIds: number[]): Promise<Card> {
-  const card = await request<CardFromApi>('POST', `/api/cards/${targetId}/merge`, { card_ids: cardIds })
+export async function mergeCards(boardId: number, targetId: number, cardIds: number[]): Promise<Card> {
+  const card = await request<CardFromApi>('POST', `/api/boards/${boardId}/cards/${targetId}/merge`, { card_ids: cardIds })
   return toCard(card)
 }
 
 // «Разъединить»: слитые в targetId карточки возвращаются на доску, туда, где были.
 // cardIds — только эти (для «Отменить» после объединения), null — все.
-export async function unmergeCards(targetId: number, cardIds: number[] | null): Promise<Card[]> {
-  const cards = await request<CardFromApi[]>('POST', `/api/cards/${targetId}/unmerge`, {
+export async function unmergeCards(boardId: number, targetId: number, cardIds: number[] | null): Promise<Card[]> {
+  const cards = await request<CardFromApi[]>('POST', `/api/boards/${boardId}/cards/${targetId}/unmerge`, {
     card_ids: cardIds,
   })
   return cards.map(toCard)
 }
 
 // Кнопка «Очистить»: все карточки из «Выполнено» уходят в историю.
-export async function clearDone(): Promise<void> {
-  await request('POST', '/api/cards/clear-done')
+export async function clearDone(boardId: number): Promise<void> {
+  await request('POST', `/api/boards/${boardId}/cards/clear-done`)
 }
 
 // Кнопка «Очистить очередь»: все карточки из «Очереди» уходят в историю как удалённые.
-export async function clearQueue(): Promise<void> {
-  await request('POST', '/api/cards/clear-queue')
+export async function clearQueue(boardId: number): Promise<void> {
+  await request('POST', `/api/boards/${boardId}/cards/clear-queue`)
 }
 
 // Когда пришли самые свежие донаты (null — таких ещё не было). По ним в навигации
@@ -152,8 +153,8 @@ export type LatestDonations = {
   toHistory: string | null
 }
 
-export async function getLatestDonations(): Promise<LatestDonations> {
-  const response = await fetch('/api/cards/latest-donations')
+export async function getLatestDonations(boardId: number): Promise<LatestDonations> {
+  const response = await fetch(`/api/boards/${boardId}/cards/latest-donations`)
   if (!response.ok) {
     throw new Error(`Не удалось узнать о новых донатах: ${response.status}`)
   }

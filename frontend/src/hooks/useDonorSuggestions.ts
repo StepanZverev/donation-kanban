@@ -3,17 +3,19 @@
 
 import { useEffect, useState } from 'react'
 import { getDonorSuggestions } from '../api/donors'
+import { useBoard } from './useBoard'
 
 const DEBOUNCE_MS = 200
 
 export function useDonorSuggestions(query: string) {
+  const { id: boardId } = useBoard()
   const [suggestions, setSuggestions] = useState<string[]>([])
 
   useEffect(() => {
     // Ответ на старый запрос может прийти позже нового — такой выкидываем
     let isCurrent = true
     const timer = window.setTimeout(() => {
-      getDonorSuggestions(query)
+      getDonorSuggestions(boardId, query)
         .then((names) => {
           if (isCurrent) {
             setSuggestions(names)
@@ -27,7 +29,7 @@ export function useDonorSuggestions(query: string) {
       isCurrent = false
       window.clearTimeout(timer)
     }
-  }, [query])
+  }, [boardId, query])
 
   return suggestions
 }

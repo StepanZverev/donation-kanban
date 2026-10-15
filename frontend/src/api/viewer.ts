@@ -31,12 +31,12 @@ async function readViewerSettings(response: Response): Promise<ViewerSettings> {
   return toViewerSettings(await response.json())
 }
 
-export async function getViewerSettings(): Promise<ViewerSettings> {
-  return readViewerSettings(await fetch('/api/settings/viewer'))
+export async function getViewerSettings(boardId: number): Promise<ViewerSettings> {
+  return readViewerSettings(await fetch(`/api/boards/${boardId}/settings/viewer`))
 }
 
-export async function saveDonationUrl(url: string): Promise<ViewerSettings> {
-  const response = await fetch('/api/settings/viewer/donation-url', {
+export async function saveDonationUrl(boardId: number, url: string): Promise<ViewerSettings> {
+  const response = await fetch(`/api/boards/${boardId}/settings/viewer/donation-url`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url }),
@@ -45,12 +45,12 @@ export async function saveDonationUrl(url: string): Promise<ViewerSettings> {
 }
 
 // Включает ссылку для зрителей или делает новую (старая перестаёт работать)
-export async function createPublicLink(): Promise<ViewerSettings> {
-  return readViewerSettings(await fetch('/api/settings/viewer/link', { method: 'POST' }))
+export async function createPublicLink(boardId: number): Promise<ViewerSettings> {
+  return readViewerSettings(await fetch(`/api/boards/${boardId}/settings/viewer/link`, { method: 'POST' }))
 }
 
-export async function deletePublicLink(): Promise<ViewerSettings> {
-  return readViewerSettings(await fetch('/api/settings/viewer/link', { method: 'DELETE' }))
+export async function deletePublicLink(boardId: number): Promise<ViewerSettings> {
+  return readViewerSettings(await fetch(`/api/boards/${boardId}/settings/viewer/link`, { method: 'DELETE' }))
 }
 
 // Полный адрес страницы для зрителей, его стример копирует и выкладывает

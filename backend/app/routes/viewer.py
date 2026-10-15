@@ -6,7 +6,7 @@
 доску; кнопка «+» ведёт на страницу доната, а донат сам станет карточкой.
 
 Здесь две группы адресов:
-- /api/settings/viewer — настройки, их меняет хозяин доски;
+- /api/boards/{id}/settings/viewer — настройки, их меняет хозяин доски;
 - /api/public/... — то, что видит зритель. Эти адреса не требуют входа
   и ничего не меняют. Гостя для зрителя тоже не создаём.
 """
@@ -18,14 +18,14 @@ from urllib.parse import urlparse
 import anyio.to_thread
 from fastapi import APIRouter, Depends, HTTPException, WebSocket
 
-from ..board import get_board_cards, get_board_id, get_columns
+from ..board import get_board_cards, get_columns, get_owned_board_id
 from ..db import delete_board_setting, get_board_setting, get_db, open_db, set_board_setting
 from ..intake import get_intake_settings
 from ..realtime import notify_board_changed, send_updates_until_closed
 from ..schemas import DonationUrl, PublicBoard, PublicCard, ViewerSettings
 from .settings import read_priority_levels
 
-router = APIRouter(prefix="/api/settings/viewer", tags=["Для зрителей"])
+router = APIRouter(prefix="/api/boards/{board_id}/settings/viewer", tags=["Для зрителей"])
 public_router = APIRouter(prefix="/api/public", tags=["Для зрителей"])
 
 # Ключи в таблице board_settings
@@ -61,7 +61,7 @@ def is_allowed_donation_url(url: str) -> bool:
 @router.get("")
 def get_viewer_settings(
     db: sqlite3.Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
+    board_id: int = Depends(get_owned_board_id),
 ) -> ViewerSettings:
     return read_viewer_settings(db, board_id)
 
@@ -70,7 +70,7 @@ def get_viewer_settings(
 def save_donation_url(
     data: DonationUrl,
     db: sqlite3.Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
+    board_id: int = Depends(get_owned_board_id),
 ) -> ViewerSettings:
     """Сохраняет ссылку на донат. Пустая строка убирает кнопку «+» у зрителей."""
     url = data.url.strip()
@@ -88,7 +88,7 @@ def save_donation_url(
 @router.post("/link")
 def create_public_link(
     db: sqlite3.Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
+    board_id: int = Depends(get_owned_board_id),
 ) -> ViewerSettings:
     """
     Включает ссылку для зрителей или делает новую вместо старой.
@@ -104,7 +104,7 @@ def create_public_link(
 @router.delete("/link")
 def delete_public_link(
     db: sqlite3.Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
+    board_id: int = Depends(get_owned_board_id),
 ) -> ViewerSettings:
     """Выключает ссылку для зрителей."""
     delete_board_setting(db, board_id, PUBLIC_TOKEN_KEY)

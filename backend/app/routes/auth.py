@@ -147,6 +147,15 @@ def take_guest_cards(db: sqlite3.Connection, guest: sqlite3.Row, user_id: int) -
     if guest_board_id is not None:
         user_board_id = find_user_board(db, user_id) or create_board(db, user_id)
         move_cards_to_board(db, guest_board_id, user_board_id)
+    # Где гость был модератором, теперь модератор аккаунт. OR IGNORE: если аккаунт
+    # уже модератор этой доски, вторую такую же строку не добавляем
+    db.execute("UPDATE OR IGNORE board_members SET user_id = ? WHERE user_id = ?", (user_id, guest["id"]))
+    # Остатки гостя и модераторство на собственной доске аккаунта (хозяину оно не нужно)
+    db.execute("DELETE FROM board_members WHERE user_id = ?", (guest["id"],))
+    db.execute(
+        "DELETE FROM board_members WHERE user_id = ? AND board_id IN (SELECT id FROM boards WHERE owner_id = ?)",
+        (user_id, user_id),
+    )
     db.execute("DELETE FROM sessions WHERE user_id = ?", (guest["id"],))
     db.execute("DELETE FROM users WHERE id = ?", (guest["id"],))
 

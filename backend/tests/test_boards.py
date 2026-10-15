@@ -5,17 +5,18 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 from fastapi import WebSocketDisconnect
-from fastapi.testclient import TestClient
 
 from app.db import connect, init_db
 from app.donationalerts import listener
 from app.realtime import BoardUpdates, board_updates
 
+from .helpers import BoardClient
+
 
 @pytest.fixture
 def other(client):
     """Второй браузер: у него своя cookie, значит, свой гость и своя доска."""
-    return TestClient(client.app)
+    return BoardClient(client.app)
 
 
 @pytest.fixture
@@ -224,9 +225,8 @@ def test_server_start_listens_to_everyone_connected(client, other, fake_da, monk
 
 
 def test_old_donationalerts_tokens_move_to_board_owner(client, other):
+    user_id = client.get("/api/me").json()["id"]  # первая доска в базе — его
     other.get("/api/me")
-    client.get("/api/columns")  # у этого пользователя появляется доска, у другого — нет
-    user_id = client.get("/api/me").json()["id"]
     # Так токены хранились раньше: одни на весь сервер, в общей таблице settings
     with connect() as db:
         db.executemany(
@@ -294,8 +294,13 @@ def test_each_browser_listens_to_its_own_board(client, other):
         assert mine.receive_json() == {"type": "board_changed"}
 
 
-def test_live_updates_need_a_session(client):
-    with pytest.raises(WebSocketDisconnect) as error:
-        with client.websocket_connect("/api/ws") as websocket:
-            websocket.receive_json()
-    assert error.value.code == 1008
+def test_live_updates_need_access_to_the_board(client, other):
+    board_id = client.get("/api/me").json()["board_id"]
+    other.get("/api/me")
+    stranger_without_session = BoardClient(client.app)
+
+    for browser in [other, stranger_without_session]:
+        with pytest.raises(WebSocketDisconnect) as error:
+            with browser.websocket_connect(f"/api/boards/{board_id}/ws") as websocket:
+                websocket.receive_json()
+        assert error.value.code == 1008

@@ -10,14 +10,14 @@ import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..board import get_board_id
+from ..board import get_board_id, get_owned_board_id
 from ..db import get_board_setting, get_db, set_board_setting
 from ..intake import get_intake_settings, save_intake_settings
 from ..merging import AUTO_MERGE_KEY, is_auto_merge_enabled
 from ..realtime import notify_board_changed
 from ..schemas import AutoMerge, IntakeSettings, PriorityLevel
 
-router = APIRouter(prefix="/api/settings", tags=["Настройки"])
+router = APIRouter(prefix="/api/boards/{board_id}/settings", tags=["Настройки"])
 
 # Ключ в таблице board_settings, под которым уровни лежат одной строкой JSON
 PRIORITY_LEVELS_KEY = "priority_levels"
@@ -52,7 +52,7 @@ def read_priority_levels(db: sqlite3.Connection, board_id: int) -> list[Priority
 def save_priority_levels(
     levels: list[PriorityLevel],
     db: sqlite3.Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
+    board_id: int = Depends(get_owned_board_id),
 ) -> list[PriorityLevel]:
     """
     Сохраняет уровни целиком. Порядок не важен: сервер сам отсортирует их по сумме.
@@ -89,7 +89,7 @@ def get_auto_merge(
 def save_auto_merge(
     data: AutoMerge,
     db: sqlite3.Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
+    board_id: int = Depends(get_owned_board_id),
 ) -> AutoMerge:
     set_board_setting(db, board_id, AUTO_MERGE_KEY, "1" if data.enabled else "0")
     notify_board_changed(db, board_id)
@@ -109,7 +109,7 @@ def get_intake(
 def save_intake(
     data: IntakeSettings,
     db: sqlite3.Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
+    board_id: int = Depends(get_owned_board_id),
 ) -> IntakeSettings:
     """
     Сохраняет настройки приёма целиком. Переключатель в шапке присылает их тоже целиком,

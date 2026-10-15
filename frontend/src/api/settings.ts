@@ -17,8 +17,8 @@ function toApi(level: PriorityLevel): PriorityLevelFromApi {
   return { min_amount: level.minAmount, name: level.name, color: level.color }
 }
 
-export async function getPriorityLevels(): Promise<PriorityLevel[]> {
-  const response = await fetch('/api/settings/priority-levels')
+export async function getPriorityLevels(boardId: number): Promise<PriorityLevel[]> {
+  const response = await fetch(`/api/boards/${boardId}/settings/priority-levels`)
   if (!response.ok) {
     throw new Error(`Не удалось загрузить уровни: ${response.status}`)
   }
@@ -28,8 +28,8 @@ export async function getPriorityLevels(): Promise<PriorityLevel[]> {
 
 // Сохраняет все уровни сразу. Если бэкенд не согласен (например, нет уровня от 0),
 // в ошибке будет его объяснение — его можно показать пользователю.
-export async function savePriorityLevels(levels: PriorityLevel[]): Promise<PriorityLevel[]> {
-  const response = await fetch('/api/settings/priority-levels', {
+export async function savePriorityLevels(boardId: number, levels: PriorityLevel[]): Promise<PriorityLevel[]> {
+  const response = await fetch(`/api/boards/${boardId}/settings/priority-levels`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(levels.map(toApi)),
@@ -44,8 +44,8 @@ export async function savePriorityLevels(levels: PriorityLevel[]): Promise<Prior
 }
 
 // Галочка «Объединять донаты одного донатера автоматически»
-export async function getAutoMerge(): Promise<boolean> {
-  const response = await fetch('/api/settings/auto-merge')
+export async function getAutoMerge(boardId: number): Promise<boolean> {
+  const response = await fetch(`/api/boards/${boardId}/settings/auto-merge`)
   if (!response.ok) {
     throw new Error(`Не удалось загрузить настройку: ${response.status}`)
   }
@@ -53,8 +53,8 @@ export async function getAutoMerge(): Promise<boolean> {
   return body.enabled
 }
 
-export async function saveAutoMerge(enabled: boolean): Promise<void> {
-  const response = await fetch('/api/settings/auto-merge', {
+export async function saveAutoMerge(boardId: number, enabled: boolean): Promise<void> {
+  const response = await fetch(`/api/boards/${boardId}/settings/auto-merge`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ enabled }),
@@ -80,8 +80,8 @@ type IntakeSettingsFromApi = {
   ignore_anonymous: boolean
 }
 
-export async function getIntakeSettings(): Promise<IntakeSettings> {
-  const response = await fetch('/api/settings/intake')
+export async function getIntakeSettings(boardId: number): Promise<IntakeSettings> {
+  const response = await fetch(`/api/boards/${boardId}/settings/intake`)
   if (!response.ok) {
     throw new Error(`Не удалось загрузить настройки приёма: ${response.status}`)
   }
@@ -90,13 +90,13 @@ export async function getIntakeSettings(): Promise<IntakeSettings> {
 }
 
 // Сохраняет настройки приёма целиком
-export async function saveIntakeSettings(settings: IntakeSettings): Promise<void> {
+export async function saveIntakeSettings(boardId: number, settings: IntakeSettings): Promise<void> {
   const body: IntakeSettingsFromApi = {
     open: settings.isOpen,
     min_amount: settings.minAmount,
     ignore_anonymous: settings.ignoreAnonymous,
   }
-  const response = await fetch('/api/settings/intake', {
+  const response = await fetch(`/api/boards/${boardId}/settings/intake`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

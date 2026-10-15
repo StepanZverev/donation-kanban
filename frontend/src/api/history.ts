@@ -10,7 +10,7 @@ export type HistoryFilter = {
   query: string
 }
 
-export async function getHistory(filter: HistoryFilter): Promise<Card[]> {
+export async function getHistory(boardId: number, filter: HistoryFilter): Promise<Card[]> {
   // URLSearchParams сам закодирует русские буквы и пробелы для адреса
   const params = new URLSearchParams()
   if (filter.reason) {
@@ -20,7 +20,7 @@ export async function getHistory(filter: HistoryFilter): Promise<Card[]> {
     params.set('q', filter.query.trim())
   }
 
-  const response = await fetch(`/api/history?${params}`)
+  const response = await fetch(`/api/boards/${boardId}/history?${params}`)
   if (!response.ok) {
     throw new Error(`Не удалось загрузить историю: ${response.status}`)
   }
@@ -29,8 +29,8 @@ export async function getHistory(filter: HistoryFilter): Promise<Card[]> {
 }
 
 // Возвращает карточку на доску: в указанную колонку, а если её не указали — в «Очередь».
-export async function restoreCard(id: number, columnId?: number): Promise<void> {
-  const response = await fetch(`/api/history/${id}/restore`, {
+export async function restoreCard(boardId: number, id: number, columnId?: number): Promise<void> {
+  const response = await fetch(`/api/boards/${boardId}/history/${id}/restore`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ column_id: columnId ?? null }),
@@ -41,8 +41,8 @@ export async function restoreCard(id: number, columnId?: number): Promise<void> 
 }
 
 // Удаляет карточку из истории насовсем.
-export async function deleteForever(id: number): Promise<void> {
-  const response = await fetch(`/api/history/${id}`, { method: 'DELETE' })
+export async function deleteForever(boardId: number, id: number): Promise<void> {
+  const response = await fetch(`/api/boards/${boardId}/history/${id}`, { method: 'DELETE' })
   if (!response.ok) {
     throw new Error(`Не удалось удалить карточку: ${response.status}`)
   }

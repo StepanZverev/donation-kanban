@@ -11,9 +11,11 @@ import sqlite3
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from .. import config
+from ..board import find_or_create_user_board
 from ..db import get_db
 from ..schemas import CurrentUser
 from ..users import SESSION_COOKIE, delete_session, get_current_user, list_logins
+from .members import list_moderated_boards
 
 router = APIRouter(prefix="/api/me", tags=["Пользователь"])
 
@@ -31,6 +33,9 @@ def get_me(
         is_guest=not logins,
         logins=logins,
         can_connect_donationalerts=config.is_donationalerts_configured(),
+        # Своей доски может ещё не быть (первый визит) — тогда она создаётся здесь
+        board_id=find_or_create_user_board(db, user["id"]),
+        moderated_boards=list_moderated_boards(db, user["id"]),
     )
 
 

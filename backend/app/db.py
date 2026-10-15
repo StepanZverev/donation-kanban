@@ -117,6 +117,16 @@ CREATE TABLE IF NOT EXISTS da_connections (
     created_at       TEXT    NOT NULL
 );
 
+-- Модераторы досок: кто ещё, кроме хозяина (boards.owner_id), может работать с доской.
+-- role пока одна — moderator: двигать, править и убирать карточки, но не трогать настройки.
+CREATE TABLE IF NOT EXISTS board_members (
+    board_id   INTEGER NOT NULL REFERENCES boards (id),
+    user_id    INTEGER NOT NULL REFERENCES users (id),
+    role       TEXT    NOT NULL,
+    created_at TEXT    NOT NULL,
+    PRIMARY KEY (board_id, user_id)
+);
+
 -- Простое хранилище «ключ — значение» для служебных данных всего сервера.
 -- Настройки конкретной доски — в board_settings.
 CREATE TABLE IF NOT EXISTS settings (
@@ -282,7 +292,7 @@ def move_to_boards(db: sqlite3.Connection) -> None:
     кто подключил DonationAlerts, а если такого нет — тот, кто заходил на сайт последним
     (скорее всего, это сам стример со своего основного браузера).
     Если пользователей ещё нет, доска остаётся без хозяина: её заберёт себе
-    первый, кто откроет сайт (см. boards.get_board_id).
+    первый, кто откроет сайт (см. board.find_or_create_user_board).
     """
     for table in ["board_columns", "cards"]:
         fields = [row["name"] for row in db.execute(f"PRAGMA table_info({table})")]

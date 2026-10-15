@@ -2,15 +2,15 @@
 // Когда на сервере что-то меняется (пришёл донат, модератор в другой вкладке
 // передвинул карточку), сервер присылает {"type": "board_changed"},
 // и мы вызываем onChange — обычно это перезагрузка карточек.
-// path — адрес соединения: у стримера своя доска (/api/ws), у зрителя — доска
-// по ссылке (/api/public/boards/<токен>/ws).
+// path — адрес соединения: у открытой доски /api/boards/<id>/ws (getBoardUpdatesPath),
+// у зрителя — доска по ссылке /api/public/boards/<токен>/ws.
 
 import { useEffect } from 'react'
 
 // Через сколько пытаться переподключиться, если соединение оборвалось
 const RECONNECT_DELAY_MS = 2000
 
-export function useBoardUpdates(onChange: () => void, path = '/api/ws') {
+export function useBoardUpdates(onChange: () => void, path: string) {
   useEffect(() => {
     let socket: WebSocket | null = null
     let reconnectTimer: number | undefined

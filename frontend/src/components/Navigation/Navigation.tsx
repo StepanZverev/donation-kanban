@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router'
+import { useBoard } from '../../hooks/useBoard'
 import styles from './Navigation.module.css'
 
 type NavigationProps = {
@@ -12,20 +13,26 @@ type NavigationProps = {
 // (совпадает ли её адрес с текущим), и передаёт это в className.
 export function Navigation(props: NavigationProps) {
   const { hasNewOnBoard, hasNewInHistory } = props
+  const board = useBoard()
+  // Все вкладки — внутри открытой доски: /boards/5, /boards/5/history, /boards/5/settings
+  const boardPath = `/boards/${board.id}`
 
   return (
     <nav className={styles.navigation}>
-      <NavLink to="/" end className={getLinkClassName}>
+      <NavLink to={boardPath} end className={getLinkClassName}>
         Доска
         {hasNewOnBoard && <span className={styles.newDot} title="Есть новые донаты" />}
       </NavLink>
-      <NavLink to="/history" className={getLinkClassName}>
+      <NavLink to={`${boardPath}/history`} className={getLinkClassName}>
         История
         {hasNewInHistory && <span className={styles.newDot} title="Есть отсеянные донаты" />}
       </NavLink>
-      <NavLink to="/settings" className={getLinkClassName}>
-        Настройки
-      </NavLink>
+      {/* Настройки доски меняет только хозяин, модератору вкладка не нужна */}
+      {board.role === 'owner' && (
+        <NavLink to={`${boardPath}/settings`} className={getLinkClassName}>
+          Настройки
+        </NavLink>
+      )}
     </nav>
   )
 
