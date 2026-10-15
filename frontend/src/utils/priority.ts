@@ -11,9 +11,10 @@ export type PriorityLevel = {
 }
 
 export const DEFAULT_PRIORITY_LEVELS: PriorityLevel[] = [
-  { minAmount: 0, name: 'Низкий', color: '#8c959f' },
-  { minAmount: 100, name: 'Средний', color: '#d4a72c' },
-  { minAmount: 500, name: 'Высокий', color: '#cf222e' },
+  { minAmount: 0, name: 'Низкий', color: '#85839a' }, // серый
+  { minAmount: 100, name: 'Средний', color: '#3f9a68' }, // зелёный
+  { minAmount: 500, name: 'Высокий', color: '#b8902f' }, // золотой
+  { minAmount: 1000, name: 'Топ', color: '#c9545d' }, // красный
 ]
 
 // Находит уровень для суммы: самый «высокий» уровень, до нижней границы которого сумма дотянулась.
