@@ -103,7 +103,8 @@ export function CardItem(props: CardItemProps) {
   // Подпись внизу: «3 мин назад · 2 доната»
   const timeAgo = useTimeAgo(lastDonationAt)
   const donationsWord = `${card.mergeCount} ${pluralize(card.mergeCount, ['донат', 'доната', 'донатов'])}`
-  const meta = `${timeAgo} · ${donationsWord}`
+  // Количество пишем, только когда донатов несколько: «1 донат» ничего не сообщает
+  const meta = card.mergeCount > 1 ? `${timeAgo} · ${donationsWord}` : timeAgo
 
   // Меряем, обрезан ли текст. Делаем это, пока он свёрнут: у обрезанного полная высота
   // (scrollHeight) больше видимой (clientHeight). ResizeObserver перемеряет,
