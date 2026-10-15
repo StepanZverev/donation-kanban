@@ -26,8 +26,8 @@ PRIORITY_LEVELS_KEY = "priority_levels"
 DEFAULT_PRIORITY_LEVELS = [
     PriorityLevel(min_amount=0, name="Низкий", color="#85839a"),  # серый
     PriorityLevel(min_amount=100, name="Средний", color="#3f9a68"),  # зелёный
-    PriorityLevel(min_amount=500, name="Высокий", color="#b8902f"),  # золотой
-    PriorityLevel(min_amount=1000, name="Топ", color="#c9545d"),  # красный
+    PriorityLevel(min_amount=500, name="Высокий", color="#c99a24"),  # золотой
+    PriorityLevel(min_amount=1000, name="Топ", color="#d6474f"),  # красный
 ]
 
 
