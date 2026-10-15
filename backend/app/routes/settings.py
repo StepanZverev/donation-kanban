@@ -21,11 +21,13 @@ router = APIRouter(prefix="/api/settings", tags=["Настройки"])
 # Ключ в таблице settings, под которым уровни лежат одной строкой JSON
 PRIORITY_LEVELS_KEY = "priority_levels"
 
-# Уровни, пока стример ничего не менял
+# Уровни, пока стример ничего не менял. Такие же лежат во фронте: src/utils/priority.ts.
+# Цвета приглушённые и подобраны так, чтобы сумма этим цветом читалась и на светлой, и на тёмной теме.
 DEFAULT_PRIORITY_LEVELS = [
-    PriorityLevel(min_amount=0, name="Низкий", color="#8c959f"),
-    PriorityLevel(min_amount=100, name="Средний", color="#d4a72c"),
-    PriorityLevel(min_amount=500, name="Высокий", color="#cf222e"),
+    PriorityLevel(min_amount=0, name="Низкий", color="#85839a"),  # серый
+    PriorityLevel(min_amount=100, name="Средний", color="#3f9a68"),  # зелёный
+    PriorityLevel(min_amount=500, name="Высокий", color="#c99a24"),  # золотой
+    PriorityLevel(min_amount=1000, name="Топ", color="#d6474f"),  # красный
 ]
 
 
