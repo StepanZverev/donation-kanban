@@ -6,7 +6,7 @@ import pytest
 from websockets.asyncio.server import serve
 
 from app import config
-from app.db import get_setting, open_db, set_setting
+from app.db import open_db
 from app.donationalerts import client, listener
 
 
@@ -47,10 +47,10 @@ def test_login_and_callback(client, fake_da, monkeypatch):
     # Старые донаты, которые были до подключения, в очередь попасть не должны
     fake_da.extend([fake_donation(5), fake_donation(4)])
 
-    async def fake_restart():
+    async def fake_restart(user_id):
         pass
 
-    monkeypatch.setattr(listener.donation_listener, "restart", fake_restart)
+    monkeypatch.setattr(listener.donation_listeners, "restart", fake_restart)
 
     login = client.get("/api/auth/login", follow_redirects=False)
     assert login.status_code == 307
@@ -62,9 +62,8 @@ def test_login_and_callback(client, fake_da, monkeypatch):
     assert callback.status_code == 307
     assert callback.headers["location"] == config.FRONTEND_URL
 
-    with open_db() as db:
-        assert get_setting(db, listener.ACCESS_TOKEN) == "access-1"
-        assert get_setting(db, listener.LAST_DONATION_ID) == "5"
+    connection = listener.read_connection(client.get("/api/me").json()["id"])
+    assert (connection["access_token"], connection["last_donation_id"]) == ("access-1", 5)
     assert client.get("/api/auth/status").json()["connected"] is True
     assert queue_titles(client) == []
 
@@ -74,28 +73,33 @@ def test_callback_with_wrong_state_is_rejected(client, fake_da):
     assert client.get("/api/auth/callback?code=abc&state=wrong").status_code == 400
 
 
-def test_missed_donations_are_imported_in_order(client, fake_da):
+def add_connection(client_, last_donation_id: int) -> int:
+    """Подключение DA для пользователя тестового клиента, как будто он уже входил. Возвращает его id."""
+    user_id = client_.get("/api/me").json()["id"]
+    listener.save_connection(user_id, {"access_token": "access-1", "refresh_token": "refresh-1"})
     with open_db() as db:
-        set_setting(db, listener.LAST_DONATION_ID, "10")
+        db.execute("UPDATE da_connections SET last_donation_id = ?", (last_donation_id,))
+    return user_id
+
+
+def test_missed_donations_are_imported_in_order(client, fake_da):
+    user_id = add_connection(client, last_donation_id=10)
     # DA отдаёт сначала новые; по 3 на страницу, так что 11 и 10 — на второй
     fake_da.extend([fake_donation(i, f"Донат {i}") for i in [14, 13, 12, 11, 10, 9]])
 
-    asyncio.run(listener.import_missed_donations("access-1"))
+    asyncio.run(listener.import_missed_donations(user_id, "access-1"))
 
     assert queue_titles(client) == ["Донат 11", "Донат 12", "Донат 13", "Донат 14"]
-    with open_db() as db:
-        assert get_setting(db, listener.LAST_DONATION_ID) == "14"
+    assert listener.read_connection(user_id)["last_donation_id"] == 14
 
     # Повторная догрузка ничего не дублирует
-    asyncio.run(listener.import_missed_donations("access-1"))
+    asyncio.run(listener.import_missed_donations(user_id, "access-1"))
     assert len(queue_titles(client)) == 4
 
 
 def test_listener_turns_live_donation_into_card(client, fake_da, monkeypatch):
     """Полный путь: подключение к (поддельному) Centrifugo, подписка, донат → карточка."""
-    with open_db() as db:
-        set_setting(db, listener.ACCESS_TOKEN, "access-1")
-        set_setting(db, listener.LAST_DONATION_ID, "0")
+    user_id = add_connection(client, last_donation_id=0)
     received: list[dict] = []
 
     async def fake_centrifugo(websocket):
@@ -114,7 +118,7 @@ def test_listener_turns_live_donation_into_card(client, fake_da, monkeypatch):
         async with serve(fake_centrifugo, "127.0.0.1", 0) as server:
             port = server.sockets[0].getsockname()[1]
             monkeypatch.setattr(listener, "CENTRIFUGO_URL", f"ws://127.0.0.1:{port}")
-            donation_listener = listener.DonationListener()
+            donation_listener = listener.DonationListener(user_id)
             donation_listener.start()
             for _ in range(50):
                 await asyncio.sleep(0.05)

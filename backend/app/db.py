@@ -107,8 +107,18 @@ CREATE TABLE IF NOT EXISTS sessions (
     expires_at TEXT    NOT NULL
 );
 
--- Простое хранилище «ключ — значение» для служебных данных всего сервера,
--- например токенов DonationAlerts. Настройки конкретной доски — в board_settings.
+-- Подключения DonationAlerts: у каждого стримера свои токены.
+-- Донаты из подключения падают на доску этого пользователя.
+CREATE TABLE IF NOT EXISTS da_connections (
+    user_id          INTEGER PRIMARY KEY REFERENCES users (id),
+    access_token     TEXT    NOT NULL,
+    refresh_token    TEXT,
+    last_donation_id INTEGER NOT NULL DEFAULT 0,       -- самый новый донат, который уже видели
+    created_at       TEXT    NOT NULL
+);
+
+-- Простое хранилище «ключ — значение» для служебных данных всего сервера.
+-- Настройки конкретной доски — в board_settings.
 CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
@@ -167,6 +177,7 @@ def init_db() -> None:
         migrate_from_fixed_statuses(db)
         db.executescript(SCHEMA)
         move_to_boards(db)
+        move_da_tokens_to_connections(db)
         rename_pile_to_queue(db)
         add_new_card_fields(db)
         rename_filtered_to_rejected(db)
@@ -306,6 +317,38 @@ def move_to_boards(db: sqlite3.Connection) -> None:
         if value is not None:
             set_board_setting(db, board_id, key, value)
             delete_setting(db, key)
+
+
+def move_da_tokens_to_connections(db: sqlite3.Connection) -> None:
+    """
+    Раньше подключение DonationAlerts было одно на весь сервер и лежало в settings.
+    Переносим его в da_connections — тому пользователю, кто его подключал.
+    Если он неизвестен (подключали ещё до появления пользователей), отдаём хозяину
+    первой доски: туда донаты и падали. Если и такого нет, подключение просто
+    забываем — DA нужно будет подключить заново.
+    """
+    access_token = get_setting(db, "da_access_token")
+    if access_token is not None:
+        owner_id = get_setting(db, "da_owner_user_id")
+        if owner_id is None:
+            row = db.execute("SELECT owner_id FROM boards WHERE owner_id IS NOT NULL ORDER BY id LIMIT 1").fetchone()
+            owner_id = row["owner_id"] if row else None
+        if owner_id is not None:
+            db.execute(
+                """
+                INSERT OR IGNORE INTO da_connections (user_id, access_token, refresh_token, last_donation_id, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    int(owner_id),
+                    access_token,
+                    get_setting(db, "da_refresh_token"),
+                    int(get_setting(db, "da_last_donation_id") or 0),
+                    now(),
+                ),
+            )
+    for key in ["da_access_token", "da_refresh_token", "da_last_donation_id", "da_owner_user_id"]:
+        delete_setting(db, key)
 
 
 def migrate_from_fixed_statuses(db: sqlite3.Connection) -> None:

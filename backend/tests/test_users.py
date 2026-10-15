@@ -9,10 +9,10 @@ from app.donationalerts import listener
 def no_listener(monkeypatch):
     """После входа в DA бэкенд перезапускает слушателя донатов. В тестах он не нужен."""
 
-    async def fake_restart():
+    async def fake_restart(user_id):
         pass
 
-    monkeypatch.setattr(listener.donation_listener, "restart", fake_restart)
+    monkeypatch.setattr(listener.donation_listeners, "restart", fake_restart)
 
 
 def connect_donationalerts(client_):
