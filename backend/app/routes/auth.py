@@ -159,14 +159,18 @@ def choose_user(db: sqlite3.Connection, da_user_id: str, current_user: sqlite3.R
 def take_guest_cards(db: sqlite3.Connection, guest: sqlite3.Row, user_id: int) -> None:
     """
     Гость вошёл в аккаунт, который уже есть (например, после «Выйти» или с нового устройства).
-    Его карточки переезжают на доску аккаунта, чтобы не потеряться.
-    Если до входа это был не гость, а другой аккаунт, его доску не трогаем.
+    Его карточки переезжают на доску аккаунта, чтобы не потеряться, а сам гость
+    с пустой доской удаляется: войти в него больше нельзя, хранить незачем.
+    Если до входа это был не гость, а другой аккаунт, его не трогаем.
     """
-    guest_board_id = find_user_board(db, guest["id"])
-    if list_logins(db, guest["id"]) or guest_board_id is None:
+    if list_logins(db, guest["id"]):
         return
-    user_board_id = find_user_board(db, user_id) or create_board(db, user_id)
-    move_cards_to_board(db, guest_board_id, user_board_id)
+    guest_board_id = find_user_board(db, guest["id"])
+    if guest_board_id is not None:
+        user_board_id = find_user_board(db, user_id) or create_board(db, user_id)
+        move_cards_to_board(db, guest_board_id, user_board_id)
+    db.execute("DELETE FROM sessions WHERE user_id = ?", (guest["id"],))
+    db.execute("DELETE FROM users WHERE id = ?", (guest["id"],))
 
 
 @router.post("/logout")

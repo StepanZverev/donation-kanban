@@ -180,6 +180,8 @@ def test_guest_cards_move_to_account_on_login(client, fake_da, no_listener):
     cards = {card["title"]: columns[card["column_id"]] for card in client.get("/api/cards").json()}
     assert cards == {"Карточка аккаунта": "Очередь", "Гостевая в работе": "В работе"}
     assert [card["title"] for card in client.get("/api/history").json()] == ["Гостевая в истории"]
+    # Гость с опустевшей доской удалён: в базе остались только аккаунт и его доска
     with connect() as db:
         assert db.execute("SELECT COUNT(*) FROM boards").fetchone()[0] == 1
+        assert db.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 1
 
