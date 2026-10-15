@@ -4,8 +4,8 @@ import { Navigation } from '../Navigation/Navigation'
 import { StreamTotal } from '../StreamTotal/StreamTotal'
 import styles from './AppHeader.module.css'
 
-// Шапка приложения в одну строку: логотип, вкладки, справа сумма за стрим,
-// переключатель приёма заказов и статус DonationAlerts.
+// Шапка приложения в одну строку: логотип, вкладки, справа сумма за стрим
+// и капсула со статусом DonationAlerts и переключателем приёма заказов.
 type AppHeaderProps = {
   // Точки «есть новое» у вкладок (см. useNewDonations)
   hasNewOnBoard: boolean
@@ -35,8 +35,12 @@ export function AppHeader(props: AppHeaderProps) {
 
         <div className={styles.right}>
           <StreamTotal />
-          <IntakeToggle />
-          <DonationAlertsStatus />
+          {/* Статус DonationAlerts и переключатель приёма — одна капсула с разделителем:
+              оба про то, доходят ли донаты до доски */}
+          <div className={styles.capsule}>
+            <DonationAlertsStatus />
+            <IntakeToggle />
+          </div>
         </div>
       </div>
     </header>

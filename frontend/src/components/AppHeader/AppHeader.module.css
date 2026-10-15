@@ -51,9 +51,16 @@
   margin-left: auto;
 }
 
+/* Рамка вокруг двух половин: статус DonationAlerts и переключатель приёма */
+.capsule {
+  display: flex;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+}
+
 /* На узком экране (например, окно на половину монитора рядом с игрой)
    прячем название: от логотипа остаётся значок */
-@media (max-width: 1000px) {
+@media (max-width: 1100px) {
   .content {
     gap: 12px;
   }
