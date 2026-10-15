@@ -1,15 +1,18 @@
-/* Вкладки в ряд на всю ширину, каждая забирает поровну места */
+/* Вкладки в ряд на всю ширину. Не помещаются — ряд прокручивается вбок
+   (пальцем или колесом с Shift), полосу прокрутки не показываем */
 .tabs {
   display: flex;
   gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
   padding: 4px;
   border-radius: 10px;
   background-color: var(--color-column);
 }
 
+/* Вкладка не уже своего содержимого; свободное место вкладки делят поровну */
 .tab {
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 1 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,7 +33,15 @@
   box-shadow: 0 1px 3px var(--color-shadow);
 }
 
+/* Длинное название обрезается многоточием, чтобы одна вкладка не забирала весь ряд */
+.name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .count {
+  flex-shrink: 0;
   font-weight: 400;
   color: var(--color-text-secondary);
 }
