@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from 'react'
 import type { BoardColumn, Card } from '../../types/card'
-import { useNow } from '../../hooks/useNow'
+import { useIsRecent } from '../../hooks/useIsRecent'
+import { useTimeAgo } from '../../hooks/useTimeAgo'
 import { getCardText, getDonorName } from '../../utils/donor'
 import { formatMoney } from '../../utils/money'
 import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
-import { formatTimeAgo, GLOW_SECONDS, pluralize } from '../../utils/time'
+import { GLOW_SECONDS, pluralize } from '../../utils/time'
 import { CardMenu } from '../CardMenu/CardMenu'
 import styles from './CardItem.module.css'
 
@@ -76,9 +77,6 @@ export function CardItem(props: CardItemProps) {
   const [isTextCut, setIsTextCut] = useState(false)
   // Ссылка на абзац с текстом, чтобы померить его высоту
   const textRef = useRef<HTMLDivElement>(null)
-  // Текущее время раз в секунду — чтобы «40 сек назад» обновлялось само
-  // и подсветка гасла вовремя
-  const now = useNow(1000)
 
   // Цвет полоски и суммы зависит от суммы доната. Ручные карточки считаются суммой 0.
   const priority = getPriorityLevel(card.streamerAmount ?? 0, priorityLevels)
@@ -99,10 +97,12 @@ export function CardItem(props: CardItemProps) {
     new Date(lastDonationAt).getTime(),
     card.lastMergedAt ? new Date(card.lastMergedAt).getTime() : 0,
   )
-  const isGlowing = !isMuted && (isNew || now - lastEventTime < GLOW_SECONDS * 1000)
+  const isRecentEvent = useIsRecent(lastEventTime, GLOW_SECONDS * 1000)
+  const isGlowing = !isMuted && (isNew || isRecentEvent)
   // Подпись внизу: «3 мин назад · 2 доната»
+  const timeAgo = useTimeAgo(lastDonationAt)
   const donationsWord = `${card.mergeCount} ${pluralize(card.mergeCount, ['донат', 'доната', 'донатов'])}`
-  const meta = `${formatTimeAgo(lastDonationAt, now)} · ${donationsWord}`
+  const meta = `${timeAgo} · ${donationsWord}`
 
   // Меряем, обрезан ли текст. Делаем это, пока он свёрнут: у обрезанного полная высота
   // (scrollHeight) больше видимой (clientHeight). ResizeObserver перемеряет,
@@ -149,10 +149,17 @@ export function CardItem(props: CardItemProps) {
       </button>
 
       <div className={styles.content}>
+        {/* Первая строка: ник и сумма, справа меню «⋯». Если ник и сумма рядом не влезают,
+            сумма переносится на строку ниже, а меню остаётся у правого края */}
         <header className={styles.header}>
-          <h3 className={styles.heading} title={heading}>
-            {heading}
-          </h3>
+          <div className={styles.titleLine}>
+            <h3 className={styles.heading} title={heading}>
+              {heading}
+            </h3>
+            {card.amount !== null && (
+              <span className={styles.amount}>{formatMoney(card.amount, card.currency)}</span>
+            )}
+          </div>
           <div className={styles.menuSlot}>
             <CardMenu
               moveTargets={moveTargets}
@@ -164,9 +171,6 @@ export function CardItem(props: CardItemProps) {
               onUnmerge={SHOW_UNMERGE && isMerged ? handleUnmerge : undefined}
             />
           </div>
-          {card.amount !== null && (
-            <span className={styles.amount}>{formatMoney(card.amount, card.currency)}</span>
-          )}
         </header>
 
         {/* Текст и ссылка под ним работают как одно целое: клик по любому из них
