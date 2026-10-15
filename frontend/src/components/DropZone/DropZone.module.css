@@ -21,7 +21,9 @@
 .delete {
   grid-column: 1;
   grid-row: 3;
-  border-left: none;
+  /* Ширина 0, а не border: none: при наведении рамка становится сплошной (border-style),
+     и «none» превратилось бы обратно в рамку 2px — текст сдвинулся бы */
+  border-left-width: 0;
   border-radius: 0 10px 10px 0;
   border-color: color-mix(in srgb, var(--color-error) 40%, transparent);
   background-color: color-mix(in srgb, var(--color-error) 6%, transparent);
@@ -32,7 +34,7 @@
 .done {
   grid-column: 3;
   grid-row: 3;
-  border-right: none;
+  border-right-width: 0;
   border-radius: 10px 0 0 10px;
   border-color: color-mix(in srgb, var(--color-success) 40%, transparent);
   background-color: color-mix(in srgb, var(--color-success) 6%, transparent);
