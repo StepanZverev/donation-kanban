@@ -59,6 +59,35 @@ CREATE TABLE IF NOT EXISTS cards (
     merged_into_id  INTEGER                             -- в какую карточку слили эту (если reason = merged)
 );
 
+-- Пользователи. Сначала каждый — гость: строка в users есть,
+-- а способов входа (user_logins) нет. Подключил DonationAlerts — появился способ входа.
+CREATE TABLE IF NOT EXISTS users (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    name         TEXT,                                  -- имя из DonationAlerts; у гостя пусто
+    avatar_url   TEXT,
+    created_at   TEXT    NOT NULL,
+    last_seen_at TEXT    NOT NULL                       -- когда последний раз открывал сайт
+);
+
+-- Чем человек входит: donationalerts (позже можно добавить twitch и другие).
+-- Один аккаунт DonationAlerts принадлежит только одному пользователю.
+CREATE TABLE IF NOT EXISTS user_logins (
+    provider         TEXT    NOT NULL,                  -- donationalerts
+    provider_user_id TEXT    NOT NULL,                  -- id пользователя в этом сервисе
+    user_id          INTEGER NOT NULL REFERENCES users (id),
+    created_at       TEXT    NOT NULL,
+    PRIMARY KEY (provider, provider_user_id)
+);
+
+-- Сессии: по ним бэкенд узнаёт, кто пришёл. Браузер хранит токен в cookie,
+-- а мы — только его хэш, чтобы утечка базы не позволила войти чужим токеном.
+CREATE TABLE IF NOT EXISTS sessions (
+    token_hash TEXT    PRIMARY KEY,
+    user_id    INTEGER NOT NULL REFERENCES users (id),
+    created_at TEXT    NOT NULL,
+    expires_at TEXT    NOT NULL
+);
+
 -- Простое хранилище «ключ — значение» для служебных данных,
 -- например токенов DonationAlerts.
 CREATE TABLE IF NOT EXISTS settings (

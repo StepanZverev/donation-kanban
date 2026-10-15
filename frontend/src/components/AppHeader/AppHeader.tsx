@@ -1,11 +1,12 @@
+import { AccountMenu } from '../AccountMenu/AccountMenu'
 import { DonationAlertsStatus } from '../DonationAlertsStatus/DonationAlertsStatus'
 import { IntakeToggle } from '../IntakeToggle/IntakeToggle'
 import { Navigation } from '../Navigation/Navigation'
 import { StreamTotal } from '../StreamTotal/StreamTotal'
 import styles from './AppHeader.module.css'
 
-// Шапка приложения в одну строку: логотип, вкладки, справа сумма за стрим
-// и капсула со статусом DonationAlerts и переключателем приёма заказов.
+// Шапка приложения в одну строку: логотип, вкладки, справа сумма за стрим,
+// капсула со статусом DonationAlerts и переключателем приёма заказов и кто вошёл.
 type AppHeaderProps = {
   // Точки «есть новое» у вкладок (см. useNewDonations)
   hasNewOnBoard: boolean
@@ -41,6 +42,7 @@ export function AppHeader(props: AppHeaderProps) {
             <DonationAlertsStatus />
             <IntakeToggle />
           </div>
+          <AccountMenu />
         </div>
       </div>
     </header>

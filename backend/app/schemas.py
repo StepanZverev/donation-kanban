@@ -196,3 +196,15 @@ class StreamTotal(BaseModel):
     donation_count: int
     # Сколько карточек сейчас на доске — столько уйдёт в историю при сбросе
     board_card_count: int
+
+
+class CurrentUser(BaseModel):
+    """Кто открыл сайт. Гость — пока не подключил ни одного способа входа."""
+
+    id: int
+    name: str | None
+    avatar_url: str | None
+    is_guest: bool
+    logins: list[str]  # например ["donationalerts"]
+    # Можно ли сейчас подключить DonationAlerts (вписаны ли ключи в backend/.env)
+    can_connect_donationalerts: bool
