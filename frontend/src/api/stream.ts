@@ -19,8 +19,8 @@ function toStreamTotal(body: StreamTotalFromApi): StreamTotal {
   return { total: body.total, donationCount: body.donation_count, boardCardCount: body.board_card_count }
 }
 
-export async function getStreamTotal(): Promise<StreamTotal> {
-  const response = await fetch('/api/stream-total')
+export async function getStreamTotal(boardId: number): Promise<StreamTotal> {
+  const response = await fetch(`/api/boards/${boardId}/stream-total`)
   if (!response.ok) {
     throw new Error(`Не удалось загрузить сумму за стрим: ${response.status}`)
   }
@@ -28,8 +28,8 @@ export async function getStreamTotal(): Promise<StreamTotal> {
 }
 
 // «Сбросить доску»: сумма обнуляется, все карточки уходят в историю
-export async function resetBoard(): Promise<StreamTotal> {
-  const response = await fetch('/api/board/reset', { method: 'POST' })
+export async function resetBoard(boardId: number): Promise<StreamTotal> {
+  const response = await fetch(`/api/boards/${boardId}/reset`, { method: 'POST' })
   if (!response.ok) {
     throw new Error(`Не удалось сбросить доску: ${response.status}`)
   }

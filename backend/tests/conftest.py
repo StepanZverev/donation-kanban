@@ -2,10 +2,11 @@ import json
 
 import httpx2
 import pytest
-from fastapi.testclient import TestClient
 
 from app import config
 from app.donationalerts import client as da_client
+
+from .helpers import BoardClient
 
 
 @pytest.fixture
@@ -14,7 +15,7 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "test.db"))
     from app.main import app
 
-    with TestClient(app) as test_client:
+    with BoardClient(app) as test_client:
         yield test_client
 
 

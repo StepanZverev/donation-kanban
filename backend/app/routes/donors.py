@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends
 from ..board import get_board_id
 from ..db import get_db
 
-router = APIRouter(prefix="/api/donors", tags=["Донатеры"])
+router = APIRouter(prefix="/api/boards/{board_id}/donors", tags=["Донатеры"])
 
 # Сколько ников показывать в подсказке
 SUGGESTIONS_LIMIT = 8

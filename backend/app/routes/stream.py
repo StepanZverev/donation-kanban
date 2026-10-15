@@ -11,12 +11,12 @@ import sqlite3
 
 from fastapi import APIRouter, Depends
 
-from ..board import archive_card, get_board_id, get_column_id_by_kind
+from ..board import archive_card, get_board_id, get_column_id_by_kind, get_owned_board_id
 from ..db import get_board_setting, get_db, now, set_board_setting
 from ..realtime import notify_board_changed
 from ..schemas import StreamTotal
 
-router = APIRouter(prefix="/api", tags=["Стрим"])
+router = APIRouter(prefix="/api/boards/{board_id}", tags=["Стрим"])
 
 # Ключ в таблице board_settings: когда последний раз сбрасывали доску.
 # Пока не сбрасывали ни разу, считаем все донаты.
@@ -57,10 +57,10 @@ def get_stream_total(
     )
 
 
-@router.post("/board/reset")
+@router.post("/reset")
 def reset_board(
     db: sqlite3.Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
+    board_id: int = Depends(get_owned_board_id),
 ) -> StreamTotal:
     """
     «Сбросить доску»: сумма за стрим обнуляется, все карточки уходят с доски в историю.

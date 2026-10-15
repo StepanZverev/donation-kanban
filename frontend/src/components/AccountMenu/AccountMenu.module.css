@@ -99,3 +99,24 @@
 .logoutButton {
   color: var(--color-error);
 }
+
+/* Список досок под разделителем */
+.boards {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+.boardLink {
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.boardLink:hover {
+  text-decoration: underline;
+}

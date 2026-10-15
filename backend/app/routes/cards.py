@@ -32,7 +32,7 @@ from ..schemas import (
     LatestDonations,
 )
 
-router = APIRouter(prefix="/api/cards", tags=["Карточки"])
+router = APIRouter(prefix="/api/boards/{board_id}/cards", tags=["Карточки"])
 
 
 @router.get("")

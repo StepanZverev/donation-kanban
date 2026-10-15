@@ -208,6 +208,10 @@ class CurrentUser(BaseModel):
     logins: list[str]  # например ["donationalerts"]
     # Можно ли сейчас подключить DonationAlerts (вписаны ли ключи в backend/.env)
     can_connect_donationalerts: bool
+    # Своя доска пользователя: её открываем по адресу «/»
+    board_id: int
+    # Чужие доски, где пользователь модератор
+    moderated_boards: list["BoardInfo"]
 
 
 class ViewerSettings(BaseModel):
@@ -255,3 +259,35 @@ class PublicBoard(BaseModel):
     # Подключён ли у стримера DonationAlerts. Без него донат не станет карточкой,
     # поэтому кнопку «+» зрителям не показываем.
     donations_connected: bool
+
+
+class BoardInfo(BaseModel):
+    """Доска и то, кем на ней является тот, кто спрашивает."""
+
+    id: int
+    # Имя хозяина доски из DonationAlerts. None — хозяин гость, имени нет.
+    owner_name: str | None
+    role: Literal["owner", "moderator"]
+
+
+class BoardMember(BaseModel):
+    """Модератор доски в списке «Модераторы»."""
+
+    user_id: int
+    name: str | None
+    avatar_url: str | None
+    is_guest: bool
+
+
+class InviteSettings(BaseModel):
+    # Секретная часть ссылки-приглашения (/invite/<invite_token>). None — приглашения выключены.
+    invite_token: str | None
+
+
+class Invite(BaseModel):
+    """Что видит человек, открывший ссылку-приглашение."""
+
+    board_id: int
+    owner_name: str | None
+    # Кто он уже на этой доске: хозяин, модератор или пока никто (None)
+    role: Literal["owner", "moderator"] | None

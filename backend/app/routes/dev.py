@@ -13,7 +13,7 @@ from ..db import get_db
 from ..donations import Donation, add_donation_card
 from ..realtime import notify_board_changed
 
-router = APIRouter(prefix="/api/dev", tags=["Для разработки"])
+router = APIRouter(prefix="/api/boards/{board_id}/dev", tags=["Для разработки"])
 
 # Пустая строка — анонимный донат
 FAKE_NAMES = ["Вася", "Катя_стрим", "Dimon2007", "", "MegaFan", "ЛёхаПро"]
