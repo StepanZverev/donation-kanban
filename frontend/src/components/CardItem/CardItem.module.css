@@ -19,27 +19,20 @@
   padding: 10px 4px 10px;
 }
 
-/* Первая строка: ник и сумма, у правого края меню «⋯» */
+/* Шапка карточки: ник и сумма под ним, у правого края меню «⋯» */
 .header {
   display: flex;
   align-items: flex-start;
-  gap: 4px;
+  gap: 8px;
 }
 
-/* Ник и сумма. В одну строку — ник слева, сумма справа. Не влезают рядом — сумма
-   переносится на вторую строку (flex-wrap) и встаёт к левому краю: space-between
-   одинокий элемент в строке ставит в начало. Ник при этом не обрезается.
-   min-height — высота кнопки «⋯», чтобы одна строка стояла вровень с ней */
+/* Ник и под ним сумма — как заголовок колонки и сумма под ним (Column.module.css) */
 .titleLine {
   flex: 1;
   min-width: 0;
-  min-height: 26px;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  align-content: center;
-  column-gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 /* Ник в одну строку. Обрезается многоточием, только если не влезает даже в строку целиком
@@ -56,12 +49,13 @@
   text-overflow: ellipsis;
 }
 
-/* Сумма цветом уровня — того же, что и полоска слева */
+/* Сумма под ником: размер и отступ как у суммы колонки, цвет — уровня приоритета,
+   того же, что и полоска слева */
 .amount {
-  flex-shrink: 0;
+  margin-top: 2px;
   color: var(--priority-color, var(--color-text));
   font-family: var(--font-numbers);
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
 }

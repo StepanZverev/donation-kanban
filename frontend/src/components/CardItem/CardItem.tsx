@@ -149,8 +149,7 @@ export function CardItem(props: CardItemProps) {
       </button>
 
       <div className={styles.content}>
-        {/* Первая строка: ник и сумма, справа меню «⋯». Если ник и сумма рядом не влезают,
-            сумма переносится на строку ниже, а меню остаётся у правого края */}
+        {/* Шапка: ник, под ним сумма, справа меню «⋯» — как в заголовке колонки */}
         <header className={styles.header}>
           <div className={styles.titleLine}>
             <h3 className={styles.heading} title={heading}>
