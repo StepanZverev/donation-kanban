@@ -6,9 +6,22 @@ import { useNewDonations } from './hooks/useNewDonations'
 import { BoardPage } from './pages/BoardPage/BoardPage'
 import { HistoryPage } from './pages/HistoryPage/HistoryPage'
 import { SettingsPage } from './pages/SettingsPage/SettingsPage'
+import { ViewerPage } from './pages/ViewerPage/ViewerPage'
 import { SETTINGS_SECTIONS } from './pages/SettingsPage/settingsSections'
 
 function App() {
+  return (
+    <Routes>
+      {/* Страница для зрителей — отдельно от приложения стримера: без шапки,
+          без звука донатов и без запросов к доске стримера */}
+      <Route path="/v/:token" element={<ViewerPage />} />
+      <Route path="*" element={<StreamerApp />} />
+    </Routes>
+  )
+}
+
+// Приложение стримера: шапка и страницы доски, истории и настроек
+function StreamerApp() {
   // Пришли ли донаты, пока стример был на другой вкладке: точки в навигации и подсветка
   const { pathname } = useLocation()
   const newDonations = useNewDonations(pathname)

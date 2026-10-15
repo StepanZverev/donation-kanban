@@ -208,3 +208,47 @@ class CurrentUser(BaseModel):
     logins: list[str]  # например ["donationalerts"]
     # Можно ли сейчас подключить DonationAlerts (вписаны ли ключи в backend/.env)
     can_connect_donationalerts: bool
+
+
+class ViewerSettings(BaseModel):
+    """Раздел настроек «Для зрителей»."""
+
+    # Секретная часть ссылки для зрителей (/v/<public_token>). None — ссылка выключена.
+    public_token: str | None
+    # Ссылка на страницу доната. Пустая строка — кнопки «+» у зрителей нет.
+    donation_url: str
+
+
+class DonationUrl(BaseModel):
+    url: str = Field(max_length=300)
+
+
+class PublicCard(BaseModel):
+    """
+    Карточка для зрителей: только то, что и так видно на стриме.
+    Служебных полей (история, пометки, id доната) здесь нет.
+    """
+
+    id: int
+    title: str
+    description: str
+    column_id: int | None
+    donor_name: str | None
+    amount: float | None
+    currency: str | None
+    streamer_amount: float | None
+    merge_count: int
+
+
+class PublicBoard(BaseModel):
+    """Всё, что нужно странице для зрителей."""
+
+    # Имя стримера из DonationAlerts. None — гость, имени нет.
+    streamer_name: str | None
+    columns: list[BoardColumn]
+    cards: list[PublicCard]
+    priority_levels: list[PriorityLevel]
+    # Пустая строка — стример не указал ссылку на донат
+    donation_url: str
+    # Принимает ли стример заказы прямо сейчас
+    intake_open: bool

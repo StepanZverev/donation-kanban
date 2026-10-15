@@ -12,7 +12,7 @@ WebSocket — это постоянное соединение между бра
 import sqlite3
 
 import anyio.from_thread
-from fastapi import WebSocket
+from fastapi import WebSocket, WebSocketDisconnect
 
 
 class BoardUpdates:
@@ -50,6 +50,19 @@ class BoardUpdates:
 
 
 board_updates = BoardUpdates()
+
+
+async def send_updates_until_closed(websocket: WebSocket, board_id: int) -> None:
+    """
+    Подключает вкладку к комнате доски и держит соединение, пока вкладку не закроют.
+    Сама вкладка ничего не присылает, цикл нужен, только чтобы соединение не закрылось.
+    """
+    await board_updates.connect(websocket, board_id)
+    try:
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        board_updates.disconnect(websocket, board_id)
 
 
 def notify_board_changed(db: sqlite3.Connection, board_id: int) -> None:

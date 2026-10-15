@@ -1,0 +1,112 @@
+/* Страница зрителя без шапки приложения: заголовок, кнопка «+» и колонки.
+   Длинные колонки прокручиваются вместе со страницей. */
+.page {
+  box-sizing: border-box;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.message {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+}
+
+.suggest {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.suggestButton {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background-color: var(--color-accent);
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.suggestButton:hover {
+  filter: brightness(1.1);
+}
+
+.suggestHint {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.closed {
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+.error {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
+/* Колонки делят ширину поровну */
+.board {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.column {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background-color: var(--color-column);
+}
+
+.columnTitle {
+  margin: 0 0 2px 4px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.count {
+  font-weight: 400;
+  color: var(--color-text-secondary);
+}
+
+.empty {
+  margin: 0 4px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* На телефоне колонки рядом не помещаются: ставим их друг под другом */
+@media (max-width: 800px) {
+  .board {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .suggest {
+    align-items: flex-start;
+  }
+}

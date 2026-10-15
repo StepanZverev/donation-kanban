@@ -2,13 +2,15 @@
 // Когда на сервере что-то меняется (пришёл донат, модератор в другой вкладке
 // передвинул карточку), сервер присылает {"type": "board_changed"},
 // и мы вызываем onChange — обычно это перезагрузка карточек.
+// path — адрес соединения: у стримера своя доска (/api/ws), у зрителя — доска
+// по ссылке (/api/public/boards/<токен>/ws).
 
 import { useEffect } from 'react'
 
 // Через сколько пытаться переподключиться, если соединение оборвалось
 const RECONNECT_DELAY_MS = 2000
 
-export function useBoardUpdates(onChange: () => void) {
+export function useBoardUpdates(onChange: () => void, path = '/api/ws') {
   useEffect(() => {
     let socket: WebSocket | null = null
     let reconnectTimer: number | undefined
@@ -18,7 +20,7 @@ export function useBoardUpdates(onChange: () => void) {
       // ws:// для http, wss:// для https. Адрес тот же, что у страницы:
       // в разработке Vite перешлёт соединение на бэкенд (см. vite.config.ts).
       const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
-      socket = new WebSocket(`${protocol}://${window.location.host}/api/ws`)
+      socket = new WebSocket(`${protocol}://${window.location.host}${path}`)
 
       socket.onmessage = (event) => {
         const message = JSON.parse(event.data)
@@ -60,5 +62,5 @@ export function useBoardUpdates(onChange: () => void) {
       window.clearTimeout(reconnectTimer)
       closeSocket()
     }
-  }, [onChange])
+  }, [onChange, path])
 }

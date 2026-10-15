@@ -6,13 +6,13 @@ const EMPTY_MESSAGE_TITLE = 'Донат без сообщения'
 
 // Ник донатера для экрана. Нет ника — это аноним, и неважно,
 // пришёл донат из DonationAlerts или карточку создали вручную.
-export function getDonorName(card: Card) {
+export function getDonorName(card: Pick<Card, 'donorName'>) {
   return card.donorName || 'Аноним'
 }
 
 // Текст карточки. Короткий текст лежит в заголовке, а длинный — целиком в описании
 // (в заголовке тогда только его начало), поэтому берём описание, а если его нет — заголовок.
-export function getCardText(card: Card) {
+export function getCardText(card: Pick<Card, 'title' | 'description'>) {
   return card.description || card.title
 }
 
