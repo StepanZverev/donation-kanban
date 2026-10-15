@@ -59,3 +59,17 @@ export type CardDraft = {
   // Сумма в валюте карточки, null — без суммы
   amount: number | null
 }
+
+// Карточка на странице для зрителей: только то, что и так видно на стриме
+export type PublicCard = Pick<
+  Card,
+  | 'id'
+  | 'title'
+  | 'description'
+  | 'columnId'
+  | 'donorName'
+  | 'amount'
+  | 'currency'
+  | 'streamerAmount'
+  | 'mergeCount'
+>

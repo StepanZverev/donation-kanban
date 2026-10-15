@@ -144,6 +144,24 @@ def sort_column_cards(column: BoardColumn, cards: list[Card]) -> list[Card]:
     return sorted(cards, key=lambda card: (-(card.streamer_amount or 0), card.created_at, card.id))
 
 
+def get_board_cards(db: sqlite3.Connection, board_id: int) -> list[Card]:
+    """
+    Все карточки на доске (без истории): колонка за колонкой слева направо,
+    внутри колонки — в том порядке, в каком их показывать сверху вниз.
+    """
+    rows = db.execute(
+        "SELECT * FROM cards WHERE board_id = ? AND archived_at IS NULL", (board_id,)
+    ).fetchall()
+    cards = [Card(**row) for row in rows]
+    add_last_donation_times(db, board_id, cards)
+
+    result: list[Card] = []
+    for column in get_columns(db, board_id):
+        column_cards = [card for card in cards if card.column_id == column.id]
+        result.extend(sort_column_cards(column, column_cards))
+    return result
+
+
 def archive_card(db: sqlite3.Connection, card_id: int, reason: str, note: str | None = None) -> None:
     """
     Убирает карточку с доски в историю. reason: 'done' (выполнена), 'deleted' (выкинута),

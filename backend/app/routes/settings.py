@@ -38,6 +38,10 @@ def get_priority_levels(
     board_id: int = Depends(get_board_id),
 ) -> list[PriorityLevel]:
     """Уровни приоритета по возрастанию суммы."""
+    return read_priority_levels(db, board_id)
+
+
+def read_priority_levels(db: sqlite3.Connection, board_id: int) -> list[PriorityLevel]:
     saved = get_board_setting(db, board_id, PRIORITY_LEVELS_KEY)
     if saved is None:
         return DEFAULT_PRIORITY_LEVELS

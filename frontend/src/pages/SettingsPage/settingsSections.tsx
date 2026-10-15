@@ -3,6 +3,7 @@ import { ColumnsSettings } from '../../components/ColumnsSettings/ColumnsSetting
 import { DonationsSettings } from '../../components/DonationsSettings/DonationsSettings'
 import { PriorityLevelsSettings } from '../../components/PriorityLevelsSettings/PriorityLevelsSettings'
 import { ThemeSettings } from '../../components/ThemeSettings/ThemeSettings'
+import { ViewerSettings } from '../../components/ViewerSettings/ViewerSettings'
 
 // Разделы настроек в том порядке, в каком они стоят в меню.
 // path — адрес раздела после /settings/, element — что в нём показать.
@@ -11,5 +12,6 @@ export const SETTINGS_SECTIONS: { path: string; title: string; element: ReactNod
   { path: 'columns', title: 'Колонки', element: <ColumnsSettings /> },
   { path: 'levels', title: 'Уровни приоритета', element: <PriorityLevelsSettings /> },
   { path: 'donations', title: 'Приём донатов', element: <DonationsSettings /> },
+  { path: 'viewers', title: 'Для зрителей', element: <ViewerSettings /> },
   { path: 'appearance', title: 'Внешний вид', element: <ThemeSettings /> },
 ]

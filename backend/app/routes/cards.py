@@ -10,14 +10,12 @@ import sqlite3
 from fastapi import APIRouter, Depends
 
 from ..board import (
-    add_last_donation_times,
     archive_card,
+    get_board_cards,
     get_board_id,
     get_card,
     get_column,
     get_column_id_by_kind,
-    get_columns,
-    sort_column_cards,
 )
 from ..db import get_db, now
 from ..donations import split_message
@@ -42,21 +40,8 @@ def list_cards(
     db: sqlite3.Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> list[Card]:
-    """
-    Все карточки на доске (без истории): колонка за колонкой слева направо,
-    внутри колонки — в том порядке, в каком их показывать сверху вниз.
-    """
-    rows = db.execute(
-        "SELECT * FROM cards WHERE board_id = ? AND archived_at IS NULL", (board_id,)
-    ).fetchall()
-    cards = [Card(**row) for row in rows]
-    add_last_donation_times(db, board_id, cards)
-
-    result: list[Card] = []
-    for column in get_columns(db, board_id):
-        column_cards = [card for card in cards if card.column_id == column.id]
-        result.extend(sort_column_cards(column, column_cards))
-    return result
+    """Все карточки на доске (без истории) в том порядке, в каком их показывать."""
+    return get_board_cards(db, board_id)
 
 
 @router.get("/latest-donations")

@@ -435,3 +435,7 @@ def set_board_setting(db: sqlite3.Connection, board_id: int, key: str, value: st
         "INSERT OR REPLACE INTO board_settings (board_id, key, value) VALUES (?, ?, ?)",
         (board_id, key, value),
     )
+
+
+def delete_board_setting(db: sqlite3.Connection, board_id: int, key: str) -> None:
+    db.execute("DELETE FROM board_settings WHERE board_id = ? AND key = ?", (board_id, key))

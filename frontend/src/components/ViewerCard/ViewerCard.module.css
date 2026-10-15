@@ -1,0 +1,41 @@
+/* Повторяет вид карточки стримера (CardItem.module.css) */
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--priority-color, var(--color-border));
+  border-radius: 10px;
+  background-color: var(--color-surface);
+}
+
+.muted {
+  opacity: 0.6;
+}
+
+.heading {
+  max-width: 100%;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.amount {
+  margin-top: 2px;
+  color: var(--priority-color, var(--color-text));
+  font-family: var(--font-numbers);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.text {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
