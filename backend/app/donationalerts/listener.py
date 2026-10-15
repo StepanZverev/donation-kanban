@@ -192,7 +192,7 @@ async def save_donation(user_id: int, data: dict) -> None:
         )
     if added:
         log.info("Новый донат от %s", donation.username)
-        await board_updates.broadcast({"type": "board_changed"})
+        await board_updates.broadcast(board_id, {"type": "board_changed"})
 
 
 async def import_missed_donations(user_id: int, access_token: str) -> None:

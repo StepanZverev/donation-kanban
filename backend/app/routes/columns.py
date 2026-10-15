@@ -48,7 +48,7 @@ def create_column(
     )
     put_columns_in_order(db, board_id, [*work_ids, cursor.lastrowid])
 
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return get_column(db, board_id, cursor.lastrowid)
 
 
@@ -64,7 +64,7 @@ def reorder_columns(
 
     put_columns_in_order(db, board_id, data.column_ids)
 
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return get_columns(db, board_id)
 
 
@@ -79,7 +79,7 @@ def rename_column(
     get_work_column(db, board_id, column_id)
     db.execute("UPDATE board_columns SET title = ? WHERE id = ?", (data.title, column_id))
 
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
     return get_column(db, board_id, column_id)
 
 
@@ -106,7 +106,7 @@ def delete_column(
     db.execute("DELETE FROM board_columns WHERE id = ?", (column_id,))
     put_columns_in_order(db, board_id, [id for id in work_ids if id != column_id])
 
-    notify_board_changed(db)
+    notify_board_changed(db, board_id)
 
 
 def get_work_column(db: sqlite3.Connection, board_id: int, column_id: int) -> BoardColumn:
