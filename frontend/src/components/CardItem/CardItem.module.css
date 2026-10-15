@@ -26,15 +26,17 @@
   gap: 4px;
 }
 
-/* Ник и сумма. Сумма прижата вправо; не влезает рядом с ником — переносится
-   на вторую строку (flex-wrap), и ник при этом не обрезается.
+/* Ник и сумма. В одну строку — ник слева, сумма справа. Не влезают рядом — сумма
+   переносится на вторую строку (flex-wrap) и встаёт к левому краю: space-between
+   одинокий элемент в строке ставит в начало. Ник при этом не обрезается.
    min-height — высота кнопки «⋯», чтобы одна строка стояла вровень с ней */
 .titleLine {
   flex: 1;
   min-width: 0;
-  min-height: 32px;
+  min-height: 26px;
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
   align-content: center;
   column-gap: 8px;
@@ -57,8 +59,6 @@
 /* Сумма цветом уровня — того же, что и полоска слева */
 .amount {
   flex-shrink: 0;
-  /* Прижимает сумму к правому краю */
-  margin-left: auto;
   color: var(--priority-color, var(--color-text));
   font-family: var(--font-numbers);
   font-size: 15px;
@@ -153,7 +153,7 @@
 /* Меню «⋯» у правого края первой строки, появляется только при наведении */
 .menuSlot {
   flex: none;
-  width: 24px;
+  width: 26px;
   opacity: 0;
 }
 

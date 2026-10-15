@@ -2,11 +2,13 @@
   position: relative;
 }
 
-/* Кнопка «⋯» неброская: без рамки и фона. Ширину задаёт место под меню в карточке */
+/* Кнопка «⋯» неброская: квадратная, без рамки и фона */
 .toggle {
-  width: 100%;
-  max-width: 32px;
-  height: 32px;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
   padding: 0;
   border-color: transparent;
   background-color: transparent;
