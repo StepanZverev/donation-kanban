@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from .db import init_db
-from .donationalerts.listener import donation_listener
+from .donationalerts.listener import donation_listeners
 from .realtime import board_updates
 from .routes import auth, cards, columns, dev, donors, history, me, settings, stream
 
@@ -20,9 +20,9 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s:     [%(name)s] %(
 async def lifespan(app: FastAPI):
     # Код до yield выполняется один раз при старте сервера, после yield — при остановке.
     init_db()
-    donation_listener.start()
+    donation_listeners.start_all()
     yield
-    await donation_listener.stop()
+    await donation_listeners.stop_all()
 
 
 app = FastAPI(title="Donation Kanban", lifespan=lifespan)

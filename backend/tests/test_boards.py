@@ -18,10 +18,10 @@ def other(client):
 
 @pytest.fixture
 def no_listener(monkeypatch):
-    async def fake_restart():
+    async def fake_restart(user_id):
         pass
 
-    monkeypatch.setattr(listener.donation_listener, "restart", fake_restart)
+    monkeypatch.setattr(listener.donation_listeners, "restart", fake_restart)
 
 
 def test_each_browser_gets_its_own_board(client, other):
@@ -100,17 +100,20 @@ def connect_donationalerts(client_):
 def test_donations_go_to_the_board_of_who_connected_donationalerts(client, other, fake_da, no_listener):
     other.get("/api/cards")
     connect_donationalerts(client)
+    user_id = client.get("/api/me").json()["id"]
 
     data = {"id": 900, "username": "Вася", "message": "Живой донат", "amount": 100, "currency": "RUB"}
-    asyncio.run(listener.save_donation(data))
+    asyncio.run(listener.save_donation(user_id, data))
 
     assert [card["title"] for card in client.get("/api/cards").json()] == ["Живой донат"]
     assert other.get("/api/cards").json() == []
 
-    # Чужое подключение другой пользователь не видит и отключить не может
+    # Подключение DA у каждого своё: другой пользователь видит «не подключён»,
+    # а его «Отключить» не трогает чужое подключение
     assert client.get("/api/auth/status").json()["connected"] is True
     assert other.get("/api/auth/status").json()["connected"] is False
-    assert other.post("/api/auth/logout").status_code == 403
+    other.post("/api/auth/logout")
+    assert client.get("/api/auth/status").json()["connected"] is True
 
 
 def make_board_old(card_title: str) -> None:
@@ -185,3 +188,58 @@ def test_guest_cards_move_to_account_on_login(client, fake_da, no_listener):
         assert db.execute("SELECT COUNT(*) FROM boards").fetchone()[0] == 1
         assert db.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 1
 
+
+
+def test_donations_of_two_streamers_do_not_mix(client, other):
+    first = client.get("/api/me").json()["id"]
+    second = other.get("/api/me").json()["id"]
+    listener.save_connection(first, {"access_token": "first", "refresh_token": None})
+    listener.save_connection(second, {"access_token": "second", "refresh_token": None})
+
+    donation = {"username": "Вася", "amount": 100, "currency": "RUB"}
+    asyncio.run(listener.save_donation(first, {**donation, "id": 10, "message": "Первому"}))
+    asyncio.run(listener.save_donation(second, {**donation, "id": 3, "message": "Второму"}))
+
+    assert [card["title"] for card in client.get("/api/cards").json()] == ["Первому"]
+    assert [card["title"] for card in other.get("/api/cards").json()] == ["Второму"]
+    # «Последний донат» у каждого свой: id из DA у разных стримеров между собой не связаны
+    assert listener.read_connection(first)["last_donation_id"] == 10
+    assert listener.read_connection(second)["last_donation_id"] == 3
+
+
+def test_server_start_listens_to_everyone_connected(client, other, fake_da, monkeypatch):
+    first = client.get("/api/me").json()["id"]
+    second = other.get("/api/me").json()["id"]
+    listener.save_connection(first, {"access_token": "first", "refresh_token": None})
+    listener.save_connection(second, {"access_token": "second", "refresh_token": None})
+    monkeypatch.setattr(listener.DonationListener, "start", lambda self: None)
+    listeners = listener.DonationListeners()
+
+    listeners.start_all()
+
+    assert sorted(listeners.listeners) == sorted([first, second])
+    assert listeners.status(first) == "connecting"
+
+
+def test_old_donationalerts_tokens_move_to_board_owner(client, other):
+    other.get("/api/me")
+    client.get("/api/columns")  # у этого пользователя появляется доска, у другого — нет
+    user_id = client.get("/api/me").json()["id"]
+    # Так токены хранились раньше: одни на весь сервер, в общей таблице settings
+    with connect() as db:
+        db.executemany(
+            "INSERT INTO settings (key, value) VALUES (?, ?)",
+            [("da_access_token", "old-access"), ("da_refresh_token", "old-refresh"), ("da_last_donation_id", "42")],
+        )
+
+    init_db()
+    init_db()  # второй запуск ничего не портит
+
+    connection = listener.read_connection(user_id)
+    assert (connection["access_token"], connection["refresh_token"], connection["last_donation_id"]) == (
+        "old-access",
+        "old-refresh",
+        42,
+    )
+    with connect() as db:
+        assert db.execute("SELECT COUNT(*) FROM settings WHERE key LIKE 'da_%'").fetchone()[0] == 0

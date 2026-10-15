@@ -13,16 +13,14 @@ from fastapi.responses import RedirectResponse
 
 from .. import config
 from ..board import create_board, find_user_board, move_cards_to_board
-from ..db import get_db, set_setting
+from ..db import get_db
 from ..donationalerts import client
 from ..donationalerts.listener import (
-    ACCESS_TOKEN,
-    OWNER_USER_ID,
-    donation_listener,
-    forget_tokens,
-    read_setting,
+    donation_listeners,
+    forget_connection,
+    read_connection,
     remember_newest_donation,
-    save_tokens,
+    save_connection,
 )
 from ..users import (
     DONATIONALERTS,
@@ -49,31 +47,12 @@ STATE_MAX_AGE_SECONDS = 10 * 60
 
 @router.get("/status")
 def status(user: sqlite3.Row = Depends(get_current_user)) -> dict:
-    """
-    Подключён ли DonationAlerts и слушаем ли мы донаты прямо сейчас.
-    Подключение пока одно на весь сервер, поэтому другим пользователям
-    показываем «не подключён»: донаты идут не на их доску.
-    """
-    if not is_donationalerts_owner(user):
-        return {
-            "configured": config.is_donationalerts_configured(),
-            "connected": False,
-            "listener": "not_connected",
-        }
+    """Подключил ли этот пользователь DonationAlerts и слушаем ли мы его донаты прямо сейчас."""
     return {
         "configured": config.is_donationalerts_configured(),
-        "connected": read_setting(ACCESS_TOKEN) is not None,
-        "listener": donation_listener.status,
+        "connected": read_connection(user["id"]) is not None,
+        "listener": donation_listeners.status(user["id"]),
     }
-
-
-def is_donationalerts_owner(user: sqlite3.Row) -> bool:
-    """
-    Этот ли пользователь подключил DonationAlerts. Если подключили ещё до появления
-    пользователей (хозяин неизвестен), считаем, что подключение общее.
-    """
-    owner_id = read_setting(OWNER_USER_ID)
-    return owner_id is None or int(owner_id) == user["id"]
 
 
 @router.get("/login")
@@ -120,15 +99,14 @@ async def callback(
     update_profile(db, user_id, profile.get("name"), profile.get("avatar"))
     if current_user is not None and current_user["id"] != user_id:
         take_guest_cards(db, current_user, user_id)
-    # Донаты теперь падают на доску этого пользователя
-    set_setting(db, OWNER_USER_ID, str(user_id))
     # Сохраняем сразу: функции ниже пишут в базу через своё соединение,
     # и SQLite не даст им писать, пока это соединение держит несохранённые изменения
     db.commit()
 
-    save_tokens(tokens)
-    await remember_newest_donation(tokens["access_token"])
-    await donation_listener.restart()
+    # Токены — в подключение этого пользователя, и запускаем слушателя его донатов
+    save_connection(user_id, tokens)
+    await remember_newest_donation(user_id, tokens["access_token"])
+    await donation_listeners.restart(user_id)
 
     # Возвращаем пользователя на доску
     response = RedirectResponse(config.FRONTEND_URL)
@@ -174,10 +152,17 @@ def take_guest_cards(db: sqlite3.Connection, guest: sqlite3.Row, user_id: int) -
 
 
 @router.post("/logout")
-async def logout(user: sqlite3.Row = Depends(get_current_user)) -> dict:
-    """Отключает DonationAlerts: забываем токены и перестаём слушать донаты."""
-    if not is_donationalerts_owner(user):
-        raise HTTPException(status_code=403, detail="DonationAlerts подключал другой пользователь")
-    forget_tokens()
-    await donation_listener.restart()
+async def logout(
+    user: sqlite3.Row = Depends(get_current_user),
+    db: sqlite3.Connection = Depends(get_db),
+) -> dict:
+    """
+    Отключает DonationAlerts: забываем токены и перестаём слушать донаты.
+    Войти через DA потом всё равно можно — аккаунт DA остаётся привязан.
+    """
+    # Сначала сохраняем то, что этот запрос уже записал (время визита или нового гостя):
+    # пока запись не завершена, другое соединение с базой не сможет в неё писать.
+    db.commit()
+    forget_connection(user["id"])
+    await donation_listeners.stop(user["id"])
     return {"status": "ok"}

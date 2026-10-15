@@ -1,11 +1,16 @@
 """
-Фоновая задача, которая слушает новые донаты DonationAlerts.
+Фоновые задачи, которые слушают новые донаты DonationAlerts.
 
-Работает всё время, пока запущен бэкенд:
-1. Если DA не подключён — ждёт, пока пользователь войдёт.
-2. Догружает донаты, пришедшие, пока бэкенд был выключен.
-3. Подключается к WebSocket DA (сервер Centrifugo) и подписывается на канал донатов.
-4. Каждый донат превращает в карточку и сообщает вкладкам, что доска изменилась.
+У каждого стримера, подключившего DA, своё подключение (строка в таблице da_connections)
+и своя фоновая задача DonationListener. Всеми задачами управляет donation_listeners:
+запускает их при старте сервера, перезапускает после входа в DA и останавливает,
+когда стример отключает DA.
+
+Каждая задача работает, пока запущен бэкенд:
+1. Догружает донаты, пришедшие, пока бэкенд был выключен.
+2. Подключается к WebSocket DA (сервер Centrifugo) и подписывается на канал донатов.
+3. Каждый донат превращает в карточку на доске своего стримера и сообщает вкладкам,
+   что доска изменилась.
 Если связь оборвалась — ждёт немного и начинает заново.
 """
 
@@ -18,7 +23,7 @@ from websockets.asyncio.client import connect as websocket_connect
 
 from .. import config
 from ..board import create_board, find_user_board
-from ..db import delete_setting, get_setting, open_db, set_setting
+from ..db import now, open_db
 from ..donations import Donation, add_donation_card
 from ..realtime import board_updates
 from . import client
@@ -30,21 +35,14 @@ RECONNECT_DELAY_SECONDS = 5
 # Сколько страниц истории донатов просматривать при догрузке пропущенных
 MAX_MISSED_PAGES = 5
 
-# Ключи в таблице settings
-ACCESS_TOKEN = "da_access_token"
-REFRESH_TOKEN = "da_refresh_token"
-# id самого нового доната, который мы уже видели. Всё, что новее, — пропущенное.
-LAST_DONATION_ID = "da_last_donation_id"
-# Кто подключил DonationAlerts: на доску этого пользователя падают донаты.
-# Пока подключение DA одно на весь сервер; у каждого своё будет на следующем этапе.
-OWNER_USER_ID = "da_owner_user_id"
-
-
 class DonationListener:
-    def __init__(self) -> None:
+    """Слушает донаты одного стримера (user_id — тот, кто подключил DonationAlerts)."""
+
+    def __init__(self, user_id: int) -> None:
+        self.user_id = user_id
         # Что сейчас происходит — показываем на фронте:
-        # not_configured | not_connected | connecting | listening | error
-        self.status = "not_connected"
+        # not_connected | connecting | listening | error
+        self.status = "connecting"
         self.task: asyncio.Task | None = None
 
     def start(self) -> None:
@@ -58,29 +56,20 @@ class DonationListener:
             except asyncio.CancelledError:
                 pass
 
-    async def restart(self) -> None:
-        """Начать заново — например, после входа в DA или выхода из него."""
-        await self.stop()
-        self.start()
-
     async def run(self) -> None:
-        if not config.is_donationalerts_configured():
-            self.status = "not_configured"
-            return
-
         while True:
-            access_token = read_setting(ACCESS_TOKEN)
-            if access_token is None:
-                # Ждать нечего: restart() перезапустит задачу после входа.
+            connection = read_connection(self.user_id)
+            if connection is None:
+                # Стример отключил DA — слушать нечего
                 self.status = "not_connected"
                 return
 
             try:
                 self.status = "connecting"
-                await self.listen(access_token)
+                await self.listen(connection["access_token"])
             except client.TokenExpiredError:
-                log.info("Токен DonationAlerts истёк, обновляю")
-                if not await refresh_access_token():
+                log.info("Токен DonationAlerts пользователя %s истёк, обновляю", self.user_id)
+                if not await refresh_access_token(self.user_id):
                     self.status = "not_connected"
                     return
                 continue
@@ -94,7 +83,7 @@ class DonationListener:
 
     async def listen(self, access_token: str) -> None:
         user = await client.get_user(access_token)
-        await import_missed_donations(access_token)
+        await import_missed_donations(self.user_id, access_token)
 
         async with websocket_connect(CENTRIFUGO_URL) as websocket:
             # 1. Представляемся токеном из профиля, в ответ получаем id своего подключения
@@ -110,14 +99,55 @@ class DonationListener:
             )
 
             self.status = "listening"
-            log.info("Слушаю донаты DonationAlerts")
+            log.info("Слушаю донаты DonationAlerts пользователя %s", self.user_id)
 
             # 3. Ждём сообщения. Одно сообщение может содержать несколько JSON через перевод строки.
             async for raw_message in websocket:
                 for line in str(raw_message).splitlines():
                     donation = extract_donation(json.loads(line))
                     if donation:
-                        await save_donation(donation)
+                        await save_donation(self.user_id, donation)
+
+
+class DonationListeners:
+    """Все слушатели донатов: по одному на каждого стримера, подключившего DonationAlerts."""
+
+    def __init__(self) -> None:
+        # id пользователя → его слушатель
+        self.listeners: dict[int, DonationListener] = {}
+
+    def start_all(self) -> None:
+        """При старте сервера запускаем слушателей всех, кто подключал DA раньше."""
+        if not config.is_donationalerts_configured():
+            return
+        for user_id in connected_user_ids():
+            self.start(user_id)
+
+    def start(self, user_id: int) -> None:
+        listener = DonationListener(user_id)
+        listener.start()
+        self.listeners[user_id] = listener
+
+    async def stop(self, user_id: int) -> None:
+        listener = self.listeners.pop(user_id, None)
+        if listener:
+            await listener.stop()
+
+    async def restart(self, user_id: int) -> None:
+        """Начать заново — например, после входа в DA."""
+        await self.stop(user_id)
+        self.start(user_id)
+
+    async def stop_all(self) -> None:
+        for user_id in list(self.listeners):
+            await self.stop(user_id)
+
+    def status(self, user_id: int) -> str:
+        """Что сейчас со слушателем пользователя: not_configured | not_connected | connecting | listening | error."""
+        if not config.is_donationalerts_configured():
+            return "not_configured"
+        listener = self.listeners.get(user_id)
+        return listener.status if listener else "not_connected"
 
 
 def extract_donation(message: dict) -> dict | None:
@@ -149,21 +179,26 @@ def to_donation(data: dict) -> Donation:
     )
 
 
-async def save_donation(data: dict) -> None:
+async def save_donation(user_id: int, data: dict) -> None:
+    """Превращает донат в карточку на доске стримера user_id."""
     donation = to_donation(data)
     with open_db() as db:
-        added = add_donation_card(db, donations_board_id(db), donation)
-        last_id = int(get_setting(db, LAST_DONATION_ID) or 0)
-        if donation.id > last_id:
-            set_setting(db, LAST_DONATION_ID, str(donation.id))
+        board_id = find_user_board(db, user_id) or create_board(db, user_id)
+        added = add_donation_card(db, board_id, donation)
+        # Запоминаем самый новый донат, который видели (MAX — чтобы не откатиться назад)
+        db.execute(
+            "UPDATE da_connections SET last_donation_id = MAX(last_donation_id, ?) WHERE user_id = ?",
+            (donation.id, user_id),
+        )
     if added:
         log.info("Новый донат от %s", donation.username)
         await board_updates.broadcast({"type": "board_changed"})
 
 
-async def import_missed_donations(access_token: str) -> None:
+async def import_missed_donations(user_id: int, access_token: str) -> None:
     """Догружает донаты новее последнего увиденного (они приходят сначала новые)."""
-    last_id = int(read_setting(LAST_DONATION_ID) or 0)
+    connection = read_connection(user_id)
+    last_id = connection["last_donation_id"] if connection else 0
     missed: list[dict] = []
 
     for page in range(1, MAX_MISSED_PAGES + 1):
@@ -176,10 +211,10 @@ async def import_missed_donations(access_token: str) -> None:
 
     # Добавляем от старых к новым, чтобы в очереди они встали по порядку
     for data in reversed(missed):
-        await save_donation(data)
+        await save_donation(user_id, data)
 
 
-async def remember_newest_donation(access_token: str) -> None:
+async def remember_newest_donation(user_id: int, access_token: str) -> None:
     """
     Запоминает самый новый донат на момент входа. Так при первом подключении
     мы не завалим очередь всеми старыми донатами за всё время.
@@ -187,58 +222,53 @@ async def remember_newest_donation(access_token: str) -> None:
     donations = await client.get_donations(access_token, 1)
     newest_id = max((int(donation["id"]) for donation in donations), default=0)
     with open_db() as db:
-        set_setting(db, LAST_DONATION_ID, str(newest_id))
+        db.execute("UPDATE da_connections SET last_donation_id = ? WHERE user_id = ?", (newest_id, user_id))
 
 
-async def refresh_access_token() -> bool:
-    refresh_token = read_setting(REFRESH_TOKEN)
-    if refresh_token is None:
+async def refresh_access_token(user_id: int) -> bool:
+    connection = read_connection(user_id)
+    if connection is None or connection["refresh_token"] is None:
         return False
     try:
-        tokens = await client.refresh_tokens(refresh_token)
+        tokens = await client.refresh_tokens(connection["refresh_token"])
     except Exception:
         log.exception("Не удалось обновить токен DonationAlerts, нужно войти заново")
-        forget_tokens()
+        forget_connection(user_id)
         return False
-    save_tokens(tokens)
+    save_connection(user_id, tokens)
     return True
 
 
-def save_tokens(tokens: dict) -> None:
+def save_connection(user_id: int, tokens: dict) -> None:
+    """Сохраняет токены DA пользователя: создаёт подключение или обновляет существующее."""
     with open_db() as db:
-        set_setting(db, ACCESS_TOKEN, tokens["access_token"])
-        # DA может не прислать новый refresh_token — тогда старый остаётся действующим
-        if tokens.get("refresh_token"):
-            set_setting(db, REFRESH_TOKEN, tokens["refresh_token"])
+        # ON CONFLICT: если подключение уже есть, обновляем токены.
+        # DA может не прислать новый refresh_token — тогда старый остаётся действующим (COALESCE).
+        db.execute(
+            """
+            INSERT INTO da_connections (user_id, access_token, refresh_token, created_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT (user_id) DO UPDATE SET
+                access_token = excluded.access_token,
+                refresh_token = COALESCE(excluded.refresh_token, da_connections.refresh_token)
+            """,
+            (user_id, tokens["access_token"], tokens.get("refresh_token"), now()),
+        )
 
 
-def forget_tokens() -> None:
+def forget_connection(user_id: int) -> None:
     with open_db() as db:
-        delete_setting(db, ACCESS_TOKEN)
-        delete_setting(db, REFRESH_TOKEN)
-        delete_setting(db, OWNER_USER_ID)
+        db.execute("DELETE FROM da_connections WHERE user_id = ?", (user_id,))
 
 
-def donations_board_id(db: sqlite3.Connection) -> int:
-    """
-    На какую доску класть донаты: на доску того, кто подключил DonationAlerts.
-    Если подключили ещё до появления пользователей и хозяин неизвестен —
-    на самую первую доску (это и есть старая общая доска).
-    """
-    owner_id = get_setting(db, OWNER_USER_ID)
-    if owner_id is not None:
-        return find_user_board(db, int(owner_id)) or create_board(db, int(owner_id))
-
-    first = db.execute("SELECT id FROM boards ORDER BY id LIMIT 1").fetchone()
-    if first is not None:
-        return first["id"]
-    # Досок ещё нет совсем: создаём без хозяина, её заберёт первый, кто откроет сайт
-    return create_board(db, None)
-
-
-def read_setting(key: str) -> str | None:
+def read_connection(user_id: int) -> sqlite3.Row | None:
     with open_db() as db:
-        return get_setting(db, key)
+        return db.execute("SELECT * FROM da_connections WHERE user_id = ?", (user_id,)).fetchone()
 
 
-donation_listener = DonationListener()
+def connected_user_ids() -> list[int]:
+    with open_db() as db:
+        return [row["user_id"] for row in db.execute("SELECT user_id FROM da_connections")]
+
+
+donation_listeners = DonationListeners()
