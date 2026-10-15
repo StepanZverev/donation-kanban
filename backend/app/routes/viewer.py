@@ -120,8 +120,16 @@ def get_public_board(token: str, db: sqlite3.Connection = Depends(get_db)) -> Pu
         raise HTTPException(status_code=404, detail="Ссылка не работает")
 
     cards = get_board_cards(db, board_id)
+    # Хозяин доски: его имя и подключён ли у него DonationAlerts (есть ли строка в da_connections).
+    # Выход из аккаунта на устройстве подключение не трогает: донаты продолжают приходить.
     owner = db.execute(
-        "SELECT users.name FROM boards JOIN users ON users.id = boards.owner_id WHERE boards.id = ?",
+        """
+        SELECT users.name, da_connections.user_id IS NOT NULL AS donations_connected
+        FROM boards
+        JOIN users ON users.id = boards.owner_id
+        LEFT JOIN da_connections ON da_connections.user_id = users.id
+        WHERE boards.id = ?
+        """,
         (board_id,),
     ).fetchone()
     return PublicBoard(
@@ -132,6 +140,7 @@ def get_public_board(token: str, db: sqlite3.Connection = Depends(get_db)) -> Pu
         priority_levels=read_priority_levels(db, board_id),
         donation_url=get_board_setting(db, board_id, DONATION_URL_KEY) or "",
         intake_open=get_intake_settings(db, board_id).open,
+        donations_connected=bool(owner and owner["donations_connected"]),
     )
 
 

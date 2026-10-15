@@ -71,6 +71,8 @@ export type PublicBoard = {
   priorityLevels: PriorityLevel[]
   donationUrl: string
   intakeOpen: boolean
+  // Подключён ли у стримера DonationAlerts: без него донат не станет карточкой
+  donationsConnected: boolean
 }
 
 type PublicBoardFromApi = {
@@ -90,6 +92,7 @@ type PublicBoardFromApi = {
   priority_levels: { min_amount: number; name: string; color: string }[]
   donation_url: string
   intake_open: boolean
+  donations_connected: boolean
 }
 
 // Доска для зрителя. null — ссылка не работает (неверная или стример её выключил).
@@ -123,5 +126,6 @@ export async function getPublicBoard(token: string): Promise<PublicBoard | null>
     })),
     donationUrl: board.donation_url,
     intakeOpen: board.intake_open,
+    donationsConnected: board.donations_connected,
   }
 }

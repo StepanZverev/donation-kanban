@@ -252,3 +252,6 @@ class PublicBoard(BaseModel):
     donation_url: str
     # Принимает ли стример заказы прямо сейчас
     intake_open: bool
+    # Подключён ли у стримера DonationAlerts. Без него донат не станет карточкой,
+    # поэтому кнопку «+» зрителям не показываем.
+    donations_connected: bool

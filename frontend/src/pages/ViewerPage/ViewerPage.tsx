@@ -31,8 +31,10 @@ export function ViewerPage() {
           {board.streamerName ? `Заказы: ${board.streamerName}` : 'Заказы стримера'}
         </h1>
 
-        {/* Кнопка «+» есть, только если стример указал ссылку на донат */}
+        {/* Кнопка «+» есть, только если стример указал ссылку на донат и подключил
+            DonationAlerts: без подключения донат не станет карточкой */}
         {board.donationUrl &&
+          board.donationsConnected &&
           (board.intakeOpen ? (
             <div className={styles.suggest}>
               <a

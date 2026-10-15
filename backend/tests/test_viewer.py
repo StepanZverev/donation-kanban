@@ -1,8 +1,12 @@
 """Страница для зрителей: доска только для чтения по секретной ссылке."""
 
+from urllib.parse import parse_qs, urlparse
+
 import pytest
 from fastapi import WebSocketDisconnect
 from fastapi.testclient import TestClient
+
+from app.donationalerts import listener
 
 
 @pytest.fixture
@@ -34,6 +38,7 @@ def test_viewer_sees_board_without_login(client, viewer):
     assert board["intake_open"] is True
     assert board["donation_url"] == ""
     assert board["streamer_name"] is None  # гость без DonationAlerts
+    assert board["donations_connected"] is False
     # Зрителю не создали гостя: cookie сессии у него нет
     assert "session" not in viewer.cookies
 
@@ -97,3 +102,31 @@ def test_live_updates_need_a_working_link(viewer):
         with viewer.websocket_connect("/api/public/boards/wrong/ws") as websocket:
             websocket.receive_json()
     assert error.value.code == 1008
+
+
+def test_viewer_knows_if_donations_reach_the_board(client, viewer, fake_da, monkeypatch):
+    async def fake_restart(user_id):
+        pass
+
+    monkeypatch.setattr(listener.donation_listeners, "restart", fake_restart)
+    token = turn_on_link(client)
+    login = client.get("/api/auth/login", follow_redirects=False)
+    state = parse_qs(urlparse(login.headers["location"]).query)["state"][0]
+    client.get(f"/api/auth/callback?code=abc&state={state}", follow_redirects=False)
+
+    assert viewer.get(f"/api/public/boards/{token}").json()["donations_connected"] is True
+
+    # Выход на устройстве подключение не трогает: донаты по-прежнему становятся карточками
+    client.post("/api/me/logout")
+    assert viewer.get(f"/api/public/boards/{token}").json()["donations_connected"] is True
+
+
+def test_no_donations_without_donationalerts_connection(client, viewer):
+    token = turn_on_link(client)
+    user_id = client.get("/api/me").json()["id"]
+    listener.save_connection(user_id, {"access_token": "access-1", "refresh_token": None})
+    assert viewer.get(f"/api/public/boards/{token}").json()["donations_connected"] is True
+
+    # «Отключить» DonationAlerts: донаты больше не станут карточками
+    client.post("/api/auth/logout")
+    assert viewer.get(f"/api/public/boards/{token}").json()["donations_connected"] is False
