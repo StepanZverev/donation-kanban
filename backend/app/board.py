@@ -58,6 +58,38 @@ def get_board_id(
     return create_board(db, user["id"])
 
 
+def move_cards_to_board(db: sqlite3.Connection, from_board_id: int, to_board_id: int) -> None:
+    """
+    Переносит все карточки (с доски и из истории) с одной доски на другую и удаляет
+    опустевшую доску. Так гость, который поработал и потом вошёл в свой аккаунт
+    через DonationAlerts, не теряет карточки.
+
+    Колонки сопоставляем по виду: «Очередь» → «Очередь», «Выполнено» → «Выполнено»,
+    промежуточные → в первую промежуточную (а если её нет — в «Очередь»).
+    """
+    work_column_ids = [column.id for column in get_columns(db, to_board_id) if column.kind == "work"]
+    incoming_id = get_column_id_by_kind(db, to_board_id, "incoming")
+    target_by_kind = {
+        "incoming": incoming_id,
+        "work": work_column_ids[0] if work_column_ids else incoming_id,
+        "done": get_column_id_by_kind(db, to_board_id, "done"),
+    }
+    for column in get_columns(db, from_board_id):
+        db.execute(
+            "UPDATE cards SET board_id = ?, column_id = ? WHERE board_id = ? AND column_id = ?",
+            (to_board_id, target_by_kind[column.kind], from_board_id, column.id),
+        )
+    # Карточки без колонки (такие бывают только в старых базах) — в «Очередь»
+    db.execute(
+        "UPDATE cards SET board_id = ?, column_id = ? WHERE board_id = ?",
+        (to_board_id, incoming_id, from_board_id),
+    )
+
+    db.execute("DELETE FROM board_columns WHERE board_id = ?", (from_board_id,))
+    db.execute("DELETE FROM board_settings WHERE board_id = ?", (from_board_id,))
+    db.execute("DELETE FROM boards WHERE id = ?", (from_board_id,))
+
+
 def get_card(db: sqlite3.Connection, board_id: int, card_id: int) -> Card:
     """Находит карточку доски по id или отвечает фронту ошибкой 404 «не найдено»."""
     row = db.execute("SELECT * FROM cards WHERE id = ? AND board_id = ?", (card_id, board_id)).fetchone()

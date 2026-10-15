@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
 from .. import config
+from ..board import create_board, find_user_board, move_cards_to_board
 from ..db import get_db, set_setting
 from ..donationalerts import client
 from ..donationalerts.listener import (
@@ -33,6 +34,7 @@ from ..users import (
     find_session_user,
     find_user_by_login,
     get_current_user,
+    list_logins,
     set_session_cookie,
     update_profile,
 )
@@ -116,6 +118,8 @@ async def callback(
     profile = await client.get_user(tokens["access_token"])
     user_id = choose_user(db, str(profile["id"]), current_user)
     update_profile(db, user_id, profile.get("name"), profile.get("avatar"))
+    if current_user is not None and current_user["id"] != user_id:
+        take_guest_cards(db, current_user, user_id)
     # Донаты теперь падают на доску этого пользователя
     set_setting(db, OWNER_USER_ID, str(user_id))
     # Сохраняем сразу: функции ниже пишут в базу через своё соединение,
@@ -150,6 +154,19 @@ def choose_user(db: sqlite3.Connection, da_user_id: str, current_user: sqlite3.R
     user_id = current_user["id"] if current_user else create_user(db)
     add_login(db, user_id, DONATIONALERTS, da_user_id)
     return user_id
+
+
+def take_guest_cards(db: sqlite3.Connection, guest: sqlite3.Row, user_id: int) -> None:
+    """
+    Гость вошёл в аккаунт, который уже есть (например, после «Выйти» или с нового устройства).
+    Его карточки переезжают на доску аккаунта, чтобы не потеряться.
+    Если до входа это был не гость, а другой аккаунт, его доску не трогаем.
+    """
+    guest_board_id = find_user_board(db, guest["id"])
+    if list_logins(db, guest["id"]) or guest_board_id is None:
+        return
+    user_board_id = find_user_board(db, user_id) or create_board(db, user_id)
+    move_cards_to_board(db, guest_board_id, user_board_id)
 
 
 @router.post("/logout")

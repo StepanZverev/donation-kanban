@@ -161,3 +161,25 @@ def test_old_board_without_users_goes_to_first_visitor(client, other):
     # Пользователей в базе не было: доску забирает тот, кто первым откроет сайт
     assert [card["title"] for card in other.get("/api/cards").json()] == ["Старая карточка"]
     assert client.get("/api/cards").json() == []
+
+
+def test_guest_cards_move_to_account_on_login(client, fake_da, no_listener):
+    connect_donationalerts(client)
+    client.post("/api/cards", json={"text": "Карточка аккаунта"})
+    client.post("/api/me/logout")
+
+    # Гостем накидал карточек: одну в «В работе», одну убрал в историю
+    work_column_id = client.get("/api/columns").json()[1]["id"]
+    client.post("/api/cards", json={"text": "Гостевая в работе", "column_id": work_column_id})
+    gone_id = client.post("/api/cards", json={"text": "Гостевая в истории"}).json()["id"]
+    client.delete(f"/api/cards/{gone_id}")
+
+    # Вошёл обратно — гостевые карточки на доске аккаунта, в колонках того же вида
+    connect_donationalerts(client)
+    columns = {column["id"]: column["title"] for column in client.get("/api/columns").json()}
+    cards = {card["title"]: columns[card["column_id"]] for card in client.get("/api/cards").json()}
+    assert cards == {"Карточка аккаунта": "Очередь", "Гостевая в работе": "В работе"}
+    assert [card["title"] for card in client.get("/api/history").json()] == ["Гостевая в истории"]
+    with connect() as db:
+        assert db.execute("SELECT COUNT(*) FROM boards").fetchone()[0] == 1
+
