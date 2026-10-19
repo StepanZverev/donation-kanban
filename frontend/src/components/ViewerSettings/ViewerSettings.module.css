@@ -64,11 +64,6 @@
   gap: 8px;
 }
 
-/* Отодвигает «Новая ссылка» и «Выключить» к правому краю */
-.spacer {
-  flex: 1;
-}
-
 .primaryButton {
   border-color: var(--color-accent);
   background-color: var(--color-accent);
@@ -76,7 +71,3 @@
   white-space: nowrap;
 }
 
-.link {
-  font-size: 13px;
-  color: var(--color-accent);
-}

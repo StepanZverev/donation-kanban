@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { getPublicPageUrl } from '../../api/viewer'
 import { useViewerSettings } from '../../hooks/useViewerSettings'
-import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
+import { LinkSetting } from '../LinkSetting/LinkSetting'
 import styles from './ViewerSettings.module.css'
 
 // Раздел «Для зрителей» на странице настроек: ссылка, по которой зрители видят доску
@@ -10,8 +10,6 @@ export function ViewerSettings() {
   const { settings, error, saveDonationUrl, createPublicLink, deletePublicLink } = useViewerSettings()
   // Что сейчас написано в поле ссылки на донат. null — поле не меняли, показываем сохранённое.
   const [donationUrlDraft, setDonationUrlDraft] = useState<string | null>(null)
-  // Только что скопировали ссылку — на пару секунд пишем на кнопке «Скопировано»
-  const [isCopied, setIsCopied] = useState(false)
 
   if (!settings) {
     return error ? <p className={styles.error}>{error}</p> : null
@@ -30,52 +28,16 @@ export function ViewerSettings() {
 
       {error && <p className={styles.error}>{error}</p>}
 
-      <div className={styles.field}>
-        <span className={styles.label}>Ссылка для зрителей</span>
-        {publicUrl ? (
-          <>
-            <span className={styles.description}>
-              Выложи её в описание канала или в чат. Новая ссылка заменит эту, и старая сразу
-              перестанет работать.
-            </span>
-            <input className={styles.input} value={publicUrl} readOnly onFocus={handleUrlFocus} />
-            <div className={styles.buttons}>
-              <button type="button" className={styles.primaryButton} onClick={handleCopyClick}>
-                {isCopied ? 'Скопировано' : 'Скопировать'}
-              </button>
-              <a href={publicUrl} target="_blank" rel="noopener noreferrer" className={styles.link}>
-                Открыть
-              </a>
-              <span className={styles.spacer} />
-              <ConfirmButton
-                title="Сделать новую ссылку"
-                question="Старая ссылка перестанет работать. Зрителям нужно будет дать новую."
-                confirmLabel="Сделать новую"
-                onConfirm={createPublicLink}
-              >
-                Новая ссылка
-              </ConfirmButton>
-              <ConfirmButton
-                title="Выключить ссылку"
-                question="Зрители больше не смогут смотреть доску по этой ссылке."
-                confirmLabel="Выключить"
-                onConfirm={deletePublicLink}
-              >
-                Выключить
-              </ConfirmButton>
-            </div>
-          </>
-        ) : (
-          <>
-            <span className={styles.description}>Сейчас выключена: доску видишь только ты.</span>
-            <div className={styles.buttons}>
-              <button type="button" className={styles.primaryButton} onClick={createPublicLink}>
-                Включить
-              </button>
-            </div>
-          </>
-        )}
-      </div>
+      <LinkSetting
+        label="Ссылка для зрителей"
+        url={publicUrl}
+        description="Выложи её в описание канала или в чат. Новая ссылка заменит эту, и старая сразу перестанет работать."
+        emptyDescription="Ссылки нет: доску видишь только ты."
+        newLinkQuestion="Старая ссылка перестанет работать. Зрителям нужно будет дать новую."
+        deleteQuestion="Зрители больше не смогут смотреть доску по этой ссылке."
+        onCreate={createPublicLink}
+        onDelete={deletePublicLink}
+      />
 
       <form className={styles.field} onSubmit={handleDonationUrlSubmit}>
         <label className={styles.label} htmlFor="donation-url">
@@ -107,20 +69,6 @@ export function ViewerSettings() {
       </form>
     </section>
   )
-
-  // Клик по полю со ссылкой выделяет её целиком — удобно скопировать вручную
-  function handleUrlFocus(event: FormEvent<HTMLInputElement>) {
-    event.currentTarget.select()
-  }
-
-  async function handleCopyClick() {
-    if (!publicUrl) {
-      return
-    }
-    await navigator.clipboard.writeText(publicUrl)
-    setIsCopied(true)
-    window.setTimeout(() => setIsCopied(false), 2000)
-  }
 
   async function handleDonationUrlSubmit(event: FormEvent<HTMLFormElement>) {
     // Без этого браузер перезагрузит страницу, отправляя форму

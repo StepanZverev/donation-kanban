@@ -42,45 +42,6 @@
   color: var(--color-text-secondary);
 }
 
-.input {
-  box-sizing: border-box;
-  flex: 1;
-  min-width: 0;
-  width: 100%;
-  padding: 6px 10px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-}
-
-.input:focus {
-  border-color: var(--color-accent);
-  outline: none;
-}
-
-.buttons {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Отодвигает «Новая ссылка» и «Выключить» к правому краю */
-.spacer {
-  flex: 1;
-}
-
-.primaryButton {
-  border-color: var(--color-accent);
-  background-color: var(--color-accent);
-  color: #ffffff;
-  white-space: nowrap;
-}
-
-.link {
-  font-size: 13px;
-  color: var(--color-accent);
-}
-
 /* Строка модератора: имя слева, «Убрать» справа */
 .member {
   display: flex;

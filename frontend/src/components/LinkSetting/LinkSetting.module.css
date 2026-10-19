@@ -1,0 +1,52 @@
+/* Блок со ссылкой: название, пояснение, поле со ссылкой и кнопки под ним.
+   Выглядит как остальные блоки настроек (см. ViewerSettings.module.css) */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.description {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.input:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Отодвигает «Новая ссылка» и «Удалить» к правому краю */
+.spacer {
+  flex: 1;
+}
+
+.primaryButton {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: #ffffff;
+  white-space: nowrap;
+}

@@ -1,6 +1,6 @@
-import { useState } from 'react'
 import { getInvitePageUrl, type BoardMember } from '../../api/boards'
 import { useMembers } from '../../hooks/useMembers'
+import { LinkSetting } from '../LinkSetting/LinkSetting'
 import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
 import styles from './MembersSettings.module.css'
 
@@ -10,8 +10,6 @@ import styles from './MembersSettings.module.css'
 export function MembersSettings() {
   const { members, inviteToken, isLoading, error, createInviteLink, deleteInviteLink, removeMember } =
     useMembers()
-  // Только что скопировали ссылку — на пару секунд пишем на кнопке «Скопировано»
-  const [isCopied, setIsCopied] = useState(false)
 
   if (isLoading) {
     return null
@@ -29,49 +27,17 @@ export function MembersSettings() {
 
       {error && <p className={styles.error}>{error}</p>}
 
-      <div className={styles.field}>
-        <span className={styles.label}>Ссылка-приглашение</span>
-        {inviteUrl ? (
-          <>
-            <span className={styles.description}>
-              Отправь её модератору лично: любой, кто откроет ссылку, сможет стать модератором.
-              Новая ссылка заменит эту, а уже принятые приглашения останутся.
-            </span>
-            <input className={styles.input} value={inviteUrl} readOnly onFocus={(event) => event.currentTarget.select()} />
-            <div className={styles.buttons}>
-              <button type="button" className={styles.primaryButton} onClick={handleCopyClick}>
-                {isCopied ? 'Скопировано' : 'Скопировать'}
-              </button>
-              <span className={styles.spacer} />
-              <ConfirmButton
-                title="Сделать новую ссылку"
-                question="Старая ссылка перестанет работать. Те, кто уже стал модератором, останутся."
-                confirmLabel="Сделать новую"
-                onConfirm={createInviteLink}
-              >
-                Новая ссылка
-              </ConfirmButton>
-              <ConfirmButton
-                title="Удалить ссылку"
-                question="Ссылка перестанет работать, и все модераторы потеряют доступ к доске."
-                confirmLabel="Удалить"
-                onConfirm={deleteInviteLink}
-              >
-                Удалить
-              </ConfirmButton>
-            </div>
-          </>
-        ) : (
-          <>
-            <span className={styles.description}>Ссылки нет: позвать модератора нельзя.</span>
-            <div className={styles.buttons}>
-              <button type="button" className={styles.primaryButton} onClick={createInviteLink}>
-                Сделать ссылку
-              </button>
-            </div>
-          </>
-        )}
-      </div>
+      <LinkSetting
+        label="Ссылка-приглашение"
+        url={inviteUrl}
+        description="Отправь её модератору лично: любой, кто откроет ссылку, сможет стать модератором. Ссылка скрыта, чтобы случайно не показать её на стриме, но скопировать можно и так. Новая ссылка заменит эту, а модераторы останутся."
+        emptyDescription="Ссылки нет: позвать модератора нельзя."
+        isSecret
+        newLinkQuestion="Старая ссылка перестанет работать. Те, кто уже стал модератором, останутся."
+        deleteQuestion="Ссылка перестанет работать, и все модераторы потеряют доступ к доске."
+        onCreate={createInviteLink}
+        onDelete={deleteInviteLink}
+      />
 
       <div className={styles.field}>
         <span className={styles.label}>Кто модератор</span>
@@ -95,15 +61,6 @@ export function MembersSettings() {
       </div>
     </section>
   )
-
-  async function handleCopyClick() {
-    if (!inviteUrl) {
-      return
-    }
-    await navigator.clipboard.writeText(inviteUrl)
-    setIsCopied(true)
-    window.setTimeout(() => setIsCopied(false), 2000)
-  }
 }
 
 // Как показать модератора в списке: как он представился, иначе имя из DonationAlerts, иначе «Гость»
