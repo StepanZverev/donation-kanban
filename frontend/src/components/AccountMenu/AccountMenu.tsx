@@ -1,4 +1,5 @@
 import { useState, type FocusEvent, type KeyboardEvent } from 'react'
+import { Link } from 'react-router'
 import { LOGIN_URL } from '../../api/auth'
 import { useCurrentUser } from '../../hooks/useCurrentUser'
 import styles from './AccountMenu.module.css'
@@ -64,6 +65,26 @@ export function AccountMenu() {
               </button>
             </>
           )}
+
+          {/* Доски, где пользователь модератор, и путь назад к своей */}
+          {user.moderatedBoards.length > 0 && (
+            <nav className={styles.boards} aria-label="Доски">
+              <p className={styles.heading}>Доски</p>
+              <Link className={styles.boardLink} to={`/boards/${user.boardId}`} onClick={handleBoardClick}>
+                Моя доска
+              </Link>
+              {user.moderatedBoards.map((board) => (
+                <Link
+                  key={board.id}
+                  className={styles.boardLink}
+                  to={`/boards/${board.id}`}
+                  onClick={handleBoardClick}
+                >
+                  Доска {board.ownerName ?? 'стримера'} · модератор
+                </Link>
+              ))}
+            </nav>
+          )}
         </div>
       )}
     </div>
@@ -80,6 +101,10 @@ export function AccountMenu() {
     if (event.key === 'Escape') {
       setIsOpen(false)
     }
+  }
+
+  function handleBoardClick() {
+    setIsOpen(false)
   }
 
   function handleLogoutClick() {

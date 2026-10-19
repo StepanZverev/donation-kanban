@@ -2,8 +2,10 @@
 // добавить, переименовать, удалить, переставить.
 
 import { useCallback, useEffect, useState } from 'react'
+import { getBoardUpdatesPath } from '../api/boards'
 import * as columnsApi from '../api/columns'
 import type { BoardColumn } from '../types/card'
+import { useBoard } from './useBoard'
 import { useBoardUpdates } from './useBoardUpdates'
 
 // Столько же, сколько разрешает бэкенд (backend/app/routes/columns.py).
@@ -11,25 +13,26 @@ import { useBoardUpdates } from './useBoardUpdates'
 export const MAX_WORK_COLUMNS = 3
 
 export function useColumnSettings() {
+  const { id: boardId } = useBoard()
   const [columns, setColumns] = useState<BoardColumn[]>([])
   const [error, setError] = useState<string | null>(null)
 
   const reload = useCallback(() => {
     return columnsApi
-      .getColumns()
+      .getColumns(boardId)
       .then((freshColumns) => {
         setColumns(freshColumns)
         setError(null)
       })
       .catch(() => setError('Не удалось загрузить колонки. Проверь, что бэкенд запущен.'))
-  }, [])
+  }, [boardId])
 
   useEffect(() => {
     reload()
   }, [reload])
 
   // Колонки могли поменять в другой вкладке
-  useBoardUpdates(reload)
+  useBoardUpdates(reload, getBoardUpdatesPath(boardId))
 
   // Только промежуточные колонки, слева направо. «Очередь» и «Выполнено» здесь не настраиваются.
   const workColumns = columns.filter((column) => column.kind === 'work')
@@ -44,15 +47,15 @@ export function useColumnSettings() {
   }
 
   function addColumn(title: string) {
-    return runAndReload(() => columnsApi.createColumn(title))
+    return runAndReload(() => columnsApi.createColumn(boardId, title))
   }
 
   function renameColumn(id: number, title: string) {
-    return runAndReload(() => columnsApi.renameColumn(id, title))
+    return runAndReload(() => columnsApi.renameColumn(boardId, id, title))
   }
 
   function removeColumn(id: number) {
-    return runAndReload(() => columnsApi.deleteColumn(id))
+    return runAndReload(() => columnsApi.deleteColumn(boardId, id))
   }
 
   // Сдвигает колонку на одно место влево (-1) или вправо (+1)
@@ -67,7 +70,7 @@ export function useColumnSettings() {
     const neighbour = ids[to]
     ids[to] = ids[from]
     ids[from] = neighbour
-    return runAndReload(() => columnsApi.reorderColumns(ids))
+    return runAndReload(() => columnsApi.reorderColumns(boardId, ids))
   }
 
   return { columns, workColumns, error, addColumn, renameColumn, removeColumn, moveColumn }

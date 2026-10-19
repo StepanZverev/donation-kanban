@@ -1,9 +1,11 @@
 // Логика вкладки «История»: загрузка списка с фильтром и поиском и действия с ним.
 
 import { useCallback, useEffect, useState } from 'react'
+import { getBoardUpdatesPath } from '../api/boards'
 import * as historyApi from '../api/history'
 import type { HistoryFilter } from '../api/history'
 import type { Card } from '../types/card'
+import { useBoard } from './useBoard'
 import { useBoardUpdates } from './useBoardUpdates'
 
 // Сколько ждать после последней набранной буквы, прежде чем искать.
@@ -11,6 +13,7 @@ import { useBoardUpdates } from './useBoardUpdates'
 const SEARCH_DELAY_MS = 300
 
 export function useHistoryCards() {
+  const { id: boardId } = useBoard()
   const [cards, setCards] = useState<Card[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -27,14 +30,14 @@ export function useHistoryCards() {
 
   const reload = useCallback(() => {
     return historyApi
-      .getHistory({ reason, query: searchQuery })
+      .getHistory(boardId, { reason, query: searchQuery })
       .then((freshCards) => {
         setCards(freshCards)
         setError(null)
       })
       .catch(() => setError('Не удалось загрузить историю. Проверь, что бэкенд запущен.'))
       .finally(() => setIsLoading(false))
-  }, [reason, searchQuery])
+  }, [boardId, reason, searchQuery])
 
   // Загружаем при открытии и заново при каждой смене фильтра или поиска
   useEffect(() => {
@@ -42,7 +45,7 @@ export function useHistoryCards() {
   }, [reload])
 
   // Карточку могли убрать в историю или переоткрыть в другой вкладке.
-  useBoardUpdates(reload)
+  useBoardUpdates(reload, getBoardUpdatesPath(boardId))
 
   async function runAndReload(action: () => Promise<unknown>) {
     try {
@@ -54,11 +57,11 @@ export function useHistoryCards() {
   }
 
   function restoreCard(id: number) {
-    return runAndReload(() => historyApi.restoreCard(id))
+    return runAndReload(() => historyApi.restoreCard(boardId, id))
   }
 
   function deleteForever(id: number) {
-    return runAndReload(() => historyApi.deleteForever(id))
+    return runAndReload(() => historyApi.deleteForever(boardId, id))
   }
 
   return {

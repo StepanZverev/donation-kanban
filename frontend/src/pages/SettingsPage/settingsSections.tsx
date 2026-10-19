@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { ColumnsSettings } from '../../components/ColumnsSettings/ColumnsSettings'
 import { DonationsSettings } from '../../components/DonationsSettings/DonationsSettings'
+import { MembersSettings } from '../../components/MembersSettings/MembersSettings'
 import { PriorityLevelsSettings } from '../../components/PriorityLevelsSettings/PriorityLevelsSettings'
 import { ThemeSettings } from '../../components/ThemeSettings/ThemeSettings'
 import { ViewerSettings } from '../../components/ViewerSettings/ViewerSettings'
@@ -12,6 +13,7 @@ export const SETTINGS_SECTIONS: { path: string; title: string; element: ReactNod
   { path: 'columns', title: 'Колонки', element: <ColumnsSettings /> },
   { path: 'levels', title: 'Уровни приоритета', element: <PriorityLevelsSettings /> },
   { path: 'donations', title: 'Приём донатов', element: <DonationsSettings /> },
+  { path: 'moderators', title: 'Модераторы', element: <MembersSettings /> },
   { path: 'viewers', title: 'Для зрителей', element: <ViewerSettings /> },
   { path: 'appearance', title: 'Внешний вид', element: <ThemeSettings /> },
 ]

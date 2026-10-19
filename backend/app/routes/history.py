@@ -12,7 +12,7 @@ from ..merging import unmerge_card
 from ..realtime import notify_board_changed
 from ..schemas import ArchiveReason, Card, CardRestore
 
-router = APIRouter(prefix="/api/history", tags=["История"])
+router = APIRouter(prefix="/api/boards/{board_id}/history", tags=["История"])
 
 
 def get_archived_card(db: sqlite3.Connection, board_id: int, card_id: int) -> Card:

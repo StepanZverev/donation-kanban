@@ -4,15 +4,16 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 from fastapi import WebSocketDisconnect
-from fastapi.testclient import TestClient
 
 from app.donationalerts import listener
+
+from .helpers import BoardClient
 
 
 @pytest.fixture
 def viewer(client):
     """Зритель: отдельный браузер без cookie."""
-    return TestClient(client.app)
+    return BoardClient(client.app)
 
 
 def turn_on_link(client_) -> str:
@@ -56,7 +57,7 @@ def test_wrong_or_turned_off_link_does_not_work(client, viewer):
 
 
 def test_viewer_sees_only_board_of_the_link(client, viewer):
-    other = TestClient(client.app)
+    other = BoardClient(client.app)
     other.post("/api/cards", json={"text": "Чужая"})
     client.post("/api/cards", json={"text": "Моя"})
     token = turn_on_link(client)

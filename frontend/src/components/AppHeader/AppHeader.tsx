@@ -1,3 +1,4 @@
+import { useBoard } from '../../hooks/useBoard'
 import { AccountMenu } from '../AccountMenu/AccountMenu'
 import { DonationAlertsStatus } from '../DonationAlertsStatus/DonationAlertsStatus'
 import { IntakeToggle } from '../IntakeToggle/IntakeToggle'
@@ -15,6 +16,7 @@ type AppHeaderProps = {
 
 export function AppHeader(props: AppHeaderProps) {
   const { hasNewOnBoard, hasNewInHistory } = props
+  const board = useBoard()
 
   return (
     // full-width: фон шапки тянется на всю ширину окна, а содержимое стоит в рабочей области
@@ -36,12 +38,18 @@ export function AppHeader(props: AppHeaderProps) {
 
         <div className={styles.right}>
           <StreamTotal />
-          {/* Статус DonationAlerts и переключатель приёма — одна капсула с разделителем:
-              оба про то, доходят ли донаты до доски */}
-          <div className={styles.capsule}>
-            <DonationAlertsStatus />
-            <IntakeToggle />
-          </div>
+          {board.role === 'owner' ? (
+            // Статус DonationAlerts и переключатель приёма — одна капсула с разделителем:
+            // оба про то, доходят ли донаты до доски. Это дело хозяина доски.
+            <div className={styles.capsule}>
+              <DonationAlertsStatus />
+              <IntakeToggle />
+            </div>
+          ) : (
+            <span className={styles.moderatorBadge}>
+              Модератор · доска {board.ownerName ?? 'стримера'}
+            </span>
+          )}
           <AccountMenu />
         </div>
       </div>

@@ -1,5 +1,7 @@
 // Запросы про текущего пользователя: кто я и выход.
 
+import { toBoardInfo, type BoardInfo, type BoardRole } from './boards'
+
 // Как пользователь приходит с сервера (snake_case, см. CurrentUser в backend/app/schemas.py)
 type CurrentUserFromApi = {
   id: number
@@ -8,6 +10,8 @@ type CurrentUserFromApi = {
   is_guest: boolean
   logins: string[]
   can_connect_donationalerts: boolean
+  board_id: number
+  moderated_boards: { id: number; owner_name: string | null; role: BoardRole }[]
 }
 
 export type CurrentUser = {
@@ -16,6 +20,8 @@ export type CurrentUser = {
   avatarUrl: string | null
   isGuest: boolean // гость — ещё не подключил DonationAlerts, доска живёт только в этом браузере
   canConnectDonationAlerts: boolean // вписаны ли ключи DA в backend/.env
+  boardId: number // своя доска: её открываем по адресу «/»
+  moderatedBoards: BoardInfo[] // чужие доски, где пользователь модератор
 }
 
 // Первый запрос сам создаёт гостя: бэкенд запомнит браузер по cookie
@@ -31,6 +37,8 @@ export async function getMe(): Promise<CurrentUser> {
     avatarUrl: user.avatar_url,
     isGuest: user.is_guest,
     canConnectDonationAlerts: user.can_connect_donationalerts,
+    boardId: user.board_id,
+    moderatedBoards: user.moderated_boards.map(toBoardInfo),
   }
 }
 

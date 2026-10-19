@@ -10,12 +10,18 @@ import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..board import get_board_id, get_column, get_column_id_by_kind, get_columns
+from ..board import (
+    get_board_id,
+    get_column,
+    get_column_id_by_kind,
+    get_columns,
+    get_owned_board_id,
+)
 from ..db import get_db, now
 from ..realtime import notify_board_changed
 from ..schemas import BoardColumn, ColumnCreate, ColumnOrder, ColumnUpdate
 
-router = APIRouter(prefix="/api/columns", tags=["Колонки"])
+router = APIRouter(prefix="/api/boards/{board_id}/columns", tags=["Колонки"])
 
 # Сколько может быть промежуточных колонок. Меньше всего — ни одной:
 # тогда на доске остаются только «Очередь» и «Выполнено».
@@ -35,7 +41,7 @@ def list_columns(
 def create_column(
     data: ColumnCreate,
     db: sqlite3.Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
+    board_id: int = Depends(get_owned_board_id),
 ) -> BoardColumn:
     """Добавляет промежуточную колонку последней, прямо перед «Выполнено»."""
     work_ids = get_work_column_ids(db, board_id)
@@ -56,7 +62,7 @@ def create_column(
 def reorder_columns(
     data: ColumnOrder,
     db: sqlite3.Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
+    board_id: int = Depends(get_owned_board_id),
 ) -> list[BoardColumn]:
     """Переставляет промежуточные колонки. Прислать нужно все их id, каждый по одному разу."""
     if sorted(data.column_ids) != sorted(get_work_column_ids(db, board_id)):
@@ -73,7 +79,7 @@ def rename_column(
     column_id: int,
     data: ColumnUpdate,
     db: sqlite3.Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
+    board_id: int = Depends(get_owned_board_id),
 ) -> BoardColumn:
     """Переименовывает промежуточную колонку."""
     get_work_column(db, board_id, column_id)
@@ -87,7 +93,7 @@ def rename_column(
 def delete_column(
     column_id: int,
     db: sqlite3.Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
+    board_id: int = Depends(get_owned_board_id),
 ) -> None:
     """
     Удаляет промежуточную колонку. Её карточки не пропадают, а возвращаются в «Очередь».

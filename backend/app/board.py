@@ -38,12 +38,56 @@ def find_user_board(db: sqlite3.Connection, user_id: int) -> int | None:
     return row["id"] if row else None
 
 
+# Роли на доске: хозяин может всё, модератор — работать с карточками
+OWNER = "owner"
+MODERATOR = "moderator"
+
+
+def get_board_role(db: sqlite3.Connection, board_id: int, user_id: int) -> str | None:
+    """Кто пользователь на этой доске: OWNER, MODERATOR или None (доступа нет, или доски нет)."""
+    board = db.execute("SELECT owner_id FROM boards WHERE id = ?", (board_id,)).fetchone()
+    if board is None:
+        return None
+    if board["owner_id"] == user_id:
+        return OWNER
+    member = db.execute(
+        "SELECT role FROM board_members WHERE board_id = ? AND user_id = ?", (board_id, user_id)
+    ).fetchone()
+    return member["role"] if member else None
+
+
 def get_board_id(
+    board_id: int,
     user: sqlite3.Row = Depends(get_current_user),
     db: sqlite3.Connection = Depends(get_db),
 ) -> int:
-    """Доска того, кто прислал запрос. Подключается так: `board_id = Depends(get_board_id)`."""
-    return find_or_create_user_board(db, user["id"])
+    """
+    Доска из адреса запроса (/api/boards/{board_id}/...), если у пользователя есть
+    к ней доступ: он хозяин или модератор. Подключается так: `board_id = Depends(get_board_id)`.
+
+    На чужую доску отвечаем 404 «не найдена», а не «нет доступа»:
+    так по ответам нельзя даже узнать, какие доски существуют.
+    """
+    if get_board_role(db, board_id, user["id"]) is None:
+        raise HTTPException(status_code=404, detail="Доска не найдена")
+    return board_id
+
+
+def get_owned_board_id(
+    board_id: int,
+    user: sqlite3.Row = Depends(get_current_user),
+    db: sqlite3.Connection = Depends(get_db),
+) -> int:
+    """
+    То же, что get_board_id, но только для хозяина доски. Так защищены настройки,
+    колонки, сброс доски и приглашения: модератору они отвечают 403 «нельзя».
+    """
+    role = get_board_role(db, board_id, user["id"])
+    if role is None:
+        raise HTTPException(status_code=404, detail="Доска не найдена")
+    if role != OWNER:
+        raise HTTPException(status_code=403, detail="Это может только хозяин доски")
+    return board_id
 
 
 def find_or_create_user_board(db: sqlite3.Connection, user_id: int) -> int:
@@ -92,6 +136,7 @@ def move_cards_to_board(db: sqlite3.Connection, from_board_id: int, to_board_id:
 
     db.execute("DELETE FROM board_columns WHERE board_id = ?", (from_board_id,))
     db.execute("DELETE FROM board_settings WHERE board_id = ?", (from_board_id,))
+    db.execute("DELETE FROM board_members WHERE board_id = ?", (from_board_id,))
     db.execute("DELETE FROM boards WHERE id = ?", (from_board_id,))
 
 

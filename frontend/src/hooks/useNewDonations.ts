@@ -10,7 +10,9 @@
 // Новое — то, что пришло позже увиденного.
 
 import { useCallback, useEffect, useState } from 'react'
+import { getBoardUpdatesPath } from '../api/boards'
 import { getLatestDonations, type LatestDonations } from '../api/cards'
+import { useBoard } from './useBoard'
 import { useBoardUpdates } from './useBoardUpdates'
 
 type Page = 'board' | 'history' | 'other'
@@ -34,6 +36,7 @@ function isNewer(time: string | null, seenTime: string | undefined) {
 }
 
 export function useNewDonations(pathname: string) {
+  const { id: boardId } = useBoard()
   const [latest, setLatest] = useState<LatestDonations | null>(null)
   // null — ещё не загрузили. При первой загрузке всё, что уже есть, считаем увиденным.
   const [seen, setSeen] = useState<Seen | null>(null)
@@ -41,21 +44,21 @@ export function useNewDonations(pathname: string) {
   const [page, setPage] = useState(getPage(pathname))
 
   const reload = useCallback(() => {
-    getLatestDonations()
+    getLatestDonations(boardId)
       .then((loaded) => {
         setLatest(loaded)
         setSeen((current) => current ?? { onBoard: loaded.onBoard ?? '', toHistory: loaded.toHistory ?? '' })
       })
       // Бэкенд не отвечает — об этом и так скажет доска, точки просто не будет
       .catch(() => {})
-  }, [])
+  }, [boardId])
 
   useEffect(() => {
     reload()
   }, [reload])
 
   // Пришёл донат или что-то поменялось — узнаём свежие времена
-  useBoardUpdates(reload)
+  useBoardUpdates(reload, getBoardUpdatesPath(boardId))
 
   // Ушли с вкладки — всё, что на ней было, теперь увидено. Состояние меняем прямо
   // во время отрисовки: так React советует отвечать на смену входных данных.

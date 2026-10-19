@@ -7,12 +7,14 @@ import type { CurrentUser } from '../api/me'
 export function useCurrentUser() {
   // null — ещё не загрузили (или бэкенд не отвечает)
   const [user, setUser] = useState<CurrentUser | null>(null)
+  // Бэкенд не ответил
+  const [hasFailed, setHasFailed] = useState(false)
 
   useEffect(() => {
     meApi
       .getMe()
       .then(setUser)
-      .catch(() => setUser(null))
+      .catch(() => setHasFailed(true))
   }, [])
 
   // После выхода перезагружаем страницу: бэкенд встретит браузер как нового гостя
@@ -21,5 +23,5 @@ export function useCurrentUser() {
     window.location.assign('/')
   }
 
-  return { user, logout }
+  return { user, hasFailed, logout }
 }

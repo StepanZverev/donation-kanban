@@ -117,6 +117,18 @@ CREATE TABLE IF NOT EXISTS da_connections (
     created_at       TEXT    NOT NULL
 );
 
+-- Модераторы досок: кто ещё, кроме хозяина (boards.owner_id), может работать с доской.
+-- role пока одна — moderator: двигать, править и убирать карточки, но не трогать настройки.
+CREATE TABLE IF NOT EXISTS board_members (
+    board_id   INTEGER NOT NULL REFERENCES boards (id),
+    user_id    INTEGER NOT NULL REFERENCES users (id),
+    role       TEXT    NOT NULL,
+    created_at TEXT    NOT NULL,
+    -- Как модератор представился, когда принимал приглашение (может быть пусто)
+    nickname   TEXT,
+    PRIMARY KEY (board_id, user_id)
+);
+
 -- Простое хранилище «ключ — значение» для служебных данных всего сервера.
 -- Настройки конкретной доски — в board_settings.
 CREATE TABLE IF NOT EXISTS settings (
@@ -182,6 +194,14 @@ def init_db() -> None:
         add_new_card_fields(db)
         rename_filtered_to_rejected(db)
         join_manual_card_texts(db)
+        add_member_nickname(db)
+
+
+def add_member_nickname(db: sqlite3.Connection) -> None:
+    """Имя модератора появилось позже таблицы board_members — в старой базе добавляем поле."""
+    member_fields = [row["name"] for row in db.execute("PRAGMA table_info(board_members)")]
+    if "nickname" not in member_fields:
+        db.execute("ALTER TABLE board_members ADD COLUMN nickname TEXT")
 
 
 def rename_pile_to_queue(db: sqlite3.Connection) -> None:
@@ -282,7 +302,7 @@ def move_to_boards(db: sqlite3.Connection) -> None:
     кто подключил DonationAlerts, а если такого нет — тот, кто заходил на сайт последним
     (скорее всего, это сам стример со своего основного браузера).
     Если пользователей ещё нет, доска остаётся без хозяина: её заберёт себе
-    первый, кто откроет сайт (см. boards.get_board_id).
+    первый, кто откроет сайт (см. board.find_or_create_user_board).
     """
     for table in ["board_columns", "cards"]:
         fields = [row["name"] for row in db.execute(f"PRAGMA table_info({table})")]
