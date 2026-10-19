@@ -1,15 +1,18 @@
 import { useState, type FocusEvent, type KeyboardEvent } from 'react'
 import { Link } from 'react-router'
 import { LOGIN_URL } from '../../api/auth'
+import { APP_VERSION } from '../../changelog'
 import { useCurrentUser } from '../../hooks/useCurrentUser'
+import { WhatsNewDialog } from '../WhatsNewDialog/WhatsNewDialog'
 import styles from './AccountMenu.module.css'
 
 // Кто вошёл — в правом углу шапки. Гость видит «Гость» и по клику подсказку,
 // что доску стоит закрепить за собой через DonationAlerts. Вошедший — аватар,
-// имя и кнопку «Выйти».
+// имя и кнопку «Выйти». Внизу — версия приложения, по клику окно «Что нового».
 export function AccountMenu() {
   const { user, logout } = useCurrentUser()
   const [isOpen, setIsOpen] = useState(false)
+  const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false)
 
   // Бэкенд не отвечает — об этом и так скажет доска
   if (user === null) {
@@ -19,75 +22,83 @@ export function AccountMenu() {
   const displayName = user.isGuest ? 'Гость' : (user.name ?? 'Без имени')
 
   return (
-    // onBlur на обёртке: фокус ушёл за пределы выпадашки (кликнули мимо) — закрываем
-    // Esc закрывает выпадашку
-    <div className={styles.wrapper} onBlur={handleBlur} onKeyDown={handleKeyDown}>
-      <button
-        type="button"
-        className={styles.button}
-        aria-expanded={isOpen}
-        title={displayName}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {user.avatarUrl ? (
-          <img className={styles.avatar} src={user.avatarUrl} alt="" />
-        ) : (
-          // Без аватара — первая буква имени в кружке
-          <span className={styles.avatar} aria-hidden="true">
-            {displayName[0]}
-          </span>
-        )}
-        <span className={styles.name}>{displayName}</span>
-      </button>
-
-      {isOpen && (
-        <div className={styles.dropdown}>
-          {user.isGuest ? (
-            <>
-              <p className={styles.heading}>Ты пользуешься доской как гость</p>
-              <p className={styles.description}>
-                Доска запомнена только в этом браузере: если почистить cookie, она потеряется.
-                Подключи DonationAlerts, чтобы закрепить доску за собой и открывать её с других
-                устройств.
-              </p>
-              {user.canConnectDonationAlerts && (
-                <a className={styles.connectButton} href={LOGIN_URL}>
-                  Подключить DonationAlerts
-                </a>
-              )}
-            </>
+    <>
+      {/* onBlur на обёртке: фокус ушёл за пределы выпадашки (кликнули мимо) — закрываем
+          Esc закрывает выпадашку */}
+      <div className={styles.wrapper} onBlur={handleBlur} onKeyDown={handleKeyDown}>
+        <button
+          type="button"
+          className={styles.button}
+          aria-expanded={isOpen}
+          title={displayName}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {user.avatarUrl ? (
+            <img className={styles.avatar} src={user.avatarUrl} alt="" />
           ) : (
-            <>
-              <p className={styles.heading}>{displayName}</p>
-              <p className={styles.description}>Вход через DonationAlerts.</p>
-              <button type="button" className={styles.logoutButton} onClick={handleLogoutClick}>
-                Выйти
-              </button>
-            </>
+            // Без аватара — первая буква имени в кружке
+            <span className={styles.avatar} aria-hidden="true">
+              {displayName[0]}
+            </span>
           )}
+          <span className={styles.name}>{displayName}</span>
+        </button>
 
-          {/* Доски, где пользователь модератор, и путь назад к своей */}
-          {user.moderatedBoards.length > 0 && (
-            <nav className={styles.boards} aria-label="Доски">
-              <p className={styles.heading}>Доски</p>
-              <Link className={styles.boardLink} to={`/boards/${user.boardId}`} onClick={handleBoardClick}>
-                Моя доска
-              </Link>
-              {user.moderatedBoards.map((board) => (
-                <Link
-                  key={board.id}
-                  className={styles.boardLink}
-                  to={`/boards/${board.id}`}
-                  onClick={handleBoardClick}
-                >
-                  Доска {board.ownerName ?? 'стримера'} · модератор
+        {isOpen && (
+          <div className={styles.dropdown}>
+            {user.isGuest ? (
+              <>
+                <p className={styles.heading}>Ты пользуешься доской как гость</p>
+                <p className={styles.description}>
+                  Доска запомнена только в этом браузере: если почистить cookie, она потеряется.
+                  Подключи DonationAlerts, чтобы закрепить доску за собой и открывать её с других
+                  устройств.
+                </p>
+                {user.canConnectDonationAlerts && (
+                  <a className={styles.connectButton} href={LOGIN_URL}>
+                    Подключить DonationAlerts
+                  </a>
+                )}
+              </>
+            ) : (
+              <>
+                <p className={styles.heading}>{displayName}</p>
+                <p className={styles.description}>Вход через DonationAlerts.</p>
+                <button type="button" className={styles.logoutButton} onClick={handleLogoutClick}>
+                  Выйти
+                </button>
+              </>
+            )}
+
+            {/* Доски, где пользователь модератор, и путь назад к своей */}
+            {user.moderatedBoards.length > 0 && (
+              <nav className={styles.boards} aria-label="Доски">
+                <p className={styles.heading}>Доски</p>
+                <Link className={styles.boardLink} to={`/boards/${user.boardId}`} onClick={handleBoardClick}>
+                  Моя доска
                 </Link>
-              ))}
-            </nav>
-          )}
-        </div>
-      )}
-    </div>
+                {user.moderatedBoards.map((board) => (
+                  <Link
+                    key={board.id}
+                    className={styles.boardLink}
+                    to={`/boards/${board.id}`}
+                    onClick={handleBoardClick}
+                  >
+                    Доска {board.ownerName ?? 'стримера'} · модератор
+                  </Link>
+                ))}
+              </nav>
+            )}
+
+            <button type="button" className={styles.versionButton} onClick={handleVersionClick}>
+              Версия {APP_VERSION} · что нового
+            </button>
+          </div>
+        )}
+      </div>
+
+      {isWhatsNewOpen && <WhatsNewDialog onClose={() => setIsWhatsNewOpen(false)} />}
+    </>
   )
 
   function handleBlur(event: FocusEvent<HTMLDivElement>) {
@@ -101,6 +112,11 @@ export function AccountMenu() {
     if (event.key === 'Escape') {
       setIsOpen(false)
     }
+  }
+
+  function handleVersionClick() {
+    setIsOpen(false)
+    setIsWhatsNewOpen(true)
   }
 
   function handleBoardClick() {
