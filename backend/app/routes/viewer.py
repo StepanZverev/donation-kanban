@@ -149,6 +149,7 @@ def get_public_board(token: str, db: Connection = Depends(get_db)) -> PublicBoar
         min_amount=intake.min_amount,
         ignore_anonymous=intake.ignore_anonymous,
         auto_merge=is_auto_merge_enabled(db, board_id),
+        rules=intake.rules,
         donations_connected=owner["donations_connected"],
     )
 

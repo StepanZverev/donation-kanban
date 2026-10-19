@@ -119,6 +119,28 @@
   vertical-align: -1px;
 }
 
+/* Свои правила стримера — цитатой с полоской слева, переносы строк как он написал */
+.ownRules {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid var(--color-accent);
+}
+
+.ownRulesTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.ownRulesText {
+  margin: 0;
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .levels {
   display: flex;
   flex-wrap: wrap;

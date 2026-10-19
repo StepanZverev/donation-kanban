@@ -9,7 +9,7 @@ type OrderRulesProps = {
 }
 
 // Блок «Как заказать» на странице зрителя. Пункты собираются из настроек приёма стримера:
-// минимальная сумма, анонимы, слияние донатов, уровни приоритета.
+// минимальная сумма, анонимы, слияние донатов, свои правила стримера, уровни приоритета.
 // Зритель может свернуть блок в одну строку, выбор запоминается (см. useRulesCollapsed).
 export function OrderRules(props: OrderRulesProps) {
   const { board } = props
@@ -67,6 +67,14 @@ export function OrderRules(props: OrderRulesProps) {
               </li>
             )}
           </ul>
+
+          {/* Правила, которые стример написал сам (например, на ивент) */}
+          {board.rules && (
+            <div className={styles.ownRules}>
+              <span className={styles.ownRulesTitle}>От стримера</span>
+              <p className={styles.ownRulesText}>{board.rules}</p>
+            </div>
+          )}
 
           {levels.length > 0 && (
             <div className={styles.levels}>

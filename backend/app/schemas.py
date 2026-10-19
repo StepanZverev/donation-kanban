@@ -75,6 +75,9 @@ class IntakeSettings(BaseModel):
     min_amount: float = Field(ge=0)
     # Донаты без ника на доску не попадают
     ignore_anonymous: bool
+    # Свои правила доната текстом (например, на ивент). Зритель видит их в «Как заказать».
+    # Пустая строка — правил нет.
+    rules: str = Field(default="", max_length=500)
 
 
 class CardCreate(BaseModel):
@@ -270,6 +273,8 @@ class PublicBoard(BaseModel):
     ignore_anonymous: bool
     # Несколько донатов одного зрителя складываются в одну карточку
     auto_merge: bool
+    # Свои правила доната от стримера. Пустая строка — правил нет.
+    rules: str
     # Подключён ли у стримера DonationAlerts: без него донат не станет карточкой
     donations_connected: bool
 

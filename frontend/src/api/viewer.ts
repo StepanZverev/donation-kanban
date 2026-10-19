@@ -83,6 +83,8 @@ export type PublicBoard = {
   ignoreAnonymous: boolean
   // Несколько донатов одного зрителя складываются в одну карточку
   autoMerge: boolean
+  // Свои правила доната от стримера. Пустая строка — правил нет.
+  rules: string
   // Подключён ли у стримера DonationAlerts: без него донат не станет карточкой
   donationsConnected: boolean
 }
@@ -110,6 +112,7 @@ type PublicBoardFromApi = {
   min_amount: number
   ignore_anonymous: boolean
   auto_merge: boolean
+  rules: string
   donations_connected: boolean
 }
 
@@ -150,6 +153,7 @@ export async function getPublicBoard(token: string): Promise<PublicBoard | null>
     minAmount: board.min_amount,
     ignoreAnonymous: board.ignore_anonymous,
     autoMerge: board.auto_merge,
+    rules: board.rules,
     donationsConnected: board.donations_connected,
   }
 }

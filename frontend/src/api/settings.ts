@@ -72,12 +72,15 @@ export type IntakeSettings = {
   minAmount: number
   // Донаты без ника на доску не попадают
   ignoreAnonymous: boolean
+  // Свои правила доната текстом, их видят зрители в «Как заказать». Пустая строка — правил нет.
+  rules: string
 }
 
 type IntakeSettingsFromApi = {
   open: boolean
   min_amount: number
   ignore_anonymous: boolean
+  rules: string
 }
 
 export async function getIntakeSettings(boardId: number): Promise<IntakeSettings> {
@@ -86,7 +89,12 @@ export async function getIntakeSettings(boardId: number): Promise<IntakeSettings
     throw new Error(`Не удалось загрузить настройки приёма: ${response.status}`)
   }
   const body: IntakeSettingsFromApi = await response.json()
-  return { isOpen: body.open, minAmount: body.min_amount, ignoreAnonymous: body.ignore_anonymous }
+  return {
+    isOpen: body.open,
+    minAmount: body.min_amount,
+    ignoreAnonymous: body.ignore_anonymous,
+    rules: body.rules,
+  }
 }
 
 // Сохраняет настройки приёма целиком
@@ -95,6 +103,7 @@ export async function saveIntakeSettings(boardId: number, settings: IntakeSettin
     open: settings.isOpen,
     min_amount: settings.minAmount,
     ignore_anonymous: settings.ignoreAnonymous,
+    rules: settings.rules,
   }
   const response = await fetch(`/api/boards/${boardId}/settings/intake`, {
     method: 'PUT',

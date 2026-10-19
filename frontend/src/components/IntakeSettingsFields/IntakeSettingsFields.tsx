@@ -1,19 +1,27 @@
-import { useState, type KeyboardEvent } from 'react'
+import { useState, type FormEvent, type KeyboardEvent } from 'react'
 import { useIntakeSettings } from '../../hooks/useIntakeSettings'
 import { ToggleField } from '../ToggleField/ToggleField'
 import styles from './IntakeSettingsFields.module.css'
 
+// Сколько символов можно написать в своих правилах (столько же разрешает бэкенд)
+const MAX_RULES_LENGTH = 500
+
 // Настройки «какие донаты становятся карточками» в разделе «Приём донатов»:
-// принимать ли заказы, минимальная сумма, анонимные донаты.
+// принимать ли заказы, минимальная сумма, анонимные донаты, свои правила для зрителей.
 // Отсеянные донаты не теряются: они сразу лежат в истории с пометкой «Отклонено» и причиной.
 export function IntakeSettingsFields() {
   const { settings, error, changeIntake } = useIntakeSettings()
   // Что сейчас написано в поле суммы. null — поле не редактируют, показываем сохранённое.
   const [minAmountDraft, setMinAmountDraft] = useState<string | null>(null)
+  // Что сейчас написано в поле правил. null — поле не трогали, показываем сохранённое.
+  const [rulesDraft, setRulesDraft] = useState<string | null>(null)
 
   if (!settings) {
     return error ? <p className={styles.error}>{error}</p> : null
   }
+
+  const rules = rulesDraft ?? settings.rules
+  const isRulesChanged = rules.trim() !== settings.rules
 
   return (
     <>
@@ -58,8 +66,51 @@ export function IntakeSettingsFields() {
         checked={settings.ignoreAnonymous}
         onChange={(ignoreAnonymous) => changeIntake({ ignoreAnonymous })}
       />
+
+      <form className={styles.rules} onSubmit={handleRulesSubmit}>
+        <label className={styles.text} htmlFor="donation-rules">
+          <span className={styles.label}>Свои правила доната</span>
+          <span className={styles.description}>
+            Например, правила ивента или что ты хочешь видеть в донате. Зрители увидят этот текст в блоке
+            «Как заказать». На то, какие донаты станут карточками, он не влияет.
+          </span>
+        </label>
+        <textarea
+          id="donation-rules"
+          className={styles.rulesInput}
+          rows={3}
+          maxLength={MAX_RULES_LENGTH}
+          placeholder="Например: на этой неделе ивент — заказываем только песни"
+          value={rules}
+          onChange={(event) => setRulesDraft(event.target.value)}
+        />
+        <div className={styles.rulesButtons}>
+          <button className={styles.primaryButton} type="submit" disabled={!isRulesChanged}>
+            Сохранить
+          </button>
+          {settings.rules && (
+            <button type="button" onClick={handleRulesClear}>
+              Очистить
+            </button>
+          )}
+          <span className={styles.counter}>
+            {rules.length} / {MAX_RULES_LENGTH}
+          </span>
+        </div>
+      </form>
     </>
   )
+
+  function handleRulesSubmit(event: FormEvent) {
+    event.preventDefault()
+    changeIntake({ rules: rules.trim() })
+    setRulesDraft(null)
+  }
+
+  function handleRulesClear() {
+    changeIntake({ rules: '' })
+    setRulesDraft(null)
+  }
 
   function handleMinAmountBlur() {
     const minAmount = Number(minAmountDraft)

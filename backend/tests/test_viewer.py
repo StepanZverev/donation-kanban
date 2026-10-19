@@ -137,13 +137,18 @@ def test_viewer_sees_rules_of_intake(client, viewer):
     token = turn_on_link(client)
     board = viewer.get(f"/api/public/boards/{token}").json()
     assert (board["min_amount"], board["ignore_anonymous"], board["auto_merge"]) == (0, False, False)
+    assert board["rules"] == ""
 
-    client.put("/api/settings/intake", json={"open": False, "min_amount": 100, "ignore_anonymous": True})
+    client.put(
+        "/api/settings/intake",
+        json={"open": False, "min_amount": 100, "ignore_anonymous": True, "rules": "Только песни"},
+    )
     client.put("/api/settings/auto-merge", json={"enabled": True})
 
     board = viewer.get(f"/api/public/boards/{token}").json()
     assert board["intake_open"] is False
     assert (board["min_amount"], board["ignore_anonymous"], board["auto_merge"]) == (100, True, True)
+    assert board["rules"] == "Только песни"
 
 
 def test_viewer_sees_if_streamer_is_here(client, viewer):
