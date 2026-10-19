@@ -3,7 +3,7 @@
 
 Стример в настройках включает «ссылку для зрителей» и, если хочет, указывает
 ссылку на свою страницу доната. Зритель открывает /v/<токен> без входа и видит
-доску; кнопка «+» ведёт на страницу доната, а донат сам станет карточкой.
+доску и правила заказа; кнопка «Предложить задачу» ведёт на страницу доната, а донат сам станет карточкой.
 
 Здесь две группы адресов:
 - /api/boards/{id}/settings/viewer — настройки, их меняет хозяин доски;
@@ -20,7 +20,8 @@ from fastapi import APIRouter, Depends, HTTPException, WebSocket
 from ..board import get_board_cards, get_columns, get_owned_board_id
 from ..db import Connection, delete_board_setting, get_board_setting, get_db, open_db, set_board_setting
 from ..intake import get_intake_settings
-from ..realtime import notify_board_changed, send_updates_until_closed
+from ..merging import is_auto_merge_enabled
+from ..realtime import board_updates, notify_board_changed, send_updates_until_closed
 from ..schemas import DonationUrl, PublicBoard, PublicCard, ViewerSettings
 from .settings import read_priority_levels
 
@@ -31,7 +32,7 @@ public_router = APIRouter(prefix="/api/public", tags=["Для зрителей"]
 PUBLIC_TOKEN_KEY = "public_token"
 DONATION_URL_KEY = "donation_url"
 
-# Ссылку на донат принимаем только на эти сайты: кнопку «+» видят все зрители,
+# Ссылку на донат принимаем только на эти сайты: кнопку «Предложить задачу» видят все зрители,
 # и в неё нельзя подложить ссылку на что-то опасное
 DONATION_SITES = {"donationalerts.com", "www.donationalerts.com"}
 
@@ -71,7 +72,7 @@ def save_donation_url(
     db: Connection = Depends(get_db),
     board_id: int = Depends(get_owned_board_id),
 ) -> ViewerSettings:
-    """Сохраняет ссылку на донат. Пустая строка убирает кнопку «+» у зрителей."""
+    """Сохраняет ссылку на донат. Пустая строка убирает кнопку «Предложить задачу» у зрителей."""
     url = data.url.strip()
     if url and not is_allowed_donation_url(url):
         raise HTTPException(
@@ -119,11 +120,13 @@ def get_public_board(token: str, db: Connection = Depends(get_db)) -> PublicBoar
         raise HTTPException(status_code=404, detail="Ссылка не работает")
 
     cards = get_board_cards(db, board_id)
-    # Хозяин доски: его имя и подключён ли у него DonationAlerts (есть ли строка в da_connections).
-    # Выход из аккаунта на устройстве подключение не трогает: донаты продолжают приходить.
+    # Хозяин доски: имя, аватарка, когда заходил и подключён ли у него DonationAlerts
+    # (есть ли строка в da_connections). Выход из аккаунта на устройстве подключение
+    # не трогает: донаты продолжают приходить.
     owner = db.execute(
         """
-        SELECT users.name, da_connections.user_id IS NOT NULL AS donations_connected
+        SELECT users.id, users.name, users.avatar_url, users.last_seen_at,
+               da_connections.user_id IS NOT NULL AS donations_connected
         FROM boards
         JOIN users ON users.id = boards.owner_id
         LEFT JOIN da_connections ON da_connections.user_id = users.id
@@ -131,15 +134,22 @@ def get_public_board(token: str, db: Connection = Depends(get_db)) -> PublicBoar
         """,
         (board_id,),
     ).fetchone()
+    intake = get_intake_settings(db, board_id)
     return PublicBoard(
-        streamer_name=owner["name"] if owner else None,
+        streamer_name=owner["name"],
+        streamer_avatar_url=owner["avatar_url"],
+        streamer_online=board_updates.is_user_connected(board_id, owner["id"]),
+        streamer_last_seen_at=owner["last_seen_at"],
         columns=get_columns(db, board_id),
         # model_dump() превращает карточку в словарь; PublicCard возьмёт из него только свои поля
         cards=[PublicCard(**card.model_dump()) for card in cards],
         priority_levels=read_priority_levels(db, board_id),
         donation_url=get_board_setting(db, board_id, DONATION_URL_KEY) or "",
-        intake_open=get_intake_settings(db, board_id).open,
-        donations_connected=bool(owner and owner["donations_connected"]),
+        intake_open=intake.open,
+        min_amount=intake.min_amount,
+        ignore_anonymous=intake.ignore_anonymous,
+        auto_merge=is_auto_merge_enabled(db, board_id),
+        donations_connected=owner["donations_connected"],
     )
 
 

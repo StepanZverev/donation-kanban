@@ -18,7 +18,7 @@ import secrets
 import anyio.to_thread
 from fastapi import APIRouter, Depends, HTTPException, WebSocket
 
-from ..board import MODERATOR, get_board_id, get_board_role, get_owned_board_id
+from ..board import MODERATOR, OWNER, get_board_id, get_board_role, get_owned_board_id
 from ..db import Connection, Row, delete_board_setting, get_board_setting, get_db, now, open_db, set_board_setting
 from ..realtime import notify_board_changed, send_updates_until_closed
 from ..schemas import AcceptInvite, BoardInfo, BoardMember, Invite, InviteSettings, MemberNickname
@@ -192,19 +192,25 @@ async def board_updates_socket(websocket: WebSocket, board_id: int) -> None:
     # Работа с базой может подождать, пока другой запрос допишет свои изменения.
     # Ждём в отдельном потоке: иначе сервер замрёт и тот запрос не сможет закончиться.
     session_token = websocket.cookies.get(SESSION_COOKIE)
-    has_access = await anyio.to_thread.run_sync(can_open_board, session_token, board_id)
-    if not has_access:
+    member = await anyio.to_thread.run_sync(find_board_member, session_token, board_id)
+    if member is None:
         # 1008 — стандартный код «нарушены правила»: здесь — нет доступа
         await websocket.close(code=1008)
         return
 
-    await send_updates_until_closed(websocket, board_id)
+    user_id, role = member
+    # Хозяина отмечаем, чтобы зрители видели, на месте ли стример. Модераторы не в счёт.
+    await send_updates_until_closed(websocket, board_id, owner_id=user_id if role == OWNER else None)
 
 
-def can_open_board(session_token: str | None, board_id: int) -> bool:
+def find_board_member(session_token: str | None, board_id: int) -> tuple[int, str] | None:
+    """Кто открыл доску: (id пользователя, роль). None — нет сессии или доступа к доске."""
     with open_db() as db:
         user = find_session_user(db, session_token)
-        return user is not None and get_board_role(db, board_id, user["id"]) is not None
+        if user is None:
+            return None
+        role = get_board_role(db, board_id, user["id"])
+        return (user["id"], role) if role is not None else None
 
 
 @invites_router.get("/{token}")

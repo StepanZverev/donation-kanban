@@ -1,6 +1,8 @@
 import { useParams } from 'react-router'
 import { usePublicBoard } from '../../hooks/usePublicBoard'
+import { OrderRules } from '../../components/OrderRules/OrderRules'
 import { ViewerCard } from '../../components/ViewerCard/ViewerCard'
+import { ViewerHeader } from '../../components/ViewerHeader/ViewerHeader'
 import styles from './ViewerPage.module.css'
 
 // Страница для зрителей: /v/<токен>. Доска стримера только для чтения.
@@ -27,30 +29,8 @@ export function ViewerPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>
-          {board.streamerName ? `Заказы: ${board.streamerName}` : 'Заказы стримера'}
-        </h1>
-
-        {/* Кнопка «+» есть, только если стример указал ссылку на донат и подключил
-            DonationAlerts: без подключения донат не станет карточкой */}
-        {board.donationUrl &&
-          board.donationsConnected &&
-          (board.intakeOpen ? (
-            <div className={styles.suggest}>
-              <a
-                className={styles.suggestButton}
-                href={board.donationUrl}
-                // noopener noreferrer: открытая страница не получит доступа к этой вкладке
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                + Предложить задачу
-              </a>
-              <span className={styles.suggestHint}>Опиши задачу в сообщении к донату</span>
-            </div>
-          ) : (
-            <span className={styles.closed}>Приём заказов закрыт</span>
-          ))}
+        <ViewerHeader board={board} />
+        <OrderRules board={board} />
       </header>
 
       {error && <p className={styles.error}>{error}</p>}

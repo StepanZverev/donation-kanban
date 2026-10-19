@@ -249,17 +249,28 @@ class PublicCard(BaseModel):
 class PublicBoard(BaseModel):
     """Всё, что нужно странице для зрителей."""
 
-    # Имя стримера из DonationAlerts. None — гость, имени нет.
+    # Имя и аватарка стримера из DonationAlerts. None — гость, имени и аватарки нет.
     streamer_name: str | None
+    streamer_avatar_url: str | None
+    # Открыта ли у стримера его доска прямо сейчас («Стример на месте»)
+    streamer_online: bool
+    # Когда стример последний раз заходил на сайт — для «был 2 ч назад»
+    streamer_last_seen_at: str
     columns: list[BoardColumn]
     cards: list[PublicCard]
     priority_levels: list[PriorityLevel]
     # Пустая строка — стример не указал ссылку на донат
     donation_url: str
+    # Правила приёма — их зритель видит в блоке «Как заказать».
     # Принимает ли стример заказы прямо сейчас
     intake_open: bool
-    # Подключён ли у стримера DonationAlerts. Без него донат не станет карточкой,
-    # поэтому кнопку «+» зрителям не показываем.
+    # Минимальная сумма доната для карточки. 0 — без минимума.
+    min_amount: float
+    # Донаты без ника на доску не попадают
+    ignore_anonymous: bool
+    # Несколько донатов одного зрителя складываются в одну карточку
+    auto_merge: bool
+    # Подключён ли у стримера DonationAlerts: без него донат не станет карточкой
     donations_connected: bool
 
 

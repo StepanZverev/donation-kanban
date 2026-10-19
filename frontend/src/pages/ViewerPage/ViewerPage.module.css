@@ -1,4 +1,4 @@
-/* Страница зрителя без шапки приложения: заголовок, кнопка «+» и колонки.
+/* Страница зрителя без шапки приложения: шапка со стримером, «Как заказать» и колонки.
    Длинные колонки прокручиваются вместе со страницей. */
 .page {
   box-sizing: border-box;
@@ -13,48 +13,12 @@
   color: var(--color-text-secondary);
 }
 
+/* Шапка: стример со статусами и кнопкой, под ней «Как заказать» */
 .header {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.title {
-  margin: 0;
-  font-size: 22px;
-}
-
-.suggest {
-  display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-}
-
-.suggestButton {
-  padding: 8px 16px;
-  border-radius: 8px;
-  background-color: var(--color-accent);
-  color: #ffffff;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.suggestButton:hover {
-  filter: brightness(1.1);
-}
-
-.suggestHint {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
-
-.closed {
-  font-size: 14px;
-  color: var(--color-text-secondary);
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .error {
@@ -104,9 +68,5 @@
   .board {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .suggest {
-    align-items: flex-start;
   }
 }

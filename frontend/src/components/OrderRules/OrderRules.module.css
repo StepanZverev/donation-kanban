@@ -1,0 +1,172 @@
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background-color: var(--color-surface);
+}
+
+/* Свёрнутый блок — одна тонкая строка */
+.collapsed {
+  padding: 8px 14px;
+}
+
+/* Заголовок — он же кнопка «Свернуть / Показать» */
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.title {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--color-text);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.toggleAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.toggle:hover .toggleAction {
+  color: var(--color-text);
+}
+
+/* Развёрнутый блок: стрелка смотрит вверх — «свернуть» */
+.toggleAction svg {
+  transform: rotate(180deg);
+}
+
+.collapsed .toggleAction svg {
+  transform: none;
+}
+
+/* Плашка «ссылки на донат нет» */
+.noLink {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px dashed var(--color-border);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.noLink b {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Пункты правил идут в строку и переносятся целиком */
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+  list-style: none;
+}
+
+.list b {
+  font-weight: 600;
+}
+
+.icon {
+  display: inline-block;
+  width: 14px;
+  margin-right: 4px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--color-accent);
+}
+
+/* «+» в шрифте мельче остальных значков — подтягиваем до их размера */
+.plus {
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 13px;
+  vertical-align: -1px;
+}
+
+.levels {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.level {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text);
+}
+
+.levelColor {
+  width: 10px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+/* На телефоне пункты — списком, текст переносится под текст, а не под значок */
+@media (max-width: 700px) {
+  .list {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .list li {
+    /* 14px значок + 8px отступ + пробел после значка */
+    padding-left: 26px;
+    text-indent: -26px;
+  }
+
+  .icon {
+    margin-right: 8px;
+    text-indent: 0;
+  }
+
+  .levels {
+    margin-top: 8px;
+  }
+
+  .toggleText {
+    display: none;
+  }
+}
