@@ -35,6 +35,32 @@
   color: var(--color-text-secondary);
 }
 
+/* Поле «Как тебя называть» с подписью и подсказкой */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.input:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
 /* «Принять» и «Открыть доску» — главная кнопка (у второй это ссылка) */
 .acceptButton {
   padding: 8px 18px;

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getInvitePageUrl } from '../../api/boards'
+import { getInvitePageUrl, type BoardMember } from '../../api/boards'
 import { useMembers } from '../../hooks/useMembers'
 import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
 import styles from './MembersSettings.module.css'
@@ -79,10 +79,8 @@ export function MembersSettings() {
         {members.map((member) => (
           <div key={member.userId} className={styles.member}>
             <span className={styles.memberName}>
-              {member.isGuest ? 'Гость' : (member.name ?? 'Без имени')}
-              {member.isGuest && (
-                <span className={styles.memberNote}> · без входа через DonationAlerts</span>
-              )}
+              {getMemberTitle(member)}
+              <span className={styles.memberNote}> · {getMemberNote(member)}</span>
             </span>
             <ConfirmButton
               title="Убрать модератора"
@@ -106,4 +104,20 @@ export function MembersSettings() {
     setIsCopied(true)
     window.setTimeout(() => setIsCopied(false), 2000)
   }
+}
+
+// Как показать модератора в списке: как он представился, иначе имя из DonationAlerts, иначе «Гость»
+function getMemberTitle(member: BoardMember) {
+  return member.nickname ?? member.name ?? 'Гость'
+}
+
+// Подпись после имени: вошёл ли он через DonationAlerts и под каким именем
+function getMemberNote(member: BoardMember) {
+  if (member.isGuest) {
+    return 'без входа через DonationAlerts'
+  }
+  if (member.nickname && member.name && member.nickname !== member.name) {
+    return `в DonationAlerts — ${member.name}`
+  }
+  return 'вошёл через DonationAlerts'
 }

@@ -39,6 +39,9 @@ export async function getBoard(boardId: number): Promise<BoardInfo | null> {
 
 export type BoardMember = {
   userId: number
+  // Как модератор представился, когда принимал приглашение
+  nickname: string | null
+  // Имя из DonationAlerts
   name: string | null
   avatarUrl: string | null
   // Гость — не входил через DonationAlerts, имени нет
@@ -50,10 +53,16 @@ export async function getMembers(boardId: number): Promise<BoardMember[]> {
   if (!response.ok) {
     throw new Error(`Не удалось загрузить модераторов: ${response.status}`)
   }
-  const members: { user_id: number; name: string | null; avatar_url: string | null; is_guest: boolean }[] =
-    await response.json()
+  const members: {
+    user_id: number
+    nickname: string | null
+    name: string | null
+    avatar_url: string | null
+    is_guest: boolean
+  }[] = await response.json()
   return members.map((member) => ({
     userId: member.user_id,
+    nickname: member.nickname,
     name: member.name,
     avatarUrl: member.avatar_url,
     isGuest: member.is_guest,
@@ -114,8 +123,13 @@ export async function getInvite(token: string): Promise<Invite | null> {
   return { boardId: invite.board_id, ownerName: invite.owner_name, role: invite.role }
 }
 
-export async function acceptInvite(token: string): Promise<BoardInfo> {
-  const response = await fetch(`/api/invites/${encodeURIComponent(token)}/accept`, { method: 'POST' })
+// nickname — как модератор представился (пустая строка — не представился)
+export async function acceptInvite(token: string, nickname: string): Promise<BoardInfo> {
+  const response = await fetch(`/api/invites/${encodeURIComponent(token)}/accept`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nickname }),
+  })
   if (!response.ok) {
     throw new Error(`Не удалось принять приглашение: ${response.status}`)
   }

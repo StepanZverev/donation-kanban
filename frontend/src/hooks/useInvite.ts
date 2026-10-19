@@ -22,11 +22,12 @@ export function useInvite(token: string) {
       .catch(() => setState({ status: 'error' }))
   }, [token])
 
-  // Принимает приглашение и возвращает id доски, чтобы её открыть
-  async function accept() {
+  // Принимает приглашение и возвращает id доски, чтобы её открыть.
+  // nickname — как модератор представился, стример увидит это имя в списке
+  async function accept(nickname: string) {
     setIsAccepting(true)
     try {
-      const board = await boardsApi.acceptInvite(token)
+      const board = await boardsApi.acceptInvite(token, nickname)
       return board.id
     } finally {
       setIsAccepting(false)

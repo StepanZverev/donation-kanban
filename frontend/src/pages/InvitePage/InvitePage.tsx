@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { useInvite } from '../../hooks/useInvite'
 import styles from './InvitePage.module.css'
@@ -9,6 +10,8 @@ export function InvitePage() {
   const { token = '' } = useParams()
   const { state, isAccepting, accept } = useInvite(token)
   const navigate = useNavigate()
+  // Как назвать модератора: стример увидит это имя в списке модераторов
+  const [nickname, setNickname] = useState('')
 
   if (state.status === 'loading') {
     return <p className="app-message">Открываю приглашение…</p>
@@ -37,6 +40,20 @@ export function InvitePage() {
               Ты сможешь двигать, править и убирать карточки на его доске. Настройки доски
               останутся у стримера.
             </p>
+            <label className={styles.field}>
+              <span className={styles.label}>Как тебя называть</span>
+              <input
+                className={styles.input}
+                value={nickname}
+                maxLength={40}
+                placeholder="Например, ник в чате"
+                onChange={(event) => setNickname(event.target.value)}
+              />
+              <span className={styles.note}>
+                Так тебя увидит стример в списке модераторов. Можно оставить пустым, тогда будет
+                «Гость».
+              </span>
+            </label>
             <button
               type="button"
               className={styles.acceptButton}
@@ -65,7 +82,7 @@ export function InvitePage() {
   )
 
   async function handleAcceptClick() {
-    const boardId = await accept()
+    const boardId = await accept(nickname)
     navigate(`/boards/${boardId}`)
   }
 }

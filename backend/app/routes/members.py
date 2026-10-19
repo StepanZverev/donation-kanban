@@ -22,7 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException, WebSocket
 from ..board import MODERATOR, get_board_id, get_board_role, get_owned_board_id
 from ..db import delete_board_setting, get_board_setting, get_db, now, open_db, set_board_setting
 from ..realtime import notify_board_changed, send_updates_until_closed
-from ..schemas import BoardInfo, BoardMember, Invite, InviteSettings
+from ..schemas import AcceptInvite, BoardInfo, BoardMember, Invite, InviteSettings
 from ..users import SESSION_COOKIE, find_session_user, get_current_user
 
 router = APIRouter(prefix="/api/boards/{board_id}", tags=["Доска и модераторы"])
@@ -86,7 +86,7 @@ def list_members(
     """Модераторы доски, сначала те, кого позвали раньше."""
     rows = db.execute(
         """
-        SELECT users.id, users.name, users.avatar_url,
+        SELECT users.id, users.name, users.avatar_url, board_members.nickname,
                NOT EXISTS (SELECT 1 FROM user_logins WHERE user_logins.user_id = users.id) AS is_guest
         FROM board_members
         JOIN users ON users.id = board_members.user_id
@@ -96,7 +96,13 @@ def list_members(
         (board_id,),
     ).fetchall()
     return [
-        BoardMember(user_id=row["id"], name=row["name"], avatar_url=row["avatar_url"], is_guest=row["is_guest"])
+        BoardMember(
+            user_id=row["id"],
+            nickname=row["nickname"],
+            name=row["name"],
+            avatar_url=row["avatar_url"],
+            is_guest=row["is_guest"],
+        )
         for row in rows
     ]
 
@@ -191,15 +197,23 @@ def get_invite(
 @invites_router.post("/{token}/accept")
 def accept_invite(
     token: str,
+    body: AcceptInvite | None = None,
     user: sqlite3.Row = Depends(get_current_user),
     db: sqlite3.Connection = Depends(get_db),
 ) -> BoardInfo:
-    """Принять приглашение: стать модератором доски. Хозяину и уже модератору ничего не нужно."""
+    """
+    Принять приглашение: стать модератором доски. Хозяину и уже модератору ничего не нужно.
+    В body модератор может написать, как его называть (иначе стример увидит «Гость»).
+    """
     board_id = find_board_by_invite(db, token)
+    # Пустое имя или одни пробелы — считаем, что не представился
+    nickname = None
+    if body is not None and body.nickname:
+        nickname = body.nickname.strip() or None
     if get_board_role(db, board_id, user["id"]) is None:
         db.execute(
-            "INSERT INTO board_members (board_id, user_id, role, created_at) VALUES (?, ?, ?, ?)",
-            (board_id, user["id"], MODERATOR, now()),
+            "INSERT INTO board_members (board_id, user_id, role, created_at, nickname) VALUES (?, ?, ?, ?, ?)",
+            (board_id, user["id"], MODERATOR, now(), nickname),
         )
         # Хозяин в настройках сразу увидит нового модератора
         notify_board_changed(db, board_id)

@@ -274,9 +274,19 @@ class BoardMember(BaseModel):
     """Модератор доски в списке «Модераторы»."""
 
     user_id: int
+    # Как модератор представился, когда принимал приглашение
+    nickname: str | None
+    # Имя из DonationAlerts (у гостя нет)
     name: str | None
     avatar_url: str | None
     is_guest: bool
+
+
+class AcceptInvite(BaseModel):
+    """Что модератор пишет, принимая приглашение."""
+
+    # Как к нему обращаться: стример увидит это имя в списке модераторов
+    nickname: str | None = Field(default=None, max_length=40)
 
 
 class InviteSettings(BaseModel):

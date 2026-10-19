@@ -158,3 +158,22 @@ def test_guest_moderator_keeps_board_after_login(client, moderator, fake_da, no_
     me = moderator.get("/api/me").json()
     assert me["is_guest"] is False
     assert [board["id"] for board in me["moderated_boards"]] == [board_id]
+
+
+def test_moderator_introduces_himself_when_accepting(client, moderator):
+    board_id = board_of(client)
+    token = client.post(f"/api/boards/{board_id}/invite-link").json()["invite_token"]
+    moderator.post(f"/api/invites/{token}/accept", json={"nickname": "  Вася с чата  "})
+
+    [member] = client.get(f"/api/boards/{board_id}/members").json()
+    assert member["nickname"] == "Вася с чата"
+    assert member["is_guest"] is True
+
+
+def test_moderator_without_name_has_no_nickname(client, moderator):
+    board_id = board_of(client)
+    token = client.post(f"/api/boards/{board_id}/invite-link").json()["invite_token"]
+    moderator.post(f"/api/invites/{token}/accept", json={"nickname": "   "})
+
+    [member] = client.get(f"/api/boards/{board_id}/members").json()
+    assert member["nickname"] is None

@@ -124,6 +124,8 @@ CREATE TABLE IF NOT EXISTS board_members (
     user_id    INTEGER NOT NULL REFERENCES users (id),
     role       TEXT    NOT NULL,
     created_at TEXT    NOT NULL,
+    -- Как модератор представился, когда принимал приглашение (может быть пусто)
+    nickname   TEXT,
     PRIMARY KEY (board_id, user_id)
 );
 
@@ -192,6 +194,14 @@ def init_db() -> None:
         add_new_card_fields(db)
         rename_filtered_to_rejected(db)
         join_manual_card_texts(db)
+        add_member_nickname(db)
+
+
+def add_member_nickname(db: sqlite3.Connection) -> None:
+    """Имя модератора появилось позже таблицы board_members — в старой базе добавляем поле."""
+    member_fields = [row["name"] for row in db.execute("PRAGMA table_info(board_members)")]
+    if "nickname" not in member_fields:
+        db.execute("ALTER TABLE board_members ADD COLUMN nickname TEXT")
 
 
 def rename_pile_to_queue(db: sqlite3.Connection) -> None:
