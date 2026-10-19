@@ -204,3 +204,38 @@ def test_owner_and_stranger_cannot_change_nickname(client, moderator):
     too_long = "я" * 41
     invite(client, moderator)
     assert moderator.put(f"/api/boards/{board_id}/members/me", json={"nickname": too_long}).status_code == 422
+
+
+def test_history_remembers_which_moderator_archived(client, moderator):
+    board_id = board_of(client)
+    token = client.post(f"/api/boards/{board_id}/invite-link").json()["invite_token"]
+    moderator.post(f"/api/invites/{token}/accept", json={"nickname": "Петя с чата"})
+    base = f"/api/boards/{board_id}"
+    by_moderator = moderator.post(f"{base}/cards", json={"text": "Убрал модератор"}).json()
+    by_owner = moderator.post(f"{base}/cards", json={"text": "Убрал стример"}).json()
+
+    archived = moderator.post(f"{base}/cards/{by_moderator['id']}/archive", json={"reason": "done"}).json()
+    assert archived["archived_by"] == "Петя с чата"
+    assert client.post(f"/api/cards/{by_owner['id']}/archive", json={"reason": "done"}).json()["archived_by"] is None
+
+    # Имя осталось прежним, даже когда модератор переименовался
+    moderator.put(f"{base}/members/me", json={"nickname": "Пётр"})
+    history = {card["title"]: card["archived_by"] for card in client.get("/api/history").json()}
+    assert history == {"Убрал модератор": "Петя с чата", "Убрал стример": None}
+    # По имени модератора можно искать
+    assert [card["title"] for card in client.get("/api/history", params={"q": "петя"}).json()] == ["Убрал модератор"]
+
+    # Вернули на доску — подпись стирается
+    assert client.post(f"/api/history/{by_moderator['id']}/restore").json()["archived_by"] is None
+
+
+def test_moderator_name_on_cleared_and_deleted_cards(client, moderator):
+    board_id = invite(client, moderator)
+    base = f"/api/boards/{board_id}"
+    deleted = moderator.post(f"{base}/cards", json={"text": "Удалил"}).json()
+    moderator.delete(f"{base}/cards/{deleted['id']}")
+    moderator.post(f"{base}/cards", json={"text": "Из очереди веником"})
+    assert moderator.post(f"{base}/cards/clear-queue").json() == {"cleared": 1}
+
+    # Модератор не представился и без DonationAlerts — подписываем «Гость»
+    assert [card["archived_by"] for card in client.get("/api/history").json()] == ["Гость", "Гость"]

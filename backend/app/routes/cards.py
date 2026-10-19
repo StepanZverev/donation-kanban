@@ -15,6 +15,7 @@ from ..board import (
     get_card,
     get_column,
     get_column_id_by_kind,
+    get_moderator_name,
 )
 from ..db import Connection, get_db, now
 from ..donations import split_message
@@ -118,28 +119,33 @@ def create_card(
 def clear_done(
     db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
+    moderator_name: str | None = Depends(get_moderator_name),
 ) -> dict[str, int]:
     """Веник у «Выполнено»: все карточки оттуда уходят в историю как выполненные."""
-    return {"cleared": clear_column(db, board_id, "done", "done")}
+    return {"cleared": clear_column(db, board_id, "done", "done", moderator_name)}
 
 
 @router.post("/clear-queue")
 def clear_queue(
     db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
+    moderator_name: str | None = Depends(get_moderator_name),
 ) -> dict[str, int]:
     """Веник у «Очереди»: все карточки оттуда уходят в историю как удалённые."""
-    return {"cleared": clear_column(db, board_id, "incoming", "deleted")}
+    return {"cleared": clear_column(db, board_id, "incoming", "deleted", moderator_name)}
 
 
-def clear_column(db: Connection, board_id: int, kind: str, reason: str) -> int:
-    """Убирает в историю все карточки колонки вида kind с пометкой reason. Возвращает, сколько убрали."""
+def clear_column(db: Connection, board_id: int, kind: str, reason: str, archived_by: str | None) -> int:
+    """
+    Убирает в историю все карточки колонки вида kind с пометкой reason. Возвращает, сколько убрали.
+    archived_by — имя модератора, если веником махнул он.
+    """
     column_id = get_column_id_by_kind(db, board_id, kind)
     rows = db.execute(
         "SELECT id FROM cards WHERE column_id = %s AND archived_at IS NULL", (column_id,)
     ).fetchall()
     for row in rows:
-        archive_card(db, row["id"], reason)
+        archive_card(db, row["id"], reason, archived_by=archived_by)
 
     notify_board_changed(db, board_id)
     return len(rows)
@@ -243,6 +249,7 @@ def archive(
     data: CardArchive,
     db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
+    moderator_name: str | None = Depends(get_moderator_name),
 ) -> Card:
     """
     Убирает карточку в историю с явной пометкой: «выполнено», «удалено» или «отклонено»
@@ -252,7 +259,7 @@ def archive(
     get_card(db, board_id, card_id)
     # Причина нужна только у «Отклонено», у остальных пометок её не сохраняем
     note = data.note.strip() if data.reason == "rejected" else None
-    archive_card(db, card_id, data.reason, note)
+    archive_card(db, card_id, data.reason, note, archived_by=moderator_name)
 
     notify_board_changed(db, board_id)
     return get_card(db, board_id, card_id)
@@ -264,12 +271,13 @@ def merge(
     data: CardMerge,
     db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
+    moderator_name: str | None = Depends(get_moderator_name),
 ) -> Card:
     """
     Сливает карточки data.card_ids в эту карточку. Все они должны быть от того же донатера.
     Так работают «Объединить все донаты в эту карточку» и перетаскивание карточки на карточку.
     """
-    target = merge_cards(db, board_id, get_card(db, board_id, card_id), data.card_ids)
+    target = merge_cards(db, board_id, get_card(db, board_id, card_id), data.card_ids, moderator_name)
 
     notify_board_changed(db, board_id)
     return target
@@ -298,6 +306,7 @@ def remove_card(
     card_id: int,
     db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
+    moderator_name: str | None = Depends(get_moderator_name),
 ) -> Card:
     """
     Убирает карточку с доски в историю (насовсем она не удаляется).
@@ -307,7 +316,7 @@ def remove_card(
     card = get_card(db, board_id, card_id)
     done_column_id = get_column_id_by_kind(db, board_id, "done")
     reason = "done" if card.column_id == done_column_id else "deleted"
-    archive_card(db, card_id, reason)
+    archive_card(db, card_id, reason, archived_by=moderator_name)
 
     notify_board_changed(db, board_id)
     return get_card(db, board_id, card_id)

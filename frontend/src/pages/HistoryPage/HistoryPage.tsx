@@ -1,6 +1,6 @@
 import type { ChangeEvent } from 'react'
 import type { HistoryFilter } from '../../api/history'
-import { RestoreIcon, TrashIcon } from '../../components/Icons/Icons'
+import { RestoreIcon, SwordIcon, TrashIcon } from '../../components/Icons/Icons'
 import { useHighlightSince } from '../../hooks/useHighlightSince'
 import { useHistoryCards } from '../../hooks/useHistoryCards'
 import { useNow } from '../../hooks/useNow'
@@ -136,11 +136,23 @@ export function HistoryPage(props: HistoryPageProps) {
                     </span>
                   )}
 
-                  {/* Длинный текст обрезается многоточием, целиком — во всплывающей подсказке */}
-                  <span className={styles.what} title={getFullText(card)}>
-                    <b className={styles.who}>{getDonorName(card)}</b>
-                    {' · '}
-                    {getCardText(card)}
+                  {/* Длинный текст обрезается многоточием, целиком — во всплывающей подсказке.
+                      Справа — метка модератора, если карточку убрал он */}
+                  <span className={styles.what}>
+                    <span className={styles.text} title={getFullText(card)}>
+                      <b className={styles.who}>{getDonorName(card)}</b>
+                      {' · '}
+                      {getCardText(card)}
+                    </span>
+                    {card.archivedBy && (
+                      <span
+                        className={styles.moderator}
+                        title={`${archiveReasonLabels[card.archiveReason ?? 'deleted']} модератором ${card.archivedBy}`}
+                      >
+                        <SwordIcon />
+                        {card.archivedBy}
+                      </span>
+                    )}
                   </span>
 
                   <span className={styles.amount}>
