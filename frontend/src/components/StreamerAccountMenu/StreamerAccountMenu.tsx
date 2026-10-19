@@ -1,4 +1,5 @@
 import { LOGIN_URL, type ListenerStatus } from '../../api/auth'
+import type { CurrentUser } from '../../api/me'
 import { useDonationAlertsStatus } from '../../hooks/useDonationAlertsStatus'
 import { useIntakeSettings } from '../../hooks/useIntakeSettings'
 import { AccountMenu } from '../AccountMenu/AccountMenu'
@@ -30,13 +31,19 @@ const listenerDescriptions: Record<ListenerStatus, string | null> = {
 //   DonationAlerts не подключён — серая точка, открыт приём или нет (донатам всё равно неоткуда взяться);
 //   приём закрыт — жёлтая пауза (это не ошибка, а предупреждение: донаты уходят в историю);
 //   иначе точка DonationAlerts: зелёная — слушаю донаты, жёлтая — подключаюсь, красная — нет связи.
-export function StreamerAccountMenu() {
+type StreamerAccountMenuProps = {
+  user: CurrentUser
+  onLogout: () => void
+}
+
+export function StreamerAccountMenu({ user, onLogout }: StreamerAccountMenuProps) {
   const { status, disconnect } = useDonationAlertsStatus()
   const { settings, changeIntake } = useIntakeSettings()
 
-  // Бэкенд не отвечает — об этом и так скажет доска, показываем обычное меню
-  if (status === null || settings === null) {
-    return <AccountMenu />
+  // У гостя донатов нет, следить не за чем: обычное меню с «Подключить DonationAlerts».
+  // Бэкенд не отвечает — об этом и так скажет доска, тоже показываем обычное меню.
+  if (user.isGuest || status === null || settings === null) {
+    return <AccountMenu user={user} onLogout={onLogout} />
   }
 
   const listener = status.listener
@@ -93,7 +100,11 @@ export function StreamerAccountMenu() {
     </div>
   )
 
-  return <AccountMenu indicator={indicator} streamSection={streamSection} />
+  return (
+    <AccountMenu user={user} onLogout={onLogout} indicator={indicator}>
+      {streamSection}
+    </AccountMenu>
+  )
 
   function handleDisconnectClick() {
     if (window.confirm('Отключить DonationAlerts? Новые донаты перестанут попадать на доску.')) {

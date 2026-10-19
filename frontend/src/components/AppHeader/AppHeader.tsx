@@ -1,12 +1,14 @@
 import { useBoard } from '../../hooks/useBoard'
-import { AccountMenu } from '../AccountMenu/AccountMenu'
+import { useCurrentUser } from '../../hooks/useCurrentUser'
+import { ModeratorAccountMenu } from '../ModeratorAccountMenu/ModeratorAccountMenu'
 import { Navigation } from '../Navigation/Navigation'
 import { StreamerAccountMenu } from '../StreamerAccountMenu/StreamerAccountMenu'
 import { StreamTotal } from '../StreamTotal/StreamTotal'
 import styles from './AppHeader.module.css'
 
 // Шапка приложения в одну строку: логотип, вкладки, справа сумма за стрим и меню аккаунта.
-// Статус DonationAlerts и переключатель приёма — в меню аккаунта (StreamerAccountMenu).
+// Меню аккаунта своё у хозяина доски (StreamerAccountMenu: статус DonationAlerts и приём)
+// и у модератора (ModeratorAccountMenu: «Модератор: имя» и меч).
 type AppHeaderProps = {
   // Точки «есть новое» у вкладок (см. useNewDonations)
   hasNewOnBoard: boolean
@@ -16,6 +18,7 @@ type AppHeaderProps = {
 export function AppHeader(props: AppHeaderProps) {
   const { hasNewOnBoard, hasNewInHistory } = props
   const board = useBoard()
+  const { user, logout } = useCurrentUser()
 
   return (
     // full-width: фон шапки тянется на всю ширину окна, а содержимое стоит в рабочей области
@@ -37,17 +40,13 @@ export function AppHeader(props: AppHeaderProps) {
 
         <div className={styles.right}>
           <StreamTotal />
-          {board.role === 'owner' ? (
-            // На своей доске в меню ещё статус DonationAlerts и переключатель приёма
-            <StreamerAccountMenu />
-          ) : (
-            <>
-              <span className={styles.moderatorBadge}>
-                Модератор · доска {board.ownerName ?? 'стримера'}
-              </span>
-              <AccountMenu />
-            </>
-          )}
+          {/* Пока не знаем, кто вошёл (или бэкенд не отвечает), меню не показываем */}
+          {user !== null &&
+            (board.role === 'owner' ? (
+              <StreamerAccountMenu user={user} onLogout={logout} />
+            ) : (
+              <ModeratorAccountMenu user={user} onLogout={logout} />
+            ))}
         </div>
       </div>
     </header>

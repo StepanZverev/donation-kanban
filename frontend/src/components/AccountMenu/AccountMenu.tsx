@@ -2,32 +2,48 @@ import { useState, type FocusEvent, type KeyboardEvent, type ReactNode } from 'r
 import { Link } from 'react-router'
 import { LOGIN_URL } from '../../api/auth'
 import { APP_VERSION } from '../../changelog'
-import { useCurrentUser } from '../../hooks/useCurrentUser'
+import type { CurrentUser } from '../../api/me'
+import { useBoard } from '../../hooks/useBoard'
 import { WhatsNewDialog } from '../WhatsNewDialog/WhatsNewDialog'
 import styles from './AccountMenu.module.css'
 
 type AccountMenuProps = {
-  // Значок справа от ника на кнопке и часть выпадашки под именем.
-  // Их передаёт StreamerAccountMenu на своей доске; гостю они не показываются:
-  // донатов у гостя нет, следить не за чем.
+  // Кто вошёл и как выйти (useCurrentUser в AppHeader)
+  user: CurrentUser
+  onLogout: () => void
+  // Имя на кнопке и в выпадашке. Без него — имя из DonationAlerts, у гостя «Гость».
+  // Модератору сюда передают имя, которым он представился на доске.
+  name?: string
+  // Серая приписка перед именем на кнопке, например «Модератор:»
+  namePrefix?: string
+  // Подсказка при наведении на кнопку и подпись под именем в выпадашке
+  title?: string
+  subtitle?: string
+  // Значок справа от имени на кнопке: точка статуса, пауза или меч
   indicator?: ReactNode
-  streamSection?: ReactNode
+  // Что объяснить гостю над кнопкой «Подключить DonationAlerts»
+  guestHint?: string
+  // Середина выпадашки: то, что нужно на этой доске (статус DA, приём, имя модератора)
+  children?: ReactNode
 }
 
-// Кто вошёл — в правом углу шапки. Гость видит «Гость» и по клику подсказку,
-// что доску стоит закрепить за собой через DonationAlerts. Вошедший — аватар,
-// имя и кнопку «Выйти». Внизу — версия приложения, по клику окно «Что нового».
-export function AccountMenu({ indicator, streamSection }: AccountMenuProps) {
-  const { user, logout } = useCurrentUser()
+const DEFAULT_GUEST_HINT =
+  'Если почистить cookie, доска потеряется. Подключи DonationAlerts, чтобы донаты приходили на доску, а её можно было открыть с других устройств.'
+
+// Кто вошёл — в правом углу шапки. По клику выпадашка: кто вошёл, середина от того,
+// кто её показывает (StreamerAccountMenu или ModeratorAccountMenu), список досок,
+// внизу «Выйти» и версия приложения (по клику окно «Что нового»).
+// Гостю вместо «Выйти» — подсказка и кнопка «Подключить DonationAlerts».
+export function AccountMenu(props: AccountMenuProps) {
+  const { user, onLogout, namePrefix, indicator, children } = props
+  const currentBoard = useBoard()
   const [isOpen, setIsOpen] = useState(false)
   const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false)
 
-  // Бэкенд не отвечает — об этом и так скажет доска
-  if (user === null) {
-    return null
-  }
-
-  const displayName = user.isGuest ? 'Гость' : (user.name ?? 'Без имени')
+  const displayName = props.name ?? (user.isGuest ? 'Гость' : (user.name ?? 'Без имени'))
+  const subtitle =
+    props.subtitle ?? (user.isGuest ? 'Доска запомнена только в этом браузере' : 'Вход через DonationAlerts')
+  const guestHint = props.guestHint ?? DEFAULT_GUEST_HINT
 
   const avatar = user.avatarUrl ? (
     <img className={styles.avatar} src={user.avatarUrl} alt="" />
@@ -47,12 +63,15 @@ export function AccountMenu({ indicator, streamSection }: AccountMenuProps) {
           type="button"
           className={styles.button}
           aria-expanded={isOpen}
-          title={displayName}
+          title={props.title ?? displayName}
           onClick={() => setIsOpen(!isOpen)}
         >
           {avatar}
-          <span className={styles.name}>{displayName}</span>
-          {!user.isGuest && indicator && <span className={styles.indicator}>{indicator}</span>}
+          <span className={styles.name}>
+            {namePrefix && <span className={styles.namePrefix}>{namePrefix} </span>}
+            {displayName}
+          </span>
+          {indicator && <span className={styles.indicator}>{indicator}</span>}
         </button>
 
         {isOpen && (
@@ -61,38 +80,37 @@ export function AccountMenu({ indicator, streamSection }: AccountMenuProps) {
               {avatar}
               <span className={styles.whoText}>
                 <span className={styles.heading}>{displayName}</span>
-                <span className={styles.description}>
-                  {user.isGuest ? 'Доска запомнена только в этом браузере' : 'Вход через DonationAlerts'}
-                </span>
+                <span className={styles.description}>{subtitle}</span>
               </span>
             </div>
 
-            {user.isGuest ? (
+            {children}
+
+            {user.isGuest && (
               <>
-                <p className={styles.description}>
-                  Если почистить cookie, доска потеряется. Подключи DonationAlerts, чтобы донаты
-                  приходили на доску, а её можно было открыть с других устройств.
-                </p>
+                <p className={styles.description}>{guestHint}</p>
                 {user.canConnectDonationAlerts && (
                   <a className={styles.connectButton} href={LOGIN_URL}>
                     Подключить DonationAlerts
                   </a>
                 )}
               </>
-            ) : (
-              streamSection
             )}
 
             {/* Доски, где пользователь модератор, и путь назад к своей */}
             {user.moderatedBoards.length > 0 && (
               <nav className={styles.boards} aria-label="Доски">
-                <Link className={styles.boardLink} to={`/boards/${user.boardId}`} onClick={handleBoardClick}>
+                <Link
+                  className={getBoardLinkClass(user.boardId)}
+                  to={`/boards/${user.boardId}`}
+                  onClick={handleBoardClick}
+                >
                   Моя доска
                 </Link>
                 {user.moderatedBoards.map((board) => (
                   <Link
                     key={board.id}
-                    className={styles.boardLink}
+                    className={getBoardLinkClass(board.id)}
                     to={`/boards/${board.id}`}
                     onClick={handleBoardClick}
                   >
@@ -121,6 +139,11 @@ export function AccountMenu({ indicator, streamSection }: AccountMenuProps) {
     </>
   )
 
+  // Доска, которая сейчас открыта, выделена в списке
+  function getBoardLinkClass(boardId: number) {
+    return boardId === currentBoard.id ? `${styles.boardLink} ${styles.currentBoard}` : styles.boardLink
+  }
+
   function handleBlur(event: FocusEvent<HTMLDivElement>) {
     // relatedTarget — элемент, куда ушёл фокус. Если он внутри выпадашки, не закрываем.
     if (!event.currentTarget.contains(event.relatedTarget)) {
@@ -145,7 +168,7 @@ export function AccountMenu({ indicator, streamSection }: AccountMenuProps) {
 
   function handleLogoutClick() {
     if (window.confirm('Выйти на этом устройстве? Вернуться можно через DonationAlerts.')) {
-      logout()
+      onLogout()
     }
   }
 }

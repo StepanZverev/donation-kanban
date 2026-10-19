@@ -1,0 +1,109 @@
+/* Меч у имени на кнопке — в фиолетовом цвете приложения */
+.sword {
+  display: flex;
+  color: var(--color-accent);
+}
+
+.description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+/* Блоки выпадашки разделены линией сверху, как остальные части меню */
+.section,
+.daRow {
+  align-self: stretch;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* «Как тебя называть»: название, поле с кнопкой, подсказки */
+.section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.inputRow {
+  align-self: stretch;
+  display: flex;
+  gap: 6px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.input:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
+.primaryButton {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+/* «Взять из DonationAlerts» — выглядит как ссылка */
+.linkButton {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-accent);
+  font-size: 13px;
+  text-align: left;
+}
+
+.linkButton:hover {
+  text-decoration: underline;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.error {
+  font-size: 12px;
+  color: var(--color-error);
+}
+
+/* Строка своего DonationAlerts: название с подписью, кнопка справа */
+.daRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.daText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}
+
+/* «Подключить» — ссылка, которая выглядит как главная кнопка */
+.connectButton {
+  padding: 4px 12px;
+  border-radius: 6px;
+  background-color: var(--color-accent);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}

@@ -11,7 +11,7 @@ type CurrentUserFromApi = {
   logins: string[]
   can_connect_donationalerts: boolean
   board_id: number
-  moderated_boards: { id: number; owner_name: string | null; role: BoardRole }[]
+  moderated_boards: { id: number; owner_name: string | null; role: BoardRole; my_nickname: string | null }[]
 }
 
 export type CurrentUser = {

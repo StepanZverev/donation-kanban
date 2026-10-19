@@ -40,10 +40,15 @@
 /* Длинное имя обрезаем многоточием.
    Отступы сверху и снизу — чтобы хвосты букв не обрезались при line-height: 1 */
 .name {
-  max-width: 140px;
+  max-width: 240px;
   padding: 2px 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* «Модератор:» перед именем — серым, чтобы имя читалось первым */
+.namePrefix {
+  color: var(--color-text-secondary);
 }
 
 /* Индикатор чуть дальше от имени, чем аватар */
@@ -135,8 +140,14 @@
 .boardLink {
   padding: 4px 0;
   font-size: 13px;
-  color: var(--color-accent);
+  color: var(--color-text);
   text-decoration: none;
+}
+
+/* Открытая сейчас доска — фиолетовым */
+.currentBoard {
+  color: var(--color-accent);
+  font-weight: 600;
 }
 
 .boardLink:hover {

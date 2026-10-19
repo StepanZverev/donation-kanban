@@ -268,6 +268,8 @@ class BoardInfo(BaseModel):
     # Имя хозяина доски из DonationAlerts. None — хозяин гость, имени нет.
     owner_name: str | None
     role: Literal["owner", "moderator"]
+    # Как модератор представился на этой доске. None — у хозяина или если не представился.
+    my_nickname: str | None = None
 
 
 class BoardMember(BaseModel):
@@ -286,6 +288,12 @@ class AcceptInvite(BaseModel):
     """Что модератор пишет, принимая приглашение."""
 
     # Как к нему обращаться: стример увидит это имя в списке модераторов
+    nickname: str | None = Field(default=None, max_length=40)
+
+
+class MemberNickname(BaseModel):
+    """Новое имя модератора на доске. Пустое — стример снова увидит имя из DonationAlerts или «Гость»."""
+
     nickname: str | None = Field(default=None, max_length=40)
 
 

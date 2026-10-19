@@ -161,3 +161,15 @@ export function EyeOffIcon() {
     </svg>
   )
 }
+
+// Меч — значок модератора у имени в шапке
+export function SwordIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      {/* Клинок наискосок от правого верхнего угла */}
+      <path d="M14 2l-.4 2.6-6.4 6.4-2.2-2.2 6.4-6.4z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      {/* Гарда поперёк клинка и рукоять */}
+      <path d="M3.6 7.9l4.5 4.5M5.6 10.4l-3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  )
+}

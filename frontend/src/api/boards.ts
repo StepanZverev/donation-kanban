@@ -12,12 +12,14 @@ export type BoardInfo = {
   // Имя хозяина доски из DonationAlerts. null — хозяин гость, имени нет.
   ownerName: string | null
   role: BoardRole
+  // Как модератор представился на этой доске. null — у хозяина или если не представился.
+  myNickname: string | null
 }
 
-type BoardInfoFromApi = { id: number; owner_name: string | null; role: BoardRole }
+type BoardInfoFromApi = { id: number; owner_name: string | null; role: BoardRole; my_nickname: string | null }
 
 export function toBoardInfo(board: BoardInfoFromApi): BoardInfo {
-  return { id: board.id, ownerName: board.owner_name, role: board.role }
+  return { id: board.id, ownerName: board.owner_name, role: board.role, myNickname: board.my_nickname }
 }
 
 // Адрес живых обновлений доски (см. useBoardUpdates)
@@ -124,6 +126,19 @@ export async function getInvite(token: string): Promise<Invite | null> {
 }
 
 // nickname — как модератор представился (пустая строка — не представился)
+// Модератор меняет, как его называть на этой доске. Пустое имя — «не представился».
+export async function changeMyNickname(boardId: number, nickname: string): Promise<BoardInfo> {
+  const response = await fetch(`/api/boards/${boardId}/members/me`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nickname }),
+  })
+  if (!response.ok) {
+    throw new Error(`Не удалось сохранить имя: ${response.status}`)
+  }
+  return toBoardInfo(await response.json())
+}
+
 export async function acceptInvite(token: string, nickname: string): Promise<BoardInfo> {
   const response = await fetch(`/api/invites/${encodeURIComponent(token)}/accept`, {
     method: 'POST',
