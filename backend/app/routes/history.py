@@ -2,12 +2,11 @@
 Эндпоинты истории: карточки, которые убрали с доски.
 """
 
-import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..board import get_board_id, get_card, get_column, get_column_id_by_kind, return_to_board
-from ..db import get_db
+from ..db import Connection, get_db
 from ..merging import unmerge_card
 from ..realtime import notify_board_changed
 from ..schemas import ArchiveReason, Card, CardRestore
@@ -15,7 +14,7 @@ from ..schemas import ArchiveReason, Card, CardRestore
 router = APIRouter(prefix="/api/boards/{board_id}/history", tags=["История"])
 
 
-def get_archived_card(db: sqlite3.Connection, board_id: int, card_id: int) -> Card:
+def get_archived_card(db: Connection, board_id: int, card_id: int) -> Card:
     card = get_card(db, board_id, card_id)
     if card.archived_at is None:
         raise HTTPException(status_code=404, detail="Карточки нет в истории")
@@ -26,7 +25,7 @@ def get_archived_card(db: sqlite3.Connection, board_id: int, card_id: int) -> Ca
 def list_history(
     reason: ArchiveReason | None = None,
     q: str = "",
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> list[Card]:
     """
@@ -36,16 +35,16 @@ def list_history(
     q — поиск: остаются карточки, у которых ник, заголовок или текст содержат эти буквы
     (большие и маленькие не различаем).
     """
-    sql = "SELECT * FROM cards WHERE board_id = ? AND archived_at IS NOT NULL"
+    sql = "SELECT * FROM cards WHERE board_id = %s AND archived_at IS NOT NULL"
     params: list[str | int] = [board_id]
     if reason is not None:
-        sql += " AND archive_reason = ?"
+        sql += " AND archive_reason = %s"
         params.append(reason)
     sql += " ORDER BY archived_at DESC, id DESC"
     cards = [Card(**row) for row in db.execute(sql, params).fetchall()]
 
-    # Поиск делаем в Python, а не через LIKE в SQL: SQLite не умеет сравнивать
-    # без учёта регистра русские буквы («Вася» и «вася» для него разные).
+    # Поиск делаем в Python, без учёта регистра: «Вася» и «вася» — одно и то же.
+    # Так же ищут подсказки ников (donors.py) и объединение донатов (merging.py).
     query = q.strip().casefold()
     if query:
         cards = [card for card in cards if query in searchable_text(card)]
@@ -64,7 +63,7 @@ def searchable_text(card: Card) -> str:
 def restore_card(
     card_id: int,
     data: CardRestore | None = None,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> Card:
     """
@@ -87,10 +86,10 @@ def restore_card(
 @router.delete("/{card_id}", status_code=204)
 def delete_forever(
     card_id: int,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> None:
     """Удаляет карточку из истории окончательно, без возможности вернуть."""
     get_archived_card(db, board_id, card_id)
-    db.execute("DELETE FROM cards WHERE id = ?", (card_id,))
+    db.execute("DELETE FROM cards WHERE id = %s", (card_id,))
     notify_board_changed(db, board_id)

@@ -2,12 +2,11 @@
 Подсказки ников для поля «Ник» в форме карточки.
 """
 
-import sqlite3
 
 from fastapi import APIRouter, Depends
 
 from ..board import get_board_id
-from ..db import get_db
+from ..db import Connection, get_db
 
 router = APIRouter(prefix="/api/boards/{board_id}/donors", tags=["Донатеры"])
 
@@ -18,7 +17,7 @@ SUGGESTIONS_LIMIT = 8
 @router.get("")
 def list_donors(
     q: str = "",
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> list[str]:
     """
@@ -30,14 +29,14 @@ def list_donors(
         """
         SELECT donor_name, MAX(created_at) AS last_at
         FROM cards
-        WHERE board_id = ? AND donor_name IS NOT NULL AND donor_name != ''
+        WHERE board_id = %s AND donor_name IS NOT NULL AND donor_name != ''
         GROUP BY donor_name
         ORDER BY last_at DESC
         """,
         (board_id,),
     ).fetchall()
 
-    # Как в поиске истории: сравниваем в Python, SQLite не понимает регистр русских букв
+    # Как в поиске истории: сравниваем в Python без учёта регистра
     query = q.strip().casefold()
     seen: set[str] = set()
     starts_with: list[str] = []

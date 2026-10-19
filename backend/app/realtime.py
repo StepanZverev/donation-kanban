@@ -9,10 +9,10 @@ WebSocket — это постоянное соединение между бра
 Вкладки других досок об этом не узнают.
 """
 
-import sqlite3
-
 import anyio.from_thread
 from fastapi import WebSocket, WebSocketDisconnect
+
+from .db import Connection
 
 
 class BoardUpdates:
@@ -65,7 +65,7 @@ async def send_updates_until_closed(websocket: WebSocket, board_id: int) -> None
         board_updates.disconnect(websocket, board_id)
 
 
-def notify_board_changed(db: sqlite3.Connection, board_id: int) -> None:
+def notify_board_changed(db: Connection, board_id: int) -> None:
     """
     Сохраняет изменения в базе и сообщает вкладкам доски board_id, что она изменилась.
 

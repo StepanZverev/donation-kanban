@@ -1,0 +1,29 @@
+# База данных PostgreSQL для разработки. Запуск из корня проекта:
+#   docker compose up -d      — запустить (в фоне, переживает перезагрузку Docker)
+#   docker compose stop       — остановить, данные остаются
+#   docker compose down -v    — удалить вместе со всеми данными (осторожно!)
+#
+# Бэкенд по умолчанию подключается именно к этой базе (см. backend/app/config.py).
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: donation_kanban
+      POSTGRES_PASSWORD: donation_kanban
+      POSTGRES_DB: donation_kanban
+    ports:
+      - "5432:5432"
+    volumes:
+      # Данные базы хранятся в томе Docker и не пропадают при перезапуске
+      - postgres-data:/var/lib/postgresql/data
+      # При самом первом запуске создаём ещё и отдельную базу для тестов
+      - ./backend/docker/create-test-database.sql:/docker-entrypoint-initdb.d/create-test-database.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "donation_kanban"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:

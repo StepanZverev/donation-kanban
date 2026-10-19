@@ -6,14 +6,13 @@
 """
 
 import secrets
-import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
 from .. import config
 from ..board import create_board, find_user_board, move_cards_to_board
-from ..db import get_db
+from ..db import Connection, Row, get_db
 from ..donationalerts import client
 from ..donationalerts.listener import (
     donation_listeners,
@@ -46,7 +45,7 @@ STATE_MAX_AGE_SECONDS = 10 * 60
 
 
 @router.get("/status")
-def status(user: sqlite3.Row = Depends(get_current_user)) -> dict:
+def status(user: Row = Depends(get_current_user)) -> dict:
     """Подключил ли этот пользователь DonationAlerts и слушаем ли мы его донаты прямо сейчас."""
     return {
         "configured": config.is_donationalerts_configured(),
@@ -81,7 +80,7 @@ async def callback(
     code: str,
     state: str,
     request: Request,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
 ) -> RedirectResponse:
     """Сюда DonationAlerts возвращает браузер после того, как пользователь разрешил доступ."""
     expected_state = request.cookies.get(STATE_COOKIE)
@@ -99,8 +98,8 @@ async def callback(
     update_profile(db, user_id, profile.get("name"), profile.get("avatar"))
     if current_user is not None and current_user["id"] != user_id:
         take_guest_cards(db, current_user, user_id)
-    # Сохраняем сразу: функции ниже пишут в базу через своё соединение,
-    # и SQLite не даст им писать, пока это соединение держит несохранённые изменения
+    # Сохраняем сразу: функции ниже пишут в базу через своё соединение. Строки, которые
+    # это соединение поменяло и ещё не сохранило, заняты, и другое соединение ждало бы их вечно
     db.commit()
 
     # Токены — в подключение этого пользователя, и запускаем слушателя его донатов
@@ -119,7 +118,7 @@ async def callback(
     return response
 
 
-def choose_user(db: sqlite3.Connection, da_user_id: str, current_user: sqlite3.Row | None) -> int:
+def choose_user(db: Connection, da_user_id: str, current_user: Row | None) -> int:
     """
     В какого пользователя войти после подключения DonationAlerts:
     - этот аккаунт DA уже привязан к кому-то — входим в него (например, с нового устройства);
@@ -134,7 +133,7 @@ def choose_user(db: sqlite3.Connection, da_user_id: str, current_user: sqlite3.R
     return user_id
 
 
-def take_guest_cards(db: sqlite3.Connection, guest: sqlite3.Row, user_id: int) -> None:
+def take_guest_cards(db: Connection, guest: Row, user_id: int) -> None:
     """
     Гость вошёл в аккаунт, который уже есть (например, после «Выйти» или с нового устройства).
     Его карточки переезжают на доску аккаунта, чтобы не потеряться, а сам гость
@@ -147,30 +146,36 @@ def take_guest_cards(db: sqlite3.Connection, guest: sqlite3.Row, user_id: int) -
     if guest_board_id is not None:
         user_board_id = find_user_board(db, user_id) or create_board(db, user_id)
         move_cards_to_board(db, guest_board_id, user_board_id)
-    # Где гость был модератором, теперь модератор аккаунт. OR IGNORE: если аккаунт
-    # уже модератор этой доски, вторую такую же строку не добавляем
-    db.execute("UPDATE OR IGNORE board_members SET user_id = ? WHERE user_id = ?", (user_id, guest["id"]))
-    # Остатки гостя и модераторство на собственной доске аккаунта (хозяину оно не нужно)
-    db.execute("DELETE FROM board_members WHERE user_id = ?", (guest["id"],))
+    # Где гость был модератором, теперь модератор аккаунт. Доски, где аккаунт уже
+    # модератор, пропускаем: вторая такая же строка не нужна (и база её не пустит)
     db.execute(
-        "DELETE FROM board_members WHERE user_id = ? AND board_id IN (SELECT id FROM boards WHERE owner_id = ?)",
+        """
+        UPDATE board_members SET user_id = %s
+        WHERE user_id = %s AND board_id NOT IN (SELECT board_id FROM board_members WHERE user_id = %s)
+        """,
+        (user_id, guest["id"], user_id),
+    )
+    # Остатки гостя и модераторство на собственной доске аккаунта (хозяину оно не нужно)
+    db.execute("DELETE FROM board_members WHERE user_id = %s", (guest["id"],))
+    db.execute(
+        "DELETE FROM board_members WHERE user_id = %s AND board_id IN (SELECT id FROM boards WHERE owner_id = %s)",
         (user_id, user_id),
     )
-    db.execute("DELETE FROM sessions WHERE user_id = ?", (guest["id"],))
-    db.execute("DELETE FROM users WHERE id = ?", (guest["id"],))
+    db.execute("DELETE FROM sessions WHERE user_id = %s", (guest["id"],))
+    db.execute("DELETE FROM users WHERE id = %s", (guest["id"],))
 
 
 @router.post("/logout")
 async def logout(
-    user: sqlite3.Row = Depends(get_current_user),
-    db: sqlite3.Connection = Depends(get_db),
+    user: Row = Depends(get_current_user),
+    db: Connection = Depends(get_db),
 ) -> dict:
     """
     Отключает DonationAlerts: забываем токены и перестаём слушать донаты.
     Войти через DA потом всё равно можно — аккаунт DA остаётся привязан.
     """
     # Сначала сохраняем то, что этот запрос уже записал (время визита или нового гостя):
-    # пока запись не завершена, другое соединение с базой не сможет в неё писать.
+    # пока запись не сохранена, строку пользователя другое соединение поменять не сможет.
     db.commit()
     forget_connection(user["id"])
     await donation_listeners.stop(user["id"])

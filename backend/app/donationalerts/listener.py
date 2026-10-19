@@ -17,13 +17,12 @@
 import asyncio
 import json
 import logging
-import sqlite3
 
 from websockets.asyncio.client import connect as websocket_connect
 
 from .. import config
 from ..board import create_board, find_user_board
-from ..db import now, open_db
+from ..db import Row, now, open_db
 from ..donations import Donation, add_donation_card
 from ..realtime import board_updates
 from . import client
@@ -185,9 +184,9 @@ async def save_donation(user_id: int, data: dict) -> None:
     with open_db() as db:
         board_id = find_user_board(db, user_id) or create_board(db, user_id)
         added = add_donation_card(db, board_id, donation)
-        # Запоминаем самый новый донат, который видели (MAX — чтобы не откатиться назад)
+        # Запоминаем самый новый донат, который видели (GREATEST — бо́льшее из двух, чтобы не откатиться назад)
         db.execute(
-            "UPDATE da_connections SET last_donation_id = MAX(last_donation_id, ?) WHERE user_id = ?",
+            "UPDATE da_connections SET last_donation_id = GREATEST(last_donation_id, %s) WHERE user_id = %s",
             (donation.id, user_id),
         )
     if added:
@@ -222,7 +221,7 @@ async def remember_newest_donation(user_id: int, access_token: str) -> None:
     donations = await client.get_donations(access_token, 1)
     newest_id = max((int(donation["id"]) for donation in donations), default=0)
     with open_db() as db:
-        db.execute("UPDATE da_connections SET last_donation_id = ? WHERE user_id = ?", (newest_id, user_id))
+        db.execute("UPDATE da_connections SET last_donation_id = %s WHERE user_id = %s", (newest_id, user_id))
 
 
 async def refresh_access_token(user_id: int) -> bool:
@@ -247,7 +246,7 @@ def save_connection(user_id: int, tokens: dict) -> None:
         db.execute(
             """
             INSERT INTO da_connections (user_id, access_token, refresh_token, created_at)
-            VALUES (?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s)
             ON CONFLICT (user_id) DO UPDATE SET
                 access_token = excluded.access_token,
                 refresh_token = COALESCE(excluded.refresh_token, da_connections.refresh_token)
@@ -258,12 +257,12 @@ def save_connection(user_id: int, tokens: dict) -> None:
 
 def forget_connection(user_id: int) -> None:
     with open_db() as db:
-        db.execute("DELETE FROM da_connections WHERE user_id = ?", (user_id,))
+        db.execute("DELETE FROM da_connections WHERE user_id = %s", (user_id,))
 
 
-def read_connection(user_id: int) -> sqlite3.Row | None:
+def read_connection(user_id: int) -> Row | None:
     with open_db() as db:
-        return db.execute("SELECT * FROM da_connections WHERE user_id = ?", (user_id,)).fetchone()
+        return db.execute("SELECT * FROM da_connections WHERE user_id = %s", (user_id,)).fetchone()
 
 
 def connected_user_ids() -> list[int]:

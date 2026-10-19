@@ -6,7 +6,6 @@
 удалить и переставить. Их всегда от 1 до 3.
 """
 
-import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -17,7 +16,7 @@ from ..board import (
     get_columns,
     get_owned_board_id,
 )
-from ..db import get_db, now
+from ..db import Connection, get_db, now
 from ..realtime import notify_board_changed
 from ..schemas import BoardColumn, ColumnCreate, ColumnOrder, ColumnUpdate
 
@@ -30,7 +29,7 @@ MAX_WORK_COLUMNS = 3
 
 @router.get("")
 def list_columns(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> list[BoardColumn]:
     """Все колонки доски слева направо: «Очередь», промежуточные, «Выполнено»."""
@@ -40,7 +39,7 @@ def list_columns(
 @router.post("", status_code=201)
 def create_column(
     data: ColumnCreate,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_owned_board_id),
 ) -> BoardColumn:
     """Добавляет промежуточную колонку последней, прямо перед «Выполнено»."""
@@ -48,20 +47,20 @@ def create_column(
     if len(work_ids) >= MAX_WORK_COLUMNS:
         raise HTTPException(status_code=400, detail=f"Промежуточных колонок может быть не больше {MAX_WORK_COLUMNS}")
 
-    cursor = db.execute(
-        "INSERT INTO board_columns (board_id, title, kind, position) VALUES (?, ?, 'work', 0)",
+    column = db.execute(
+        "INSERT INTO board_columns (board_id, title, kind, position) VALUES (%s, %s, 'work', 0) RETURNING id",
         (board_id, data.title),
-    )
-    put_columns_in_order(db, board_id, [*work_ids, cursor.lastrowid])
+    ).fetchone()
+    put_columns_in_order(db, board_id, [*work_ids, column["id"]])
 
     notify_board_changed(db, board_id)
-    return get_column(db, board_id, cursor.lastrowid)
+    return get_column(db, board_id, column["id"])
 
 
 @router.put("/order")
 def reorder_columns(
     data: ColumnOrder,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_owned_board_id),
 ) -> list[BoardColumn]:
     """Переставляет промежуточные колонки. Прислать нужно все их id, каждый по одному разу."""
@@ -78,12 +77,12 @@ def reorder_columns(
 def rename_column(
     column_id: int,
     data: ColumnUpdate,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_owned_board_id),
 ) -> BoardColumn:
     """Переименовывает промежуточную колонку."""
     get_work_column(db, board_id, column_id)
-    db.execute("UPDATE board_columns SET title = ? WHERE id = ?", (data.title, column_id))
+    db.execute("UPDATE board_columns SET title = %s WHERE id = %s", (data.title, column_id))
 
     notify_board_changed(db, board_id)
     return get_column(db, board_id, column_id)
@@ -92,7 +91,7 @@ def rename_column(
 @router.delete("/{column_id}", status_code=204)
 def delete_column(
     column_id: int,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_owned_board_id),
 ) -> None:
     """
@@ -106,16 +105,16 @@ def delete_column(
     # чтобы ни одна не ссылалась на удалённую колонку.
     incoming_id = get_column_id_by_kind(db, board_id, "incoming")
     db.execute(
-        "UPDATE cards SET column_id = ?, moved_at = ? WHERE column_id = ?",
+        "UPDATE cards SET column_id = %s, moved_at = %s WHERE column_id = %s",
         (incoming_id, now(), column_id),
     )
-    db.execute("DELETE FROM board_columns WHERE id = ?", (column_id,))
+    db.execute("DELETE FROM board_columns WHERE id = %s", (column_id,))
     put_columns_in_order(db, board_id, [id for id in work_ids if id != column_id])
 
     notify_board_changed(db, board_id)
 
 
-def get_work_column(db: sqlite3.Connection, board_id: int, column_id: int) -> BoardColumn:
+def get_work_column(db: Connection, board_id: int, column_id: int) -> BoardColumn:
     """Находит колонку и проверяет, что она промежуточная: «Очередь» и «Выполнено» менять нельзя."""
     column = get_column(db, board_id, column_id)
     if column.kind != "work":
@@ -123,12 +122,12 @@ def get_work_column(db: sqlite3.Connection, board_id: int, column_id: int) -> Bo
     return column
 
 
-def get_work_column_ids(db: sqlite3.Connection, board_id: int) -> list[int]:
+def get_work_column_ids(db: Connection, board_id: int) -> list[int]:
     """id промежуточных колонок слева направо."""
     return [column.id for column in get_columns(db, board_id) if column.kind == "work"]
 
 
-def put_columns_in_order(db: sqlite3.Connection, board_id: int, work_ids: list[int]) -> None:
+def put_columns_in_order(db: Connection, board_id: int, work_ids: list[int]) -> None:
     """
     Заново нумерует колонки слева направо: «Очередь» — 0, потом промежуточные
     в порядке work_ids, «Выполнено» — последней.
@@ -139,4 +138,4 @@ def put_columns_in_order(db: sqlite3.Connection, board_id: int, work_ids: list[i
         get_column_id_by_kind(db, board_id, "done"),
     ]
     for position, column_id in enumerate(ordered_ids):
-        db.execute("UPDATE board_columns SET position = ? WHERE id = ?", (position, column_id))
+        db.execute("UPDATE board_columns SET position = %s WHERE id = %s", (position, column_id))

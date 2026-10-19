@@ -12,14 +12,13 @@
 """
 
 import secrets
-import sqlite3
 from urllib.parse import urlparse
 
 import anyio.to_thread
 from fastapi import APIRouter, Depends, HTTPException, WebSocket
 
 from ..board import get_board_cards, get_columns, get_owned_board_id
-from ..db import delete_board_setting, get_board_setting, get_db, open_db, set_board_setting
+from ..db import Connection, delete_board_setting, get_board_setting, get_db, open_db, set_board_setting
 from ..intake import get_intake_settings
 from ..realtime import notify_board_changed, send_updates_until_closed
 from ..schemas import DonationUrl, PublicBoard, PublicCard, ViewerSettings
@@ -37,17 +36,17 @@ DONATION_URL_KEY = "donation_url"
 DONATION_SITES = {"donationalerts.com", "www.donationalerts.com"}
 
 
-def read_viewer_settings(db: sqlite3.Connection, board_id: int) -> ViewerSettings:
+def read_viewer_settings(db: Connection, board_id: int) -> ViewerSettings:
     return ViewerSettings(
         public_token=get_board_setting(db, board_id, PUBLIC_TOKEN_KEY),
         donation_url=get_board_setting(db, board_id, DONATION_URL_KEY) or "",
     )
 
 
-def find_board_by_public_token(db: sqlite3.Connection, token: str) -> int | None:
+def find_board_by_public_token(db: Connection, token: str) -> int | None:
     """Доска, у которой такая ссылка для зрителей. None — ссылка неверная или выключена."""
     row = db.execute(
-        "SELECT board_id FROM board_settings WHERE key = ? AND value = ?", (PUBLIC_TOKEN_KEY, token)
+        "SELECT board_id FROM board_settings WHERE key = %s AND value = %s", (PUBLIC_TOKEN_KEY, token)
     ).fetchone()
     return row["board_id"] if row else None
 
@@ -60,7 +59,7 @@ def is_allowed_donation_url(url: str) -> bool:
 
 @router.get("")
 def get_viewer_settings(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_owned_board_id),
 ) -> ViewerSettings:
     return read_viewer_settings(db, board_id)
@@ -69,7 +68,7 @@ def get_viewer_settings(
 @router.put("/donation-url")
 def save_donation_url(
     data: DonationUrl,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_owned_board_id),
 ) -> ViewerSettings:
     """Сохраняет ссылку на донат. Пустая строка убирает кнопку «+» у зрителей."""
@@ -87,7 +86,7 @@ def save_donation_url(
 
 @router.post("/link")
 def create_public_link(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_owned_board_id),
 ) -> ViewerSettings:
     """
@@ -103,7 +102,7 @@ def create_public_link(
 
 @router.delete("/link")
 def delete_public_link(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_owned_board_id),
 ) -> ViewerSettings:
     """Выключает ссылку для зрителей."""
@@ -113,7 +112,7 @@ def delete_public_link(
 
 
 @public_router.get("/boards/{token}")
-def get_public_board(token: str, db: sqlite3.Connection = Depends(get_db)) -> PublicBoard:
+def get_public_board(token: str, db: Connection = Depends(get_db)) -> PublicBoard:
     """Доска для зрителей. 404 — ссылка неверная или стример её выключил."""
     board_id = find_board_by_public_token(db, token)
     if board_id is None:
@@ -128,7 +127,7 @@ def get_public_board(token: str, db: sqlite3.Connection = Depends(get_db)) -> Pu
         FROM boards
         JOIN users ON users.id = boards.owner_id
         LEFT JOIN da_connections ON da_connections.user_id = users.id
-        WHERE boards.id = ?
+        WHERE boards.id = %s
         """,
         (board_id,),
     ).fetchone()
@@ -147,7 +146,7 @@ def get_public_board(token: str, db: sqlite3.Connection = Depends(get_db)) -> Pu
 @public_router.websocket("/boards/{token}/ws")
 async def public_board_updates(websocket: WebSocket, token: str) -> None:
     """Живые обновления для зрителей: та же комната доски, что и у стримера."""
-    # В отдельном потоке, чтобы сервер не замер, пока база занята (см. main.py)
+    # В отдельном потоке, чтобы сервер не замер, пока база занята (см. members.py)
     board_id = await anyio.to_thread.run_sync(find_board_by_link, token)
     if board_id is None:
         await websocket.close(code=1008)

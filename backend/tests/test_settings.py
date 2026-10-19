@@ -120,13 +120,3 @@ def test_priority_levels_no_same_amount(client):
 def test_priority_level_color_must_be_hex(client):
     levels = [{"min_amount": 0, "name": "А", "color": "red"}]
     assert client.put("/api/settings/priority-levels", json=levels).status_code == 422
-
-
-def test_old_pile_title_is_renamed_to_queue(client):
-    """В старых базах первая колонка называлась «Куча» — при запуске она становится «Очередью»."""
-    from app.db import init_db, open_db
-
-    with open_db() as db:
-        db.execute("UPDATE board_columns SET title = 'Куча' WHERE kind = 'incoming'")
-    init_db()
-    assert titles(client)[0] == "Очередь"

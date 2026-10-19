@@ -6,7 +6,7 @@ from urllib.parse import parse_qs, urlparse
 import pytest
 from fastapi import WebSocketDisconnect
 
-from app.db import connect, init_db
+from app.db import connect
 from app.donationalerts import listener
 from app.realtime import BoardUpdates, board_updates
 
@@ -119,56 +119,6 @@ def test_donations_go_to_the_board_of_who_connected_donationalerts(client, other
     assert client.get("/api/auth/status").json()["connected"] is True
 
 
-def make_board_old(card_title: str) -> None:
-    """
-    Превращает базу с одной доской в «старую»: у колонок и карточек нет доски,
-    настройки лежат в общей таблице settings. Кладёт в «Очередь» карточку card_title.
-    """
-    with connect() as db:
-        db.execute("UPDATE board_columns SET board_id = NULL")
-        db.execute("UPDATE cards SET board_id = NULL")
-        db.execute("DELETE FROM board_settings")
-        db.execute("DELETE FROM boards")
-        db.execute("INSERT INTO settings (key, value) VALUES ('auto_merge', '1')")
-        db.execute(
-            """
-            INSERT INTO cards (title, column_id, created_at, updated_at, moved_at)
-            VALUES (?, (SELECT id FROM board_columns WHERE kind = 'incoming'), '1', '1', '1')
-            """,
-            (card_title,),
-        )
-
-
-def test_old_board_goes_to_user_with_donationalerts(client, other, fake_da, no_listener):
-    other.get("/api/me")
-    connect_donationalerts(client)
-    client.get("/api/columns")  # единственная доска в базе
-    make_board_old("Старая карточка")
-
-    init_db()
-    init_db()  # второй запуск ничего не портит
-
-    assert [card["title"] for card in client.get("/api/cards").json()] == ["Старая карточка"]
-    assert client.get("/api/settings/auto-merge").json() == {"enabled": True}
-    # У второго пользователя — новая пустая доска с настройками по умолчанию
-    assert other.get("/api/cards").json() == []
-    assert other.get("/api/settings/auto-merge").json() == {"enabled": False}
-
-
-def test_old_board_without_users_goes_to_first_visitor(client, other):
-    client.get("/api/columns")  # единственная доска в базе
-    make_board_old("Старая карточка")
-    with connect() as db:
-        db.execute("DELETE FROM sessions")
-        db.execute("DELETE FROM users")
-
-    init_db()
-
-    # Пользователей в базе не было: доску забирает тот, кто первым откроет сайт
-    assert [card["title"] for card in other.get("/api/cards").json()] == ["Старая карточка"]
-    assert client.get("/api/cards").json() == []
-
-
 def test_guest_cards_move_to_account_on_login(client, fake_da, no_listener):
     connect_donationalerts(client)
     client.post("/api/cards", json={"text": "Карточка аккаунта"})
@@ -188,9 +138,8 @@ def test_guest_cards_move_to_account_on_login(client, fake_da, no_listener):
     assert [card["title"] for card in client.get("/api/history").json()] == ["Гостевая в истории"]
     # Гость с опустевшей доской удалён: в базе остались только аккаунт и его доска
     with connect() as db:
-        assert db.execute("SELECT COUNT(*) FROM boards").fetchone()[0] == 1
-        assert db.execute("SELECT COUNT(*) FROM users").fetchone()[0] == 1
-
+        assert db.execute("SELECT COUNT(*) AS count FROM boards").fetchone()["count"] == 1
+        assert db.execute("SELECT COUNT(*) AS count FROM users").fetchone()["count"] == 1
 
 
 def test_donations_of_two_streamers_do_not_mix(client, other):
@@ -222,30 +171,6 @@ def test_server_start_listens_to_everyone_connected(client, other, fake_da, monk
 
     assert sorted(listeners.listeners) == sorted([first, second])
     assert listeners.status(first) == "connecting"
-
-
-def test_old_donationalerts_tokens_move_to_board_owner(client, other):
-    user_id = client.get("/api/me").json()["id"]  # первая доска в базе — его
-    other.get("/api/me")
-    # Так токены хранились раньше: одни на весь сервер, в общей таблице settings
-    with connect() as db:
-        db.executemany(
-            "INSERT INTO settings (key, value) VALUES (?, ?)",
-            [("da_access_token", "old-access"), ("da_refresh_token", "old-refresh"), ("da_last_donation_id", "42")],
-        )
-
-    init_db()
-    init_db()  # второй запуск ничего не портит
-
-    connection = listener.read_connection(user_id)
-    assert (connection["access_token"], connection["refresh_token"], connection["last_donation_id"]) == (
-        "old-access",
-        "old-refresh",
-        42,
-    )
-    with connect() as db:
-        assert db.execute("SELECT COUNT(*) FROM settings WHERE key LIKE 'da_%'").fetchone()[0] == 0
-
 
 
 class FakeTab:

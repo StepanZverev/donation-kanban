@@ -6,13 +6,12 @@
 DonationAlerts (routes/auth.py).
 """
 
-import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from .. import config
 from ..board import find_or_create_user_board
-from ..db import get_db
+from ..db import Connection, Row, get_db
 from ..schemas import CurrentUser
 from ..users import SESSION_COOKIE, delete_session, get_current_user, list_logins
 from .members import list_moderated_boards
@@ -22,8 +21,8 @@ router = APIRouter(prefix="/api/me", tags=["Пользователь"])
 
 @router.get("")
 def get_me(
-    user: sqlite3.Row = Depends(get_current_user),
-    db: sqlite3.Connection = Depends(get_db),
+    user: Row = Depends(get_current_user),
+    db: Connection = Depends(get_db),
 ) -> CurrentUser:
     logins = list_logins(db, user["id"])
     return CurrentUser(
@@ -43,8 +42,8 @@ def get_me(
 def logout(
     request: Request,
     response: Response,
-    user: sqlite3.Row = Depends(get_current_user),
-    db: sqlite3.Connection = Depends(get_db),
+    user: Row = Depends(get_current_user),
+    db: Connection = Depends(get_db),
 ) -> dict:
     """
     Выйти на этом устройстве. Следующий визит начнётся с нового гостя,

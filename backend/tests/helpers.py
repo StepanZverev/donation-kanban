@@ -1,11 +1,10 @@
-import sqlite3
-
 from fastapi.testclient import TestClient
 
 from app.board import create_board
+from app.db import Connection
 
 
-def default_board_id(db: sqlite3.Connection) -> int:
+def default_board_id(db: Connection) -> int:
     """
     Доска для тестовых донатов. В большинстве тестов пользователь один, и доска одна.
     Если доски ещё нет, создаём её без хозяина: первый запрос клиента заберёт её себе.
