@@ -7,7 +7,7 @@ import type { PriorityLevel } from '../utils/priority'
 export type ViewerSettings = {
   // Секретная часть ссылки для зрителей (/v/<токен>). null — ссылка выключена.
   publicToken: string | null
-  // Ссылка на страницу доната. Пустая строка — кнопки «+» у зрителей нет.
+  // Ссылка на страницу доната. Пустая строка — кнопки «Предложить задачу» у зрителей нет.
   donationUrl: string
 }
 
@@ -64,19 +64,36 @@ export function getPublicUpdatesPath(token: string) {
 }
 
 export type PublicBoard = {
-  // Имя стримера из DonationAlerts, null — без имени
+  // Имя и аватарка стримера из DonationAlerts, null — без имени (гость)
   streamerName: string | null
+  streamerAvatarUrl: string | null
+  // Открыта ли у стримера его доска прямо сейчас — «Стример на месте»
+  streamerOnline: boolean
+  // Когда стример последний раз был на сайте — для «был 2 ч назад»
+  streamerLastSeenAt: string
   columns: BoardColumn[]
   cards: PublicCard[]
   priorityLevels: PriorityLevel[]
   donationUrl: string
+  // Правила приёма — из них собирается блок «Как заказать»
   intakeOpen: boolean
+  // Минимальная сумма доната, 0 — без минимума
+  minAmount: number
+  // Донаты без ника на доску не попадают
+  ignoreAnonymous: boolean
+  // Несколько донатов одного зрителя складываются в одну карточку
+  autoMerge: boolean
+  // Свои правила доната от стримера. Пустая строка — правил нет.
+  rules: string
   // Подключён ли у стримера DonationAlerts: без него донат не станет карточкой
   donationsConnected: boolean
 }
 
 type PublicBoardFromApi = {
   streamer_name: string | null
+  streamer_avatar_url: string | null
+  streamer_online: boolean
+  streamer_last_seen_at: string
   columns: BoardColumn[]
   cards: {
     id: number
@@ -92,6 +109,10 @@ type PublicBoardFromApi = {
   priority_levels: { min_amount: number; name: string; color: string }[]
   donation_url: string
   intake_open: boolean
+  min_amount: number
+  ignore_anonymous: boolean
+  auto_merge: boolean
+  rules: string
   donations_connected: boolean
 }
 
@@ -107,6 +128,9 @@ export async function getPublicBoard(token: string): Promise<PublicBoard | null>
   const board: PublicBoardFromApi = await response.json()
   return {
     streamerName: board.streamer_name,
+    streamerAvatarUrl: board.streamer_avatar_url,
+    streamerOnline: board.streamer_online,
+    streamerLastSeenAt: board.streamer_last_seen_at,
     columns: board.columns,
     cards: board.cards.map((card) => ({
       id: card.id,
@@ -126,6 +150,10 @@ export async function getPublicBoard(token: string): Promise<PublicBoard | null>
     })),
     donationUrl: board.donation_url,
     intakeOpen: board.intake_open,
+    minAmount: board.min_amount,
+    ignoreAnonymous: board.ignore_anonymous,
+    autoMerge: board.auto_merge,
+    rules: board.rules,
     donationsConnected: board.donations_connected,
   }
 }

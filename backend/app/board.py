@@ -75,6 +75,24 @@ def get_board_id(
     return board_id
 
 
+def get_moderator_name(
+    board_id: int = Depends(get_board_id),
+    user: Row = Depends(get_current_user),
+    db: Connection = Depends(get_db),
+) -> str | None:
+    """
+    Если действие на доске делает модератор — как подписать его в истории:
+    имя, которым он представился, иначе имя из DonationAlerts, иначе «Гость».
+    Если хозяин доски — None: свои действия стример не подписывает.
+    """
+    member = db.execute(
+        "SELECT nickname FROM board_members WHERE board_id = %s AND user_id = %s", (board_id, user["id"])
+    ).fetchone()
+    if member is None:
+        return None
+    return member["nickname"] or user["name"] or "Гость"
+
+
 def get_owned_board_id(
     board_id: int,
     user: Row = Depends(get_current_user),
@@ -209,17 +227,24 @@ def get_board_cards(db: Connection, board_id: int) -> list[Card]:
     return result
 
 
-def archive_card(db: Connection, card_id: int, reason: str, note: str | None = None) -> None:
+def archive_card(
+    db: Connection,
+    card_id: int,
+    reason: str,
+    note: str | None = None,
+    archived_by: str | None = None,
+) -> None:
     """
     Убирает карточку с доски в историю. reason: 'done' (выполнена), 'deleted' (выкинута),
     'rejected' (отклонена) и т. д. note — пояснение к пометке, например причина отказа.
+    archived_by — имя модератора, если это сделал он (см. get_moderator_name).
     Карточку перед этим уже нашли на этой доске (get_card), здесь доску не проверяем.
     """
     timestamp = now()
     db.execute(
-        "UPDATE cards SET archived_at = %s, archive_reason = %s, archive_note = %s, updated_at = %s"
-        " WHERE id = %s",
-        (timestamp, reason, note or None, timestamp, card_id),
+        "UPDATE cards SET archived_at = %s, archive_reason = %s, archive_note = %s, archived_by = %s,"
+        " updated_at = %s WHERE id = %s",
+        (timestamp, reason, note or None, archived_by, timestamp, card_id),
     )
 
 
@@ -232,7 +257,7 @@ def return_to_board(db: Connection, card_id: int, column_id: int) -> None:
     db.execute(
         """
         UPDATE cards
-        SET archived_at = NULL, archive_reason = NULL, archive_note = NULL,
+        SET archived_at = NULL, archive_reason = NULL, archive_note = NULL, archived_by = NULL,
             column_id = %s, moved_at = %s, updated_at = %s
         WHERE id = %s
         """,

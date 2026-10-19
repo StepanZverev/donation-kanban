@@ -131,3 +131,49 @@ def test_no_donations_without_donationalerts_connection(client, viewer):
     # «Отключить» DonationAlerts: донаты больше не станут карточками
     client.post("/api/auth/logout")
     assert viewer.get(f"/api/public/boards/{token}").json()["donations_connected"] is False
+
+
+def test_viewer_sees_rules_of_intake(client, viewer):
+    token = turn_on_link(client)
+    board = viewer.get(f"/api/public/boards/{token}").json()
+    assert (board["min_amount"], board["ignore_anonymous"], board["auto_merge"]) == (0, False, False)
+    assert board["rules"] == ""
+
+    client.put(
+        "/api/settings/intake",
+        json={"open": False, "min_amount": 100, "ignore_anonymous": True, "rules": "Только песни"},
+    )
+    client.put("/api/settings/auto-merge", json={"enabled": True})
+
+    board = viewer.get(f"/api/public/boards/{token}").json()
+    assert board["intake_open"] is False
+    assert (board["min_amount"], board["ignore_anonymous"], board["auto_merge"]) == (100, True, True)
+    assert board["rules"] == "Только песни"
+
+
+def test_viewer_sees_if_streamer_is_here(client, viewer):
+    token = turn_on_link(client)
+    board_id = client.get("/api/me").json()["board_id"]
+    board = viewer.get(f"/api/public/boards/{token}").json()
+    assert board["streamer_online"] is False
+    last_seen = board["streamer_last_seen_at"]
+
+    moderator = BoardClient(client.app)
+    invite = client.post(f"/api/boards/{board_id}/invite-link").json()["invite_token"]
+    moderator.post(f"/api/invites/{invite}/accept")
+
+    with viewer.websocket_connect(f"/api/public/boards/{token}/ws") as viewer_socket:
+        # Модератор открыл доску — стример от этого «на месте» не становится
+        with moderator.websocket_connect(f"/api/boards/{board_id}/ws"):
+            assert viewer.get(f"/api/public/boards/{token}").json()["streamer_online"] is False
+
+        # Стример открыл доску: зрителю сразу приходит сигнал перечитать её
+        with client.websocket_connect(f"/api/boards/{board_id}/ws"):
+            assert viewer_socket.receive_json() == {"type": "board_changed"}
+            assert viewer.get(f"/api/public/boards/{token}").json()["streamer_online"] is True
+
+        # Закрыл — тоже сигнал, и время ухода запомнилось
+        assert viewer_socket.receive_json() == {"type": "board_changed"}
+        board = viewer.get(f"/api/public/boards/{token}").json()
+        assert board["streamer_online"] is False
+        assert board["streamer_last_seen_at"] > last_seen

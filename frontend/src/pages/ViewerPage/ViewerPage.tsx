@@ -1,6 +1,12 @@
 import { useParams } from 'react-router'
+import { useCardFlash } from '../../hooks/useCardFlash'
+import { useFollowedDonor } from '../../hooks/useFollowedDonor'
 import { usePublicBoard } from '../../hooks/usePublicBoard'
+import { FollowPanel } from '../../components/FollowPanel/FollowPanel'
+import { OrderRules } from '../../components/OrderRules/OrderRules'
 import { ViewerCard } from '../../components/ViewerCard/ViewerCard'
+import { ViewerHeader } from '../../components/ViewerHeader/ViewerHeader'
+import { isFollowedDonor } from '../../utils/follow'
 import styles from './ViewerPage.module.css'
 
 // Страница для зрителей: /v/<токен>. Доска стримера только для чтения.
@@ -9,6 +15,8 @@ export function ViewerPage() {
   // Токен — секретная часть ссылки после /v/
   const { token = '' } = useParams()
   const { state, error, getColumnCards } = usePublicBoard(token)
+  const { followedName, follow, unfollow } = useFollowedDonor(token)
+  const { flashedCardId, showCard } = useCardFlash()
 
   if (state.status === 'loading') {
     return <p className={styles.message}>Загружаю доску…</p>
@@ -27,30 +35,17 @@ export function ViewerPage() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>
-          {board.streamerName ? `Заказы: ${board.streamerName}` : 'Заказы стримера'}
-        </h1>
-
-        {/* Кнопка «+» есть, только если стример указал ссылку на донат и подключил
-            DonationAlerts: без подключения донат не станет карточкой */}
-        {board.donationUrl &&
-          board.donationsConnected &&
-          (board.intakeOpen ? (
-            <div className={styles.suggest}>
-              <a
-                className={styles.suggestButton}
-                href={board.donationUrl}
-                // noopener noreferrer: открытая страница не получит доступа к этой вкладке
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                + Предложить задачу
-              </a>
-              <span className={styles.suggestHint}>Опиши задачу в сообщении к донату</span>
-            </div>
-          ) : (
-            <span className={styles.closed}>Приём заказов закрыт</span>
-          ))}
+        <ViewerHeader board={board} />
+        <OrderRules board={board} />
+        {followedName && (
+          <FollowPanel
+            board={board}
+            followedName={followedName}
+            getColumnCards={getColumnCards}
+            onUnfollow={unfollow}
+            onShowCard={showCard}
+          />
+        )}
       </header>
 
       {error && <p className={styles.error}>{error}</p>}
@@ -69,6 +64,9 @@ export function ViewerPage() {
                   card={card}
                   priorityLevels={board.priorityLevels}
                   isMuted={column.kind === 'done'}
+                  isFollowed={followedName !== null && isFollowedDonor(card, followedName)}
+                  isFlashed={card.id === flashedCardId}
+                  onFollow={follow}
                 />
               ))}
               {cards.length === 0 && <p className={styles.empty}>Пока пусто</p>}

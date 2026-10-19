@@ -14,8 +14,18 @@
   opacity: 0.6;
 }
 
+/* Ник и справа «Следить» / «Слежу» */
+.top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  min-width: 0;
+}
+
 .heading {
-  max-width: 100%;
+  flex: 1;
+  min-width: 0;
   margin: 0;
   font-size: 15px;
   font-weight: 600;
@@ -38,4 +48,72 @@
   color: var(--color-text-secondary);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+/* Карточка ника, за которым следит зритель */
+.followed {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* «Показать на доске»: карточка коротко вспыхивает */
+.flashed {
+  animation: flash 1.6s ease-out;
+}
+
+@keyframes flash {
+  0%,
+  40% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent) 45%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.followButton,
+.followedTag {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  font-size: 12px;
+}
+
+.followButton svg,
+.followedTag svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* «Следить» видно, только когда навели на карточку */
+.followButton {
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+  opacity: 0;
+}
+
+.card:hover .followButton,
+.followButton:focus-visible {
+  opacity: 1;
+}
+
+/* На телефоне наведения нет: кнопка видна всегда, но бледная */
+@media (hover: none) {
+  .followButton {
+    opacity: 0.5;
+  }
+}
+
+.followedTag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
+  font-weight: 600;
 }

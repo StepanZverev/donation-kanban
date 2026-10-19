@@ -5,7 +5,6 @@
   flex-direction: column;
   gap: 8px;
   padding: 12px 0;
-  border-bottom: 1px solid var(--color-border);
 }
 
 .label {
@@ -19,17 +18,42 @@
   color: var(--color-text-secondary);
 }
 
-.input {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 6px 10px;
+.inputBox {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-right: 4px;
   border: 1px solid var(--color-border);
   border-radius: 6px;
 }
 
-.input:focus {
+/* Поле в фокусе — рамка вокруг всего блока становится фиолетовой */
+.inputBox:focus-within {
   border-color: var(--color-accent);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
   outline: none;
+}
+
+/* Кнопка-иконка внутри поля: без рамки, серая, при наведении ярче */
+.iconButton {
+  display: flex;
+  padding: 5px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.iconButton:hover {
+  background-color: var(--color-column);
+  color: var(--color-text);
 }
 
 .buttons {

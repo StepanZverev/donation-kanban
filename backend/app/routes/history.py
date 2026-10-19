@@ -56,7 +56,9 @@ def searchable_text(card: Card) -> str:
     Всё, по чему ищем: ник, заголовок, текст карточки и причина отказа —
     одной строкой в нижнем регистре.
     """
-    return " ".join([card.donor_name or "", card.title, card.description, card.archive_note or ""]).casefold()
+    # Имя модератора тоже ищется: можно найти всё, что убрал «Петя»
+    texts = [card.donor_name or "", card.title, card.description, card.archive_note or "", card.archived_by or ""]
+    return " ".join(texts).casefold()
 
 
 @router.post("/{card_id}/restore")

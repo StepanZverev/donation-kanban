@@ -1,0 +1,59 @@
+.dialog {
+  width: min(480px, calc(100vw - 32px));
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--color-surface);
+  color: inherit;
+}
+
+.dialog::backdrop {
+  background-color: var(--color-backdrop);
+}
+
+/* Заголовок и «Закрыть» стоят на месте, а список версий прокручивается между ними */
+.content {
+  box-sizing: border-box;
+  max-height: min(600px, calc(100vh - 64px));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 18px;
+}
+
+/* Список версий */
+.releases {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.version {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.date {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  font-size: 13px;
+}
+
+.changes {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}

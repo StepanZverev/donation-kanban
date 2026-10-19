@@ -8,15 +8,14 @@ import styles from './ViewerSettings.module.css'
 // без входа, и ссылка на донат для кнопки «+» на их странице.
 export function ViewerSettings() {
   const { settings, error, saveDonationUrl, createPublicLink, deletePublicLink } = useViewerSettings()
-  // Что сейчас написано в поле ссылки на донат. null — поле не меняли, показываем сохранённое.
-  const [donationUrlDraft, setDonationUrlDraft] = useState<string | null>(null)
+  // Что сейчас написано в поле ссылки на донат (поле видно, пока ссылка не добавлена)
+  const [donationUrlDraft, setDonationUrlDraft] = useState('')
 
   if (!settings) {
     return error ? <p className={styles.error}>{error}</p> : null
   }
 
   const publicUrl = settings.publicToken ? getPublicPageUrl(settings.publicToken) : null
-  const donationUrl = donationUrlDraft ?? settings.donationUrl
 
   return (
     <section className={styles.section}>
@@ -32,54 +31,62 @@ export function ViewerSettings() {
         label="Ссылка для зрителей"
         url={publicUrl}
         description="Выложи её в описание канала или в чат. Новая ссылка заменит эту, и старая сразу перестанет работать."
-        emptyDescription="Ссылки нет: доску видишь только ты."
         newLinkQuestion="Старая ссылка перестанет работать. Зрителям нужно будет дать новую."
         deleteQuestion="Зрители больше не смогут смотреть доску по этой ссылке."
         onCreate={createPublicLink}
         onDelete={deletePublicLink}
       />
 
-      <form className={styles.field} onSubmit={handleDonationUrlSubmit}>
-        <label className={styles.label} htmlFor="donation-url">
-          Ссылка на донат
-        </label>
+      <div className={styles.field}>
+        <span className={styles.label}>Ссылка на донат</span>
         <span className={styles.description}>
           Например, https://www.donationalerts.com/r/твой_ник. Тогда у зрителей появится кнопка «+
           Предложить задачу»: она откроет страницу доната, а донат сам станет карточкой. Кнопка
-          видна, только пока подключён DonationAlerts. Оставь поле пустым, и кнопки не будет.
+          видна, только пока подключён DonationAlerts.
         </span>
-        <div className={styles.buttons}>
-          <input
-            id="donation-url"
-            className={styles.input}
-            type="url"
-            autoComplete="off"
-            placeholder="https://www.donationalerts.com/r/…"
-            value={donationUrl}
-            onChange={(event) => setDonationUrlDraft(event.target.value)}
-          />
-          <button
-            type="submit"
-            className={styles.primaryButton}
-            disabled={donationUrlDraft === null || donationUrlDraft === settings.donationUrl}
-          >
-            Сохранить
-          </button>
-        </div>
-      </form>
+
+        {/* Ссылка сохранена — показываем её и «Удалить». Нет — поле и «Добавить» */}
+        {settings.donationUrl ? (
+          <div className={styles.buttons}>
+            <a className={styles.savedLink} href={settings.donationUrl} target="_blank" rel="noreferrer">
+              {settings.donationUrl}
+            </a>
+            <button type="button" onClick={handleDonationUrlDelete}>
+              Удалить
+            </button>
+          </div>
+        ) : (
+          <form className={styles.buttons} onSubmit={handleDonationUrlSubmit}>
+            <input
+              aria-label="Ссылка на донат"
+              className={styles.input}
+              type="url"
+              autoComplete="off"
+              placeholder="https://www.donationalerts.com/r/…"
+              value={donationUrlDraft}
+              onChange={(event) => setDonationUrlDraft(event.target.value)}
+            />
+            <button type="submit" className={styles.primaryButton} disabled={donationUrlDraft.trim() === ''}>
+              Добавить
+            </button>
+          </form>
+        )}
+      </div>
     </section>
   )
 
   async function handleDonationUrlSubmit(event: FormEvent<HTMLFormElement>) {
     // Без этого браузер перезагрузит страницу, отправляя форму
     event.preventDefault()
-    if (donationUrlDraft === null) {
-      return
-    }
     const isSaved = await saveDonationUrl(donationUrlDraft.trim())
     // Не сохранилось — оставляем в поле то, что ввели, чтобы можно было исправить
     if (isSaved) {
-      setDonationUrlDraft(null)
+      setDonationUrlDraft('')
     }
+  }
+
+  // Пустая ссылка на бэкенде значит «ссылки нет»: кнопка «+» у зрителей пропадёт
+  function handleDonationUrlDelete() {
+    saveDonationUrl('')
   }
 }

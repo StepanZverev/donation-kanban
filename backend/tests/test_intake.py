@@ -4,7 +4,7 @@ from app.donations import Donation, add_donation_card
 
 from .helpers import default_board_id
 
-INTAKE_DEFAULTS = {"open": True, "min_amount": 0, "ignore_anonymous": False}
+INTAKE_DEFAULTS = {"open": True, "min_amount": 0, "ignore_anonymous": False, "rules": ""}
 
 
 def donate(donation_id: int, username: str = "Вася", amount: float = 100) -> None:
@@ -26,7 +26,21 @@ def test_default_intake_settings(client):
 
 def test_save_intake_settings(client):
     set_intake(client, open=False, min_amount=150, ignore_anonymous=True)
-    assert client.get("/api/settings/intake").json() == {"open": False, "min_amount": 150, "ignore_anonymous": True}
+    assert client.get("/api/settings/intake").json() == {
+        "open": False,
+        "min_amount": 150,
+        "ignore_anonymous": True,
+        "rules": "",
+    }
+
+
+def test_own_rules_are_saved_without_extra_spaces(client):
+    response = client.put("/api/settings/intake", json={**INTAKE_DEFAULTS, "rules": "  Ивент: только песни!\n "})
+    assert response.json()["rules"] == "Ивент: только песни!"
+    assert client.get("/api/settings/intake").json()["rules"] == "Ивент: только песни!"
+
+    # Слишком длинные правила не сохраняем
+    assert client.put("/api/settings/intake", json={**INTAKE_DEFAULTS, "rules": "а" * 501}).status_code == 422
 
 
 def test_min_amount_cannot_be_negative(client):

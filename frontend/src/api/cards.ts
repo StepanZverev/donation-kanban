@@ -22,6 +22,7 @@ export type CardFromApi = {
   archived_at: string | null
   archive_reason: Card['archiveReason']
   archive_note: string | null
+  archived_by: string | null
   merge_count: number
   merged_into_id: number | null
   last_donation_at?: string | null
@@ -46,6 +47,7 @@ export function toCard(card: CardFromApi): Card {
     archivedAt: card.archived_at,
     archiveReason: card.archive_reason,
     archiveNote: card.archive_note,
+    archivedBy: card.archived_by,
     mergeCount: card.merge_count,
     mergedIntoId: card.merged_into_id,
     lastDonationAt: card.last_donation_at ?? null,

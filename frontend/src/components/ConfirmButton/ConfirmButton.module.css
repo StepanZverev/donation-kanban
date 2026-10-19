@@ -1,13 +1,7 @@
-/* relative — чтобы окошко встало прямо под кнопкой */
-.wrapper {
-  position: relative;
-}
-
-/* Маленькое окошко под кнопкой, прижато к её правому краю */
+/* Маленькое окошко у кнопки. Где именно встать, считает ConfirmButton.tsx (top/bottom и right):
+   fixed — окошко поверх всей страницы, и прокручиваемый блок его не обрезает */
 .popover {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
+  position: fixed;
   z-index: 10;
   width: 240px;
   display: flex;

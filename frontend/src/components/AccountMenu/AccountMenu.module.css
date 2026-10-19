@@ -3,12 +3,13 @@
   position: relative;
 }
 
-/* Кнопка в шапке: аватар и имя */
+/* Кнопка в шапке: аватар, имя и (на своей доске) индикатор */
 .button {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 3px 12px 3px 3px;
+  line-height: 1;
   border: 1px solid var(--color-border);
   border-radius: 999px;
   background-color: transparent;
@@ -36,11 +37,24 @@
   font-weight: 700;
 }
 
-/* Длинное имя обрезаем многоточием */
+/* Длинное имя обрезаем многоточием.
+   Отступы сверху и снизу — чтобы хвосты букв не обрезались при line-height: 1 */
 .name {
-  max-width: 140px;
+  max-width: 240px;
+  padding: 2px 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* «Модератор:» перед именем — серым, чтобы имя читалось первым */
+.namePrefix {
+  color: var(--color-text-secondary);
+}
+
+/* Индикатор чуть дальше от имени, чем аватар */
+.indicator {
+  display: flex;
+  margin-left: 2px;
 }
 
 /* На узком экране остаётся только аватар */
@@ -60,7 +74,7 @@
   top: calc(100% + 6px);
   right: 0;
   z-index: 10;
-  width: 280px;
+  width: 300px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -70,6 +84,19 @@
   border-radius: 10px;
   background-color: var(--color-surface);
   box-shadow: 0 8px 24px var(--color-shadow);
+}
+
+/* Верх меню: аватар, имя и как вошёл */
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.whoText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .heading {
@@ -105,7 +132,7 @@
   align-self: stretch;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   padding-top: 10px;
   border-top: 1px solid var(--color-border);
 }
@@ -113,10 +140,42 @@
 .boardLink {
   padding: 4px 0;
   font-size: 13px;
-  color: var(--color-accent);
+  color: var(--color-text);
   text-decoration: none;
+}
+
+/* Открытая сейчас доска — фиолетовым */
+.currentBoard {
+  color: var(--color-accent);
+  font-weight: 600;
 }
 
 .boardLink:hover {
   text-decoration: underline;
+}
+
+/* Низ меню под разделителем: «Выйти» слева, версия справа */
+.footer {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* «Версия 0.8.0 · что нового» — мелкая ссылка, прижата вправо */
+.versionButton {
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.versionButton:hover {
+  color: var(--color-accent);
 }

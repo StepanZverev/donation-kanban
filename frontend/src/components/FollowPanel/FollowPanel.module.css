@@ -1,0 +1,194 @@
+/* Плашка «Ты следишь за …». Справа сверху — «Не следить». */
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 120px 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-accent) 14%, var(--color-surface)),
+    var(--color-surface)
+  );
+  --panel-color: var(--color-accent);
+}
+
+/* Карточку уже делают или сделали — зелёная */
+.work {
+  border-color: color-mix(in srgb, var(--color-success) 50%, var(--color-border));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-success) 14%, var(--color-surface)),
+    var(--color-surface)
+  );
+  --panel-color: var(--color-success);
+}
+
+/* Карточки нет — спокойная, с пунктиром */
+.none {
+  border-style: dashed;
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  --panel-color: var(--color-text-secondary);
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--panel-color);
+  overflow-wrap: anywhere;
+}
+
+.label svg {
+  flex-shrink: 0;
+}
+
+.unfollow {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.unfollow:hover {
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.main {
+  margin: 4px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.number {
+  font-family: var(--font-numbers);
+}
+
+.sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.sub b {
+  color: var(--color-text);
+}
+
+/* «Показать на доске» — выглядит как ссылка */
+.showCard {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-accent);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.places {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.place {
+  padding: 3px 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-numbers);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.bestPlace {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.morePlaces {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Пузырь «До 1-го места +701 ₽» */
+.toTop {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background-color: var(--color-surface);
+  font-size: 12px;
+}
+
+.toTop b {
+  font-family: var(--font-numbers);
+  white-space: nowrap;
+}
+
+.toTopHint {
+  color: var(--color-text-secondary);
+}
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.note svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-top: 1px;
+}
+
+@media (max-width: 700px) {
+  .panel {
+    padding-right: 14px;
+  }
+
+  /* «Не следить» остаётся в углу, подпись сверху уступает ему место */
+  .label {
+    padding-right: 100px;
+  }
+
+  .toTop {
+    border-radius: 10px;
+  }
+
+  .toTopHint {
+    flex-basis: 100%;
+  }
+}

@@ -1,0 +1,149 @@
+/* Цветная точка статуса DonationAlerts: у ника на кнопке и в строке меню.
+   Цвет — по тому, что делает DA (классы ниже называются как статусы) */
+.dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--color-text-secondary);
+}
+
+.listening {
+  background-color: var(--color-success);
+  box-shadow: 0 0 0 3px var(--color-success-background);
+}
+
+.connecting {
+  background-color: var(--color-warning);
+  animation: blink 1.2s ease-in-out infinite;
+}
+
+.error {
+  background-color: var(--color-error);
+  animation: blink 1.2s ease-in-out infinite;
+}
+
+/* Мигание: «подключаюсь» и «нет связи» — состояния, которые должны сами пройти */
+@keyframes blink {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* Приём закрыт — вместо точки значок паузы: две жёлтые палочки близко друг к другу */
+.pause {
+  flex-shrink: 0;
+  display: flex;
+  gap: 2px;
+  height: 10px;
+}
+
+.pause::before,
+.pause::after {
+  content: '';
+  width: 3px;
+  border-radius: 1px;
+  background-color: var(--color-warning);
+}
+
+/* Часть выпадашки со статусом DonationAlerts и приёмом */
+.section {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Строка: значок слева, название с подписью, кнопка справа */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 32px;
+}
+
+.rowText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  text-align: left;
+}
+
+.rowNote {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.description {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+/* «Подключить» — ссылка, которая выглядит как главная кнопка */
+.connectButton {
+  padding: 4px 12px;
+  border-radius: 6px;
+  background-color: var(--color-accent);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Строка «Приём открыт» целиком — кнопка-переключатель */
+.intakeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 -6px;
+  padding: 6px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+}
+
+.intakeRow:hover {
+  background-color: var(--color-column);
+}
+
+/* Приём закрыт — надпись красная, чтобы не забыть открыть */
+.closed > .rowText {
+  color: var(--color-error);
+}
+
+/* Дорожка переключателя с кружком. Включено — кружок справа на зелёном */
+.track {
+  position: relative;
+  flex-shrink: 0;
+  width: 30px;
+  height: 18px;
+  border-radius: 999px;
+  background-color: var(--color-success);
+  transition: background-color 0.15s;
+}
+
+.track::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  transform: translateX(12px);
+  transition: transform 0.15s;
+}
+
+.closed .track {
+  background-color: var(--color-text-secondary);
+}
+
+.closed .track::before {
+  transform: none;
+}

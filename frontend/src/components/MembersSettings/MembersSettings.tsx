@@ -30,8 +30,7 @@ export function MembersSettings() {
       <LinkSetting
         label="Ссылка-приглашение"
         url={inviteUrl}
-        description="Отправь её модератору лично: любой, кто откроет ссылку, сможет стать модератором. Ссылка скрыта, чтобы случайно не показать её на стриме, но скопировать можно и так. Новая ссылка заменит эту, а модераторы останутся."
-        emptyDescription="Ссылки нет: позвать модератора нельзя."
+        description="Отправь её модератору лично: любой, кто откроет ссылку, сможет стать модератором."
         isSecret
         newLinkQuestion="Старая ссылка перестанет работать. Те, кто уже стал модератором, останутся."
         deleteQuestion="Ссылка перестанет работать, и все модераторы потеряют доступ к доске."
@@ -39,26 +38,28 @@ export function MembersSettings() {
         onDelete={deleteInviteLink}
       />
 
-      <div className={styles.field}>
-        <span className={styles.label}>Кто модератор</span>
-        {members.length === 0 && <span className={styles.description}>Пока никого.</span>}
-        {members.map((member) => (
-          <div key={member.userId} className={styles.member}>
-            <span className={styles.memberName}>
-              {getMemberTitle(member)}
-              <span className={styles.memberNote}> · {getMemberNote(member)}</span>
-            </span>
-            <ConfirmButton
-              title="Убрать модератора"
-              question="Доска пропадёт у него из списка. Позвать обратно можно новой ссылкой."
-              confirmLabel="Убрать"
-              onConfirm={() => removeMember(member.userId)}
-            >
-              Убрать
-            </ConfirmButton>
-          </div>
-        ))}
-      </div>
+      {/* Список появляется, когда по ссылке пришёл первый модератор */}
+      {members.length > 0 && (
+        <div className={styles.field}>
+          <span className={styles.label}>Модераторы</span>
+          {members.map((member) => (
+            <div key={member.userId} className={styles.member}>
+              <span className={styles.memberName}>
+                {getMemberTitle(member)}
+                <span className={styles.memberNote}> · {getMemberNote(member)}</span>
+              </span>
+              <ConfirmButton
+                title="Убрать модератора"
+                question="Доска пропадёт у него из списка. Позвать обратно можно новой ссылкой."
+                confirmLabel="Убрать"
+                onConfirm={() => removeMember(member.userId)}
+              >
+                Убрать
+              </ConfirmButton>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   )
 }

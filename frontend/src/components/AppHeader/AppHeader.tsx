@@ -1,13 +1,14 @@
 import { useBoard } from '../../hooks/useBoard'
-import { AccountMenu } from '../AccountMenu/AccountMenu'
-import { DonationAlertsStatus } from '../DonationAlertsStatus/DonationAlertsStatus'
-import { IntakeToggle } from '../IntakeToggle/IntakeToggle'
+import { useCurrentUser } from '../../hooks/useCurrentUser'
+import { ModeratorAccountMenu } from '../ModeratorAccountMenu/ModeratorAccountMenu'
 import { Navigation } from '../Navigation/Navigation'
+import { StreamerAccountMenu } from '../StreamerAccountMenu/StreamerAccountMenu'
 import { StreamTotal } from '../StreamTotal/StreamTotal'
 import styles from './AppHeader.module.css'
 
-// Шапка приложения в одну строку: логотип, вкладки, справа сумма за стрим,
-// капсула со статусом DonationAlerts и переключателем приёма заказов и кто вошёл.
+// Шапка приложения в одну строку: логотип, вкладки, справа сумма за стрим и меню аккаунта.
+// Меню аккаунта своё у хозяина доски (StreamerAccountMenu: статус DonationAlerts и приём)
+// и у модератора (ModeratorAccountMenu: «Модератор: имя» и меч).
 type AppHeaderProps = {
   // Точки «есть новое» у вкладок (см. useNewDonations)
   hasNewOnBoard: boolean
@@ -17,6 +18,7 @@ type AppHeaderProps = {
 export function AppHeader(props: AppHeaderProps) {
   const { hasNewOnBoard, hasNewInHistory } = props
   const board = useBoard()
+  const { user, logout } = useCurrentUser()
 
   return (
     // full-width: фон шапки тянется на всю ширину окна, а содержимое стоит в рабочей области
@@ -38,19 +40,13 @@ export function AppHeader(props: AppHeaderProps) {
 
         <div className={styles.right}>
           <StreamTotal />
-          {board.role === 'owner' ? (
-            // Статус DonationAlerts и переключатель приёма — одна капсула с разделителем:
-            // оба про то, доходят ли донаты до доски. Это дело хозяина доски.
-            <div className={styles.capsule}>
-              <DonationAlertsStatus />
-              <IntakeToggle />
-            </div>
-          ) : (
-            <span className={styles.moderatorBadge}>
-              Модератор · доска {board.ownerName ?? 'стримера'}
-            </span>
-          )}
-          <AccountMenu />
+          {/* Пока не знаем, кто вошёл (или бэкенд не отвечает), меню не показываем */}
+          {user !== null &&
+            (board.role === 'owner' ? (
+              <StreamerAccountMenu user={user} onLogout={logout} />
+            ) : (
+              <ModeratorAccountMenu user={user} onLogout={logout} />
+            ))}
         </div>
       </div>
     </header>

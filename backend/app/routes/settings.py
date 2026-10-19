@@ -100,7 +100,7 @@ def get_intake(
     db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> IntakeSettings:
-    """Приём донатов: открыт ли, минимальная сумма, игнорировать ли анонимов."""
+    """Приём донатов: открыт ли, минимальная сумма, игнорировать ли анонимов, свои правила."""
     return get_intake_settings(db, board_id)
 
 
@@ -117,4 +117,5 @@ def save_intake(
     save_intake_settings(db, board_id, data)
     # Шапка и настройки в других вкладках увидят, что приём закрыли или открыли
     notify_board_changed(db, board_id)
-    return data
+    # Отдаём то, что сохранилось: правила там уже без пробелов по краям
+    return get_intake_settings(db, board_id)

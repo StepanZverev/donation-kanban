@@ -183,11 +183,44 @@
   color: var(--color-text-secondary);
 }
 
+/* Ник с текстом и (если есть) метка модератора справа */
 .what {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--color-text-secondary);
+}
+
+/* Метка «⚔ Петя с чата»: карточку в историю убрал модератор */
+.moderator {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  max-width: 180px;
+  padding: 1px 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: var(--color-accent-light);
+  color: var(--color-accent);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.moderator svg {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
 }
 
 .who {

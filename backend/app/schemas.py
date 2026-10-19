@@ -75,6 +75,9 @@ class IntakeSettings(BaseModel):
     min_amount: float = Field(ge=0)
     # Донаты без ника на доску не попадают
     ignore_anonymous: bool
+    # Свои правила доната текстом (например, на ивент). Зритель видит их в «Как заказать».
+    # Пустая строка — правил нет.
+    rules: str = Field(default="", max_length=500)
 
 
 class CardCreate(BaseModel):
@@ -166,6 +169,8 @@ class Card(BaseModel):
     # Пояснение к пометке: у «Отклонено» — причина отказа (её пишет стример или
     # ставят настройки приёма, см. intake.py). Пусто, если пояснения нет.
     archive_note: str | None
+    # Имя модератора, который убрал карточку в историю. Пусто — убрал сам стример.
+    archived_by: str | None = None
     merge_count: int
     merged_into_id: int | None
     # Когда пришёл последний донат карточки: у объединённой — самый свежий из слитых.
@@ -247,17 +252,30 @@ class PublicCard(BaseModel):
 class PublicBoard(BaseModel):
     """Всё, что нужно странице для зрителей."""
 
-    # Имя стримера из DonationAlerts. None — гость, имени нет.
+    # Имя и аватарка стримера из DonationAlerts. None — гость, имени и аватарки нет.
     streamer_name: str | None
+    streamer_avatar_url: str | None
+    # Открыта ли у стримера его доска прямо сейчас («Стример на месте»)
+    streamer_online: bool
+    # Когда стример последний раз заходил на сайт — для «был 2 ч назад»
+    streamer_last_seen_at: str
     columns: list[BoardColumn]
     cards: list[PublicCard]
     priority_levels: list[PriorityLevel]
     # Пустая строка — стример не указал ссылку на донат
     donation_url: str
+    # Правила приёма — их зритель видит в блоке «Как заказать».
     # Принимает ли стример заказы прямо сейчас
     intake_open: bool
-    # Подключён ли у стримера DonationAlerts. Без него донат не станет карточкой,
-    # поэтому кнопку «+» зрителям не показываем.
+    # Минимальная сумма доната для карточки. 0 — без минимума.
+    min_amount: float
+    # Донаты без ника на доску не попадают
+    ignore_anonymous: bool
+    # Несколько донатов одного зрителя складываются в одну карточку
+    auto_merge: bool
+    # Свои правила доната от стримера. Пустая строка — правил нет.
+    rules: str
+    # Подключён ли у стримера DonationAlerts: без него донат не станет карточкой
     donations_connected: bool
 
 
@@ -268,6 +286,8 @@ class BoardInfo(BaseModel):
     # Имя хозяина доски из DonationAlerts. None — хозяин гость, имени нет.
     owner_name: str | None
     role: Literal["owner", "moderator"]
+    # Как модератор представился на этой доске. None — у хозяина или если не представился.
+    my_nickname: str | None = None
 
 
 class BoardMember(BaseModel):
@@ -286,6 +306,12 @@ class AcceptInvite(BaseModel):
     """Что модератор пишет, принимая приглашение."""
 
     # Как к нему обращаться: стример увидит это имя в списке модераторов
+    nickname: str | None = Field(default=None, max_length=40)
+
+
+class MemberNickname(BaseModel):
+    """Новое имя модератора на доске. Пустое — стример снова увидит имя из DonationAlerts или «Гость»."""
+
     nickname: str | None = Field(default=None, max_length=40)
 
 

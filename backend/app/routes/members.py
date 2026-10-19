@@ -18,10 +18,10 @@ import secrets
 import anyio.to_thread
 from fastapi import APIRouter, Depends, HTTPException, WebSocket
 
-from ..board import MODERATOR, get_board_id, get_board_role, get_owned_board_id
+from ..board import MODERATOR, OWNER, get_board_id, get_board_role, get_owned_board_id
 from ..db import Connection, Row, delete_board_setting, get_board_setting, get_db, now, open_db, set_board_setting
 from ..realtime import notify_board_changed, send_updates_until_closed
-from ..schemas import AcceptInvite, BoardInfo, BoardMember, Invite, InviteSettings
+from ..schemas import AcceptInvite, BoardInfo, BoardMember, Invite, InviteSettings, MemberNickname
 from ..users import SESSION_COOKIE, find_session_user, get_current_user
 
 router = APIRouter(prefix="/api/boards/{board_id}", tags=["Доска и модераторы"])
@@ -42,10 +42,15 @@ def get_owner_name(db: Connection, board_id: int) -> str | None:
 
 def get_board_info(db: Connection, board_id: int, user_id: int) -> BoardInfo:
     """Доска глазами пользователя, у которого к ней есть доступ."""
+    # Как он представился на этой доске (строка есть только у модераторов)
+    member = db.execute(
+        "SELECT nickname FROM board_members WHERE board_id = %s AND user_id = %s", (board_id, user_id)
+    ).fetchone()
     return BoardInfo(
         id=board_id,
         owner_name=get_owner_name(db, board_id),
         role=get_board_role(db, board_id, user_id),
+        my_nickname=member["nickname"] if member else None,
     )
 
 
@@ -106,6 +111,30 @@ def list_members(
     ]
 
 
+@router.put("/members/me")
+def change_my_nickname(
+    body: MemberNickname,
+    board_id: int = Depends(get_board_id),
+    user: Row = Depends(get_current_user),
+    db: Connection = Depends(get_db),
+) -> BoardInfo:
+    """
+    Модератор меняет, как его называть на этой доске. Стример увидит новое имя в списке модераторов.
+    У хозяина доски такого имени нет: его зовут по имени из DonationAlerts.
+    """
+    if get_board_role(db, board_id, user["id"]) != MODERATOR:
+        raise HTTPException(status_code=403, detail="Имя на доске есть только у модератора")
+    # Пустое имя или одни пробелы — как будто не представился
+    nickname = body.nickname.strip() if body.nickname else None
+    db.execute(
+        "UPDATE board_members SET nickname = %s WHERE board_id = %s AND user_id = %s",
+        (nickname or None, board_id, user["id"]),
+    )
+    # Хозяин в настройках сразу увидит новое имя
+    notify_board_changed(db, board_id)
+    return get_board_info(db, board_id, user["id"])
+
+
 @router.delete("/members/{user_id}", status_code=204)
 def remove_member(
     user_id: int,
@@ -163,19 +192,25 @@ async def board_updates_socket(websocket: WebSocket, board_id: int) -> None:
     # Работа с базой может подождать, пока другой запрос допишет свои изменения.
     # Ждём в отдельном потоке: иначе сервер замрёт и тот запрос не сможет закончиться.
     session_token = websocket.cookies.get(SESSION_COOKIE)
-    has_access = await anyio.to_thread.run_sync(can_open_board, session_token, board_id)
-    if not has_access:
+    member = await anyio.to_thread.run_sync(find_board_member, session_token, board_id)
+    if member is None:
         # 1008 — стандартный код «нарушены правила»: здесь — нет доступа
         await websocket.close(code=1008)
         return
 
-    await send_updates_until_closed(websocket, board_id)
+    user_id, role = member
+    # Хозяина отмечаем, чтобы зрители видели, на месте ли стример. Модераторы не в счёт.
+    await send_updates_until_closed(websocket, board_id, owner_id=user_id if role == OWNER else None)
 
 
-def can_open_board(session_token: str | None, board_id: int) -> bool:
+def find_board_member(session_token: str | None, board_id: int) -> tuple[int, str] | None:
+    """Кто открыл доску: (id пользователя, роль). None — нет сессии или доступа к доске."""
     with open_db() as db:
         user = find_session_user(db, session_token)
-        return user is not None and get_board_role(db, board_id, user["id"]) is not None
+        if user is None:
+            return None
+        role = get_board_role(db, board_id, user["id"])
+        return (user["id"], role) if role is not None else None
 
 
 @invites_router.get("/{token}")

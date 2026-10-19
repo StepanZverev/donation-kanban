@@ -5,7 +5,8 @@
 - закрыть приём заказов (например, в конце стрима) — донаты всё равно приходят,
   но не попадают на доску;
 - задать минимальную сумму для карточки — донаты меньше неё на доску не попадают;
-- игнорировать анонимные донаты (без ника).
+- игнорировать анонимные донаты (без ника);
+- написать свои правила доната текстом — их видят зрители, на отсев они не влияют.
 
 Отсеянный донат не теряется: он сразу лежит в истории с пометкой «Отклонено»,
 а причиной (archive_note) стоит, почему его отсеяли. Оттуда его можно вернуть на доску.
@@ -18,6 +19,7 @@ from .schemas import IntakeSettings
 INTAKE_OPEN_KEY = "intake_open"
 MIN_AMOUNT_KEY = "min_amount"
 IGNORE_ANONYMOUS_KEY = "ignore_anonymous"
+RULES_KEY = "donation_rules"
 
 # Причины отказа у отсеянных донатов — так их и видно в истории
 CLOSED_NOTE = "Приём был закрыт"
@@ -31,6 +33,7 @@ def get_intake_settings(db: Connection, board_id: int) -> IntakeSettings:
         open=get_board_setting(db, board_id, INTAKE_OPEN_KEY) != "0",
         min_amount=float(get_board_setting(db, board_id, MIN_AMOUNT_KEY) or 0),
         ignore_anonymous=get_board_setting(db, board_id, IGNORE_ANONYMOUS_KEY) == "1",
+        rules=get_board_setting(db, board_id, RULES_KEY) or "",
     )
 
 
@@ -38,6 +41,8 @@ def save_intake_settings(db: Connection, board_id: int, settings: IntakeSettings
     set_board_setting(db, board_id, INTAKE_OPEN_KEY, "1" if settings.open else "0")
     set_board_setting(db, board_id, MIN_AMOUNT_KEY, str(settings.min_amount))
     set_board_setting(db, board_id, IGNORE_ANONYMOUS_KEY, "1" if settings.ignore_anonymous else "0")
+    # Пробелы и пустые строки по краям не нужны: «   » — это тоже «правил нет»
+    set_board_setting(db, board_id, RULES_KEY, settings.rules.strip())
 
 
 def filter_reason(

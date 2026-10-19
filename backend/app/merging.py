@@ -79,9 +79,16 @@ def find_auto_merge_target(db: Connection, board_id: int, card: Card) -> Card | 
     return None
 
 
-def merge_cards(db: Connection, board_id: int, target: Card, card_ids: list[int]) -> Card:
+def merge_cards(
+    db: Connection,
+    board_id: int,
+    target: Card,
+    card_ids: list[int],
+    archived_by: str | None = None,
+) -> Card:
     """
     Сливает карточки card_ids в target. Все они должны быть на доске и от того же донатера.
+    archived_by — имя модератора, если объединяет он (автообъединение доната — None).
     Возвращает target после слияния.
     """
     cards = [get_card(db, board_id, card_id) for card_id in card_ids]
@@ -94,11 +101,11 @@ def merge_cards(db: Connection, board_id: int, target: Card, card_ids: list[int]
 
     # Сливаем от старых к новым, чтобы тексты шли по порядку
     for card in sorted(cards, key=lambda card: (card.created_at, card.id)):
-        merge_one(db, get_card(db, board_id, target.id), card)
+        merge_one(db, get_card(db, board_id, target.id), card, archived_by)
     return get_card(db, board_id, target.id)
 
 
-def merge_one(db: Connection, target: Card, card: Card) -> None:
+def merge_one(db: Connection, target: Card, card: Card, archived_by: str | None) -> None:
     """Сливает одну карточку card в target."""
     # Сумма. Валюта та же — просто складываем. Разные — переходим на валюту стримера.
     if target.currency == card.currency:
@@ -125,7 +132,7 @@ def merge_one(db: Connection, target: Card, card: Card) -> None:
 
     # Слитая карточка уходит в историю со ссылкой на основную — ничего не теряется.
     # Колонку она запоминает: «Разъединить» вернёт её туда же.
-    archive_card(db, card.id, "merged")
+    archive_card(db, card.id, "merged", archived_by=archived_by)
     db.execute("UPDATE cards SET merged_into_id = %s WHERE id = %s", (target.id, card.id))
 
 

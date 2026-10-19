@@ -22,13 +22,13 @@
   color: var(--color-error);
 }
 
-/* Блок настройки: название, пояснение, под ними поле и кнопки */
+/* Блок настройки: название, пояснение, под ними поле и кнопки.
+   Блоки отделены друг от друга только отступом, без линий */
 .field {
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 12px 0;
-  border-bottom: 1px solid var(--color-border);
 }
 
 .label {
@@ -71,3 +71,14 @@
   white-space: nowrap;
 }
 
+
+/* Сохранённая ссылка на донат — обычной ссылкой, длинную обрезаем многоточием */
+.savedLink {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  color: var(--color-accent);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
