@@ -26,10 +26,10 @@ const listenerDescriptions: Record<ListenerStatus, string | null> = {
 // Меню аккаунта на своей доске. К обычному меню добавляется то, что нужно только хозяину:
 // индикатор у ника (доходят ли донаты) и в выпадашке статус DonationAlerts и переключатель приёма.
 //
-// Индикатор у ника:
-//   приём закрыт — красная пауза (донаты не попадают на доску, что бы ни делал DA);
-//   иначе точка DonationAlerts: зелёная — слушаю донаты, жёлтая — подключаюсь,
-//   красная — нет связи, серая — не подключён.
+// Индикатор у ника, по порядку важности:
+//   DonationAlerts не подключён — серая точка, открыт приём или нет (донатам всё равно неоткуда взяться);
+//   приём закрыт — жёлтая пауза (это не ошибка, а предупреждение: донаты уходят в историю);
+//   иначе точка DonationAlerts: зелёная — слушаю донаты, жёлтая — подключаюсь, красная — нет связи.
 export function StreamerAccountMenu() {
   const { status, disconnect } = useDonationAlertsStatus()
   const { settings, changeIntake } = useIntakeSettings()
@@ -42,8 +42,9 @@ export function StreamerAccountMenu() {
   const listener = status.listener
   const isIntakeOpen = settings.isOpen
   const description = listenerDescriptions[listener]
+  const isDonationAlertsOff = listener === 'not_configured' || listener === 'not_connected'
 
-  const indicator = isIntakeOpen ? (
+  const indicator = isDonationAlertsOff || isIntakeOpen ? (
     <span
       className={`${styles.dot} ${styles[listener]}`}
       title={`DonationAlerts: ${listenerLabels[listener].toLowerCase()}`}
