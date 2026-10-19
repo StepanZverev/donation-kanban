@@ -71,3 +71,14 @@
   white-space: nowrap;
 }
 
+
+/* Сохранённая ссылка на донат — обычной ссылкой, длинную обрезаем многоточием */
+.savedLink {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  color: var(--color-accent);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
