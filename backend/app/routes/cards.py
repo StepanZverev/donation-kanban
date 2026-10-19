@@ -5,7 +5,6 @@
 (@router.get, @router.post …) говорит, какой HTTP-метод и путь она обслуживает.
 """
 
-import sqlite3
 
 from fastapi import APIRouter, Depends
 
@@ -17,7 +16,7 @@ from ..board import (
     get_column,
     get_column_id_by_kind,
 )
-from ..db import get_db, now
+from ..db import Connection, get_db, now
 from ..donations import split_message
 from ..merging import STREAMER_CURRENCY, merge_cards, split_cards
 from ..realtime import notify_board_changed
@@ -37,7 +36,7 @@ router = APIRouter(prefix="/api/boards/{board_id}/cards", tags=["Карточк�
 
 @router.get("")
 def list_cards(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> list[Card]:
     """Все карточки на доске (без истории) в том порядке, в каком их показывать."""
@@ -46,7 +45,7 @@ def list_cards(
 
 @router.get("/latest-donations")
 def latest_donations(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> LatestDonations:
     """
@@ -61,7 +60,7 @@ def latest_donations(
         FROM (
             SELECT created_at, archive_reason = 'rejected' AND archived_at = created_at AS is_filtered
             FROM cards
-            WHERE board_id = ? AND source = 'donationalerts'
+            WHERE board_id = %s AND source = 'donationalerts'
         )
         """,
         (board_id,),
@@ -72,7 +71,7 @@ def latest_donations(
 @router.post("", status_code=201)
 def create_card(
     data: CardCreate,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> Card:
     """Создаёт карточку вручную. Если колонку не указали — в «Очередь»."""
@@ -88,13 +87,14 @@ def create_card(
     timestamp = now()
     # Сумму ручной карточки стример пишет в своей валюте
     currency = STREAMER_CURRENCY if data.amount is not None else None
-    cursor = db.execute(
+    card = db.execute(
         """
         INSERT INTO cards (
             board_id, title, description, column_id, source, donor_name, amount, currency, streamer_amount,
             created_at, updated_at, moved_at
         )
-        VALUES (?, ?, ?, ?, 'manual', ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, 'manual', %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
         """,
         (
             board_id,
@@ -109,14 +109,14 @@ def create_card(
             timestamp,
             timestamp,
         ),
-    )
+    ).fetchone()
     notify_board_changed(db, board_id)
-    return get_card(db, board_id, cursor.lastrowid)
+    return get_card(db, board_id, card["id"])
 
 
 @router.post("/clear-done")
 def clear_done(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> dict[str, int]:
     """Веник у «Выполнено»: все карточки оттуда уходят в историю как выполненные."""
@@ -125,18 +125,18 @@ def clear_done(
 
 @router.post("/clear-queue")
 def clear_queue(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> dict[str, int]:
     """Веник у «Очереди»: все карточки оттуда уходят в историю как удалённые."""
     return {"cleared": clear_column(db, board_id, "incoming", "deleted")}
 
 
-def clear_column(db: sqlite3.Connection, board_id: int, kind: str, reason: str) -> int:
+def clear_column(db: Connection, board_id: int, kind: str, reason: str) -> int:
     """Убирает в историю все карточки колонки вида kind с пометкой reason. Возвращает, сколько убрали."""
     column_id = get_column_id_by_kind(db, board_id, kind)
     rows = db.execute(
-        "SELECT id FROM cards WHERE column_id = ? AND archived_at IS NULL", (column_id,)
+        "SELECT id FROM cards WHERE column_id = %s AND archived_at IS NULL", (column_id,)
     ).fetchall()
     for row in rows:
         archive_card(db, row["id"], reason)
@@ -149,7 +149,7 @@ def clear_column(db: sqlite3.Connection, board_id: int, kind: str, reason: str) 
 def update_card(
     card_id: int,
     data: CardUpdate,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> Card:
     """Редактирует ник, текст и сумму. Что не прислали, не меняется."""
@@ -171,9 +171,9 @@ def update_card(
     db.execute(
         """
         UPDATE cards
-        SET title = ?, description = ?, donor_name = ?,
-            amount = ?, currency = ?, streamer_amount = ?, updated_at = ?
-        WHERE id = ?
+        SET title = %s, description = %s, donor_name = %s,
+            amount = %s, currency = %s, streamer_amount = %s, updated_at = %s
+        WHERE id = %s
         """,
         (
             title,
@@ -218,7 +218,7 @@ def new_amount_fields(card: Card, amount: float | None) -> tuple[float | None, s
 def move_card(
     card_id: int,
     data: CardMove,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> Card:
     """
@@ -230,7 +230,7 @@ def move_card(
 
     timestamp = now()
     db.execute(
-        "UPDATE cards SET column_id = ?, moved_at = ?, updated_at = ? WHERE id = ?",
+        "UPDATE cards SET column_id = %s, moved_at = %s, updated_at = %s WHERE id = %s",
         (column.id, timestamp, timestamp, card_id),
     )
     notify_board_changed(db, board_id)
@@ -241,7 +241,7 @@ def move_card(
 def archive(
     card_id: int,
     data: CardArchive,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> Card:
     """
@@ -262,7 +262,7 @@ def archive(
 def merge(
     card_id: int,
     data: CardMerge,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> Card:
     """
@@ -279,7 +279,7 @@ def merge(
 def unmerge(
     card_id: int,
     data: CardUnmerge,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> list[Card]:
     """
@@ -296,7 +296,7 @@ def unmerge(
 @router.delete("/{card_id}")
 def remove_card(
     card_id: int,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> Card:
     """

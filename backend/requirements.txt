@@ -6,3 +6,5 @@ httpx2==2.13.1
 websockets==17.2
 # Чтение ключей из файла .env
 python-dotenv==1.2.4
+# Драйвер PostgreSQL: через него Python говорит с базой данных
+psycopg[binary]==3.3.6

@@ -78,7 +78,7 @@ def add_connection(client_, last_donation_id: int) -> int:
     user_id = client_.get("/api/me").json()["id"]
     listener.save_connection(user_id, {"access_token": "access-1", "refresh_token": "refresh-1"})
     with open_db() as db:
-        db.execute("UPDATE da_connections SET last_donation_id = ?", (last_donation_id,))
+        db.execute("UPDATE da_connections SET last_donation_id = %s", (last_donation_id,))
     return user_id
 
 

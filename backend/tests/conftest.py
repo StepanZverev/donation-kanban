@@ -1,18 +1,46 @@
 import json
+import os
 
 import httpx2
 import pytest
 
 from app import config
+from app.db import connect
 from app.donationalerts import client as da_client
 
 from .helpers import BoardClient
 
+# Тесты работают с отдельной базой, чтобы не трогать настоящую. В docker-compose.yml
+# она создаётся рядом с основной. Другой адрес можно задать переменной TEST_DATABASE_URL.
+TEST_DATABASE_URL = os.environ.get(
+    "TEST_DATABASE_URL", "postgresql://donation_kanban:donation_kanban@localhost:5432/donation_kanban_test"
+)
+
+
+@pytest.fixture(autouse=True)
+def empty_database(monkeypatch):
+    """
+    Перед каждым тестом база пустая: таблицы на месте (их создают миграции),
+    а строк в них нет. TRUNCATE быстро очищает таблицы, RESTART IDENTITY
+    начинает id заново с 1.
+    """
+    monkeypatch.setenv("DATABASE_URL", TEST_DATABASE_URL)
+    from app.db import init_db
+
+    init_db()
+    with connect() as db:
+        tables = [
+            row["tablename"]
+            for row in db.execute(
+                "SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename != 'schema_migrations'"
+            )
+        ]
+        db.execute(f"TRUNCATE {', '.join(tables)} RESTART IDENTITY CASCADE")
+
 
 @pytest.fixture
-def client(tmp_path, monkeypatch):
-    """Клиент для запросов к API. Каждый тест получает свою пустую базу во временной папке."""
-    monkeypatch.setenv("DATABASE_PATH", str(tmp_path / "test.db"))
+def client():
+    """Клиент для запросов к API. Каждый тест начинает с пустой базой (см. empty_database)."""
     from app.main import app
 
     with BoardClient(app) as test_client:

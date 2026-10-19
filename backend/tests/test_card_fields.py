@@ -1,4 +1,4 @@
-from app.db import connect, init_db
+from app.db import connect
 from app.donations import Donation, add_donation_card
 
 from .helpers import default_board_id
@@ -101,16 +101,3 @@ def test_donor_suggestions(client):
     assert client.get("/api/donors", params={"q": "ка"}).json() == ["Катя_стрим"]
     assert client.get("/api/donors", params={"q": "т"}).json() == ["Кот", "Катя_стрим"]
     assert client.get("/api/donors", params={"q": "ВАС"}).json() == ["вася"]
-
-
-def test_old_manual_card_title_and_description_are_joined(client):
-    card = client.post("/api/cards", json={"text": "Сыграть катку"}).json()
-    # Так ручная карточка лежала в базе, когда у неё были отдельные заголовок и описание
-    with connect() as db:
-        db.execute("UPDATE cards SET description = 'на пистолетах' WHERE id = ?", (card["id"],))
-
-    init_db()
-    init_db()  # второй запуск ничего не портит
-
-    [joined] = client.get("/api/cards").json()
-    assert (joined["title"], joined["description"]) == ("Сыграть катку\nна пистолетах", "")

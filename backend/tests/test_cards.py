@@ -1,6 +1,4 @@
-import sqlite3
-
-from app.db import connect, init_db
+from app.db import connect
 from app.donations import Donation, add_donation_card
 
 from .helpers import default_board_id
@@ -175,52 +173,6 @@ def test_delete_forever(client):
 def test_unknown_card_returns_404(client):
     assert client.patch("/api/cards/999", json={"text": "x"}).status_code == 404
     assert client.post("/api/history/999/restore").status_code == 404
-
-
-def test_old_database_is_migrated(tmp_path, monkeypatch):
-    """База из прошлой версии (со status и position) переделывается без потери карточек."""
-    path = tmp_path / "old.db"
-    monkeypatch.setenv("DATABASE_PATH", str(path))
-
-    old = sqlite3.connect(path)
-    old.executescript(
-        """
-        CREATE TABLE cards (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL,
-            description TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'queue',
-            position INTEGER NOT NULL DEFAULT 0, source TEXT NOT NULL DEFAULT 'manual',
-            donation_id INTEGER UNIQUE, donor_name TEXT, amount REAL, currency TEXT,
-            created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
-            archived_at TEXT, archive_reason TEXT
-        );
-        INSERT INTO cards (title, status, amount, created_at, updated_at) VALUES
-            ('В очереди', 'queue', 100, '2026-01-01', '2026-01-01'),
-            ('В работе', 'in_progress', NULL, '2026-01-01', '2026-01-01'),
-            ('Готово', 'done', NULL, '2026-01-01', '2026-01-02');
-        """
-    )
-    old.close()
-
-    init_db()
-    # Повторный запуск сервера ничего не ломает
-    init_db()
-
-    with connect() as db:
-        rows = db.execute(
-            """
-            SELECT cards.title, board_columns.kind, cards.streamer_amount, cards.moved_at
-            FROM cards JOIN board_columns ON board_columns.id = cards.column_id
-            ORDER BY cards.id
-            """
-        ).fetchall()
-        fields = [row["name"] for row in db.execute("PRAGMA table_info(cards)")]
-
-    assert [tuple(row) for row in rows] == [
-        ("В очереди", "incoming", 100, "2026-01-01"),
-        ("В работе", "work", None, "2026-01-01"),
-        ("Готово", "done", None, "2026-01-02"),
-    ]
-    assert "status" not in fields and "position" not in fields
 
 
 def test_restore_to_chosen_column(client):

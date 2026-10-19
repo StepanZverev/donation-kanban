@@ -11,9 +11,7 @@
 а причиной (archive_note) стоит, почему его отсеяли. Оттуда его можно вернуть на доску.
 """
 
-import sqlite3
-
-from .db import get_board_setting, set_board_setting
+from .db import Connection, get_board_setting, set_board_setting
 from .schemas import IntakeSettings
 
 # Ключи в таблице board_settings
@@ -27,7 +25,7 @@ BELOW_MIN_NOTE = "Меньше минимальной суммы"
 ANONYMOUS_NOTE = "Анонимный донат"
 
 
-def get_intake_settings(db: sqlite3.Connection, board_id: int) -> IntakeSettings:
+def get_intake_settings(db: Connection, board_id: int) -> IntakeSettings:
     """Настройки приёма. Пока стример ничего не менял: приём открыт, минимума нет, анонимов принимаем."""
     return IntakeSettings(
         open=get_board_setting(db, board_id, INTAKE_OPEN_KEY) != "0",
@@ -36,14 +34,14 @@ def get_intake_settings(db: sqlite3.Connection, board_id: int) -> IntakeSettings
     )
 
 
-def save_intake_settings(db: sqlite3.Connection, board_id: int, settings: IntakeSettings) -> None:
+def save_intake_settings(db: Connection, board_id: int, settings: IntakeSettings) -> None:
     set_board_setting(db, board_id, INTAKE_OPEN_KEY, "1" if settings.open else "0")
     set_board_setting(db, board_id, MIN_AMOUNT_KEY, str(settings.min_amount))
     set_board_setting(db, board_id, IGNORE_ANONYMOUS_KEY, "1" if settings.ignore_anonymous else "0")
 
 
 def filter_reason(
-    db: sqlite3.Connection,
+    db: Connection,
     board_id: int,
     donor_name: str,
     streamer_amount: float,

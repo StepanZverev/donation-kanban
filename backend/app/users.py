@@ -15,13 +15,12 @@
 
 import hashlib
 import secrets
-import sqlite3
 from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, Request, Response
 
 from . import config
-from .db import get_db, now
+from .db import Connection, Row, get_db, now
 
 # Имя cookie, в которой браузер хранит токен сессии
 SESSION_COOKIE = "session"
@@ -39,36 +38,37 @@ def hash_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def create_user(db: sqlite3.Connection) -> int:
+def create_user(db: Connection) -> int:
     """Создаёт нового пользователя-гостя и возвращает его id."""
     timestamp = now()
-    cursor = db.execute(
-        "INSERT INTO users (created_at, last_seen_at) VALUES (?, ?)",
+    # RETURNING id: база сразу отвечает, какой id получил новый пользователь
+    row = db.execute(
+        "INSERT INTO users (created_at, last_seen_at) VALUES (%s, %s) RETURNING id",
         (timestamp, timestamp),
-    )
-    return cursor.lastrowid
+    ).fetchone()
+    return row["id"]
 
 
-def get_user(db: sqlite3.Connection, user_id: int) -> sqlite3.Row:
-    return db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+def get_user(db: Connection, user_id: int) -> Row:
+    return db.execute("SELECT * FROM users WHERE id = %s", (user_id,)).fetchone()
 
 
-def update_profile(db: sqlite3.Connection, user_id: int, name: str | None, avatar_url: str | None) -> None:
-    db.execute("UPDATE users SET name = ?, avatar_url = ? WHERE id = ?", (name, avatar_url, user_id))
+def update_profile(db: Connection, user_id: int, name: str | None, avatar_url: str | None) -> None:
+    db.execute("UPDATE users SET name = %s, avatar_url = %s WHERE id = %s", (name, avatar_url, user_id))
 
 
-def create_session(db: sqlite3.Connection, user_id: int) -> str:
+def create_session(db: Connection, user_id: int) -> str:
     """Создаёт сессию и возвращает токен, который нужно положить в cookie."""
     token = secrets.token_urlsafe(32)
     expires_at = datetime.now(timezone.utc) + timedelta(days=SESSION_DAYS)
     db.execute(
-        "INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
+        "INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (%s, %s, %s, %s)",
         (hash_token(token), user_id, now(), expires_at.isoformat(timespec="seconds")),
     )
     return token
 
 
-def find_session_user(db: sqlite3.Connection, token: str | None) -> sqlite3.Row | None:
+def find_session_user(db: Connection, token: str | None) -> Row | None:
     """Пользователь по токену из cookie. None — если токена нет, он чужой или сессия истекла."""
     if not token:
         return None
@@ -76,35 +76,35 @@ def find_session_user(db: sqlite3.Connection, token: str | None) -> sqlite3.Row 
         """
         SELECT users.* FROM sessions
         JOIN users ON users.id = sessions.user_id
-        WHERE sessions.token_hash = ? AND sessions.expires_at > ?
+        WHERE sessions.token_hash = %s AND sessions.expires_at > %s
         """,
         (hash_token(token), now()),
     ).fetchone()
 
 
-def delete_session(db: sqlite3.Connection, token: str) -> None:
-    db.execute("DELETE FROM sessions WHERE token_hash = ?", (hash_token(token),))
+def delete_session(db: Connection, token: str) -> None:
+    db.execute("DELETE FROM sessions WHERE token_hash = %s", (hash_token(token),))
 
 
-def find_user_by_login(db: sqlite3.Connection, provider: str, provider_user_id: str) -> int | None:
+def find_user_by_login(db: Connection, provider: str, provider_user_id: str) -> int | None:
     """id пользователя, к которому привязан этот аккаунт DonationAlerts (или другого сервиса)."""
     row = db.execute(
-        "SELECT user_id FROM user_logins WHERE provider = ? AND provider_user_id = ?",
+        "SELECT user_id FROM user_logins WHERE provider = %s AND provider_user_id = %s",
         (provider, provider_user_id),
     ).fetchone()
     return row["user_id"] if row else None
 
 
-def add_login(db: sqlite3.Connection, user_id: int, provider: str, provider_user_id: str) -> None:
+def add_login(db: Connection, user_id: int, provider: str, provider_user_id: str) -> None:
     db.execute(
-        "INSERT INTO user_logins (provider, provider_user_id, user_id, created_at) VALUES (?, ?, ?, ?)",
+        "INSERT INTO user_logins (provider, provider_user_id, user_id, created_at) VALUES (%s, %s, %s, %s)",
         (provider, provider_user_id, user_id, now()),
     )
 
 
-def list_logins(db: sqlite3.Connection, user_id: int) -> list[str]:
+def list_logins(db: Connection, user_id: int) -> list[str]:
     """Чем пользователь может войти, например ['donationalerts']. Пустой список — гость."""
-    rows = db.execute("SELECT provider FROM user_logins WHERE user_id = ? ORDER BY provider", (user_id,))
+    rows = db.execute("SELECT provider FROM user_logins WHERE user_id = %s ORDER BY provider", (user_id,))
     return [row["provider"] for row in rows]
 
 
@@ -124,8 +124,8 @@ def set_session_cookie(response: Response, token: str) -> None:
 def get_current_user(
     request: Request,
     response: Response,
-    db: sqlite3.Connection = Depends(get_db),
-) -> sqlite3.Row:
+    db: Connection = Depends(get_db),
+) -> Row:
     """
     Кто сделал запрос. Если браузер пришёл впервые (или cookie потерялась),
     создаём гостя и отдаём браузеру новую cookie.
@@ -138,5 +138,5 @@ def get_current_user(
         set_session_cookie(response, create_session(db, user_id))
     else:
         user_id = user["id"]
-        db.execute("UPDATE users SET last_seen_at = ? WHERE id = ?", (now(), user_id))
+        db.execute("UPDATE users SET last_seen_at = %s WHERE id = %s", (now(), user_id))
     return get_user(db, user_id)

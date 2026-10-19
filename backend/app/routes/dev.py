@@ -3,13 +3,12 @@
 """
 
 import random
-import sqlite3
 import time
 
 from fastapi import APIRouter, Depends
 
 from ..board import get_board_id
-from ..db import get_db
+from ..db import Connection, get_db
 from ..donations import Donation, add_donation_card
 from ..realtime import notify_board_changed
 
@@ -30,7 +29,7 @@ FAKE_MESSAGES = [
 
 @router.post("/fake-donation", status_code=201)
 def create_fake_donation(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> dict[str, str]:
     """Создаёт карточку из случайного выдуманного доната на доске того, кто нажал кнопку."""

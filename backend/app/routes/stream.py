@@ -7,12 +7,11 @@
 с доски все карточки в историю: стрим закончился, начинаем с чистого листа.
 """
 
-import sqlite3
 
 from fastapi import APIRouter, Depends
 
 from ..board import archive_card, get_board_id, get_column_id_by_kind, get_owned_board_id
-from ..db import get_board_setting, get_db, now, set_board_setting
+from ..db import Connection, get_board_setting, get_db, now, set_board_setting
 from ..realtime import notify_board_changed
 from ..schemas import StreamTotal
 
@@ -25,7 +24,7 @@ STREAM_STARTED_AT_KEY = "stream_started_at"
 
 @router.get("/stream-total")
 def get_stream_total(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> StreamTotal:
     """
@@ -43,13 +42,13 @@ def get_stream_total(
             COALESCE(SUM(streamer_amount), 0) AS total,
             COALESCE(SUM(merge_count), 0) AS donation_count
         FROM cards
-        WHERE board_id = ? AND created_at > ? AND (archive_reason IS NULL OR archive_reason != 'merged')
+        WHERE board_id = %s AND created_at > %s AND (archive_reason IS NULL OR archive_reason != 'merged')
         """,
         (board_id, started_at),
     ).fetchone()
     board_card_count = db.execute(
-        "SELECT COUNT(*) FROM cards WHERE board_id = ? AND archived_at IS NULL", (board_id,)
-    ).fetchone()[0]
+        "SELECT COUNT(*) AS count FROM cards WHERE board_id = %s AND archived_at IS NULL", (board_id,)
+    ).fetchone()["count"]
     return StreamTotal(
         total=row["total"],
         donation_count=row["donation_count"],
@@ -59,7 +58,7 @@ def get_stream_total(
 
 @router.post("/reset")
 def reset_board(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_owned_board_id),
 ) -> StreamTotal:
     """
@@ -68,7 +67,7 @@ def reset_board(
     """
     done_column_id = get_column_id_by_kind(db, board_id, "done")
     rows = db.execute(
-        "SELECT id, column_id FROM cards WHERE board_id = ? AND archived_at IS NULL", (board_id,)
+        "SELECT id, column_id FROM cards WHERE board_id = %s AND archived_at IS NULL", (board_id,)
     ).fetchall()
     for row in rows:
         archive_card(db, row["id"], "done" if row["column_id"] == done_column_id else "deleted")

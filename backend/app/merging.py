@@ -12,7 +12,6 @@
 и вычитает их суммы и тексты из основной карточки.
 """
 
-import sqlite3
 
 from fastapi import HTTPException
 
@@ -24,7 +23,7 @@ from .board import (
     get_columns,
     return_to_board,
 )
-from .db import get_board_setting, now
+from .db import Connection, get_board_setting, now
 from .schemas import Card
 
 # Ключ в таблице board_settings: объединять ли новые донаты автоматически ("1" — да)
@@ -40,15 +39,14 @@ STREAMER_CURRENCY = "RUB"
 MERGE_SEPARATOR = "⸻"
 
 
-def is_auto_merge_enabled(db: sqlite3.Connection, board_id: int) -> bool:
+def is_auto_merge_enabled(db: Connection, board_id: int) -> bool:
     return get_board_setting(db, board_id, AUTO_MERGE_KEY) == "1"
 
 
 def is_same_donor(card: Card, other: Card) -> bool:
     """
     Один ли донатер у двух карточек. Ник сравниваем без учёта регистра: «Вася» = «вася».
-    Делаем это в Python, а не в SQL: LOWER() в SQLite понимает только латиницу.
-    Это же правило повторяет фронт (utils/merging.ts).
+    Сравниваем в Python через casefold() — это же правило повторяет фронт (utils/merging.ts).
     """
     # У анонимов ника нет: два анонимных доната — не обязательно один человек
     if not card.donor_name or not other.donor_name:
@@ -56,16 +54,16 @@ def is_same_donor(card: Card, other: Card) -> bool:
     return card.donor_name.casefold() == other.donor_name.casefold()
 
 
-def find_same_donor_cards(db: sqlite3.Connection, board_id: int, card: Card) -> list[Card]:
+def find_same_donor_cards(db: Connection, board_id: int, card: Card) -> list[Card]:
     """Другие карточки того же донатера на доске, от старых к новым."""
     rows = db.execute(
-        "SELECT * FROM cards WHERE board_id = ? AND archived_at IS NULL AND id != ? ORDER BY created_at, id",
+        "SELECT * FROM cards WHERE board_id = %s AND archived_at IS NULL AND id != %s ORDER BY created_at, id",
         (board_id, card.id),
     ).fetchall()
     return [Card(**row) for row in rows if is_same_donor(card, Card(**row))]
 
 
-def find_auto_merge_target(db: sqlite3.Connection, board_id: int, card: Card) -> Card | None:
+def find_auto_merge_target(db: Connection, board_id: int, card: Card) -> Card | None:
     """
     Куда автоматически слить новый донат, или None, если некуда:
     - в карточку донатера в промежуточной колонке (например, «В работе»), самую старую из таких;
@@ -81,7 +79,7 @@ def find_auto_merge_target(db: sqlite3.Connection, board_id: int, card: Card) ->
     return None
 
 
-def merge_cards(db: sqlite3.Connection, board_id: int, target: Card, card_ids: list[int]) -> Card:
+def merge_cards(db: Connection, board_id: int, target: Card, card_ids: list[int]) -> Card:
     """
     Сливает карточки card_ids в target. Все они должны быть на доске и от того же донатера.
     Возвращает target после слияния.
@@ -100,7 +98,7 @@ def merge_cards(db: sqlite3.Connection, board_id: int, target: Card, card_ids: l
     return get_card(db, board_id, target.id)
 
 
-def merge_one(db: sqlite3.Connection, target: Card, card: Card) -> None:
+def merge_one(db: Connection, target: Card, card: Card) -> None:
     """Сливает одну карточку card в target."""
     # Сумма. Валюта та же — просто складываем. Разные — переходим на валюту стримера.
     if target.currency == card.currency:
@@ -118,9 +116,9 @@ def merge_one(db: sqlite3.Connection, target: Card, card: Card) -> None:
     db.execute(
         """
         UPDATE cards
-        SET amount = ?, currency = ?, streamer_amount = ?, description = ?,
-            merge_count = merge_count + ?, updated_at = ?
-        WHERE id = ?
+        SET amount = %s, currency = %s, streamer_amount = %s, description = %s,
+            merge_count = merge_count + %s, updated_at = %s
+        WHERE id = %s
         """,
         (amount, currency, streamer_amount, description, card.merge_count, now(), target.id),
     )
@@ -128,11 +126,11 @@ def merge_one(db: sqlite3.Connection, target: Card, card: Card) -> None:
     # Слитая карточка уходит в историю со ссылкой на основную — ничего не теряется.
     # Колонку она запоминает: «Разъединить» вернёт её туда же.
     archive_card(db, card.id, "merged")
-    db.execute("UPDATE cards SET merged_into_id = ? WHERE id = ?", (target.id, card.id))
+    db.execute("UPDATE cards SET merged_into_id = %s WHERE id = %s", (target.id, card.id))
 
 
 def split_cards(
-    db: sqlite3.Connection,
+    db: Connection,
     board_id: int,
     target: Card,
     card_ids: list[int] | None,
@@ -146,7 +144,7 @@ def split_cards(
     rows = db.execute(
         """
         SELECT * FROM cards
-        WHERE merged_into_id = ? AND archive_reason = 'merged'
+        WHERE merged_into_id = %s AND archive_reason = 'merged'
         ORDER BY archived_at DESC, id DESC
         """,
         (target.id,),
@@ -169,7 +167,7 @@ def split_cards(
     return [get_card(db, board_id, card.id) for card in merged]
 
 
-def unmerge_card(db: sqlite3.Connection, card: Card) -> None:
+def unmerge_card(db: Connection, card: Card) -> None:
     """
     Отменяет слияние card: вычитает её сумму из основной карточки и убирает её текст.
     Саму card на доску возвращает тот, кто вызвал.
@@ -177,10 +175,10 @@ def unmerge_card(db: sqlite3.Connection, card: Card) -> None:
     Если основную карточку успели отредактировать и текста card в ней уже нет,
     текст не трогаем — вычитаем только сумму.
     """
-    row = db.execute("SELECT * FROM cards WHERE id = ?", (card.merged_into_id,)).fetchone()
+    row = db.execute("SELECT * FROM cards WHERE id = %s", (card.merged_into_id,)).fetchone()
     if row is None:
         # Основную карточку уже удалили навсегда — вычитать не из чего
-        db.execute("UPDATE cards SET merged_into_id = NULL WHERE id = ?", (card.id,))
+        db.execute("UPDATE cards SET merged_into_id = NULL WHERE id = %s", (card.id,))
         return
     target = Card(**row)
 
@@ -199,12 +197,12 @@ def unmerge_card(db: sqlite3.Connection, card: Card) -> None:
     db.execute(
         """
         UPDATE cards
-        SET amount = ?, streamer_amount = ?, description = ?, merge_count = merge_count - ?, updated_at = ?
-        WHERE id = ?
+        SET amount = %s, streamer_amount = %s, description = %s, merge_count = merge_count - %s, updated_at = %s
+        WHERE id = %s
         """,
         (amount, streamer_amount, description, card.merge_count, now(), target.id),
     )
-    db.execute("UPDATE cards SET merged_into_id = NULL WHERE id = ?", (card.id,))
+    db.execute("UPDATE cards SET merged_into_id = NULL WHERE id = %s", (card.id,))
 
 
 def card_text(card: Card) -> str:

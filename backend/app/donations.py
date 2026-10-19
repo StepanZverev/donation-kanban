@@ -5,11 +5,10 @@
 позже сюда же будут попадать донаты из DonationAlerts.
 """
 
-import sqlite3
 from dataclasses import dataclass
 
 from .board import EMPTY_MESSAGE_TITLE, get_card, get_column_id_by_kind
-from .db import now
+from .db import Connection, now
 from .intake import filter_reason
 from .merging import find_auto_merge_target, is_auto_merge_enabled, merge_cards
 
@@ -28,7 +27,7 @@ class Donation:
     streamer_amount: float
 
 
-def add_donation_card(db: sqlite3.Connection, board_id: int, donation: Donation) -> bool:
+def add_donation_card(db: Connection, board_id: int, donation: Donation) -> bool:
     """
     Создаёт карточку в «Очереди» доски board_id. Место в колонке определит сумма доната.
     Возвращает False, если карточка для этого доната уже есть (защита от дублей).
@@ -48,15 +47,18 @@ def add_donation_card(db: sqlite3.Connection, board_id: int, donation: Donation)
     archived_at = timestamp if reject_note else None
     archive_reason = "rejected" if reject_note else None
 
-    # INSERT OR IGNORE молча пропускает вставку, если donation_id уже есть в таблице
-    cursor = db.execute(
+    # ON CONFLICT DO NOTHING молча пропускает вставку, если donation_id уже есть в таблице.
+    # Тогда RETURNING ничего не вернёт, и fetchone() даст None
+    card_row = db.execute(
         """
-        INSERT OR IGNORE INTO cards (
+        INSERT INTO cards (
             board_id, title, description, column_id, source, donation_id, donor_name,
             amount, currency, streamer_amount, created_at, updated_at, moved_at,
             archived_at, archive_reason, archive_note
         )
-        VALUES (?, ?, ?, ?, 'donationalerts', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, 'donationalerts', %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (donation_id) DO NOTHING
+        RETURNING id
         """,
         (
             board_id,
@@ -75,12 +77,12 @@ def add_donation_card(db: sqlite3.Connection, board_id: int, donation: Donation)
             archive_reason,
             reject_note,
         ),
-    )
-    if cursor.rowcount == 0:
+    ).fetchone()
+    if card_row is None:
         return False
 
     if reject_note is None and is_auto_merge_enabled(db, board_id):
-        card = get_card(db, board_id, cursor.lastrowid)
+        card = get_card(db, board_id, card_row["id"])
         target = find_auto_merge_target(db, board_id, card)
         if target is not None:
             merge_cards(db, board_id, target, [card.id])

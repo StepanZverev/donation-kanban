@@ -6,12 +6,11 @@
 """
 
 import json
-import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..board import get_board_id, get_owned_board_id
-from ..db import get_board_setting, get_db, set_board_setting
+from ..db import Connection, get_board_setting, get_db, set_board_setting
 from ..intake import get_intake_settings, save_intake_settings
 from ..merging import AUTO_MERGE_KEY, is_auto_merge_enabled
 from ..realtime import notify_board_changed
@@ -34,14 +33,14 @@ DEFAULT_PRIORITY_LEVELS = [
 
 @router.get("/priority-levels")
 def get_priority_levels(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> list[PriorityLevel]:
     """Уровни приоритета по возрастанию суммы."""
     return read_priority_levels(db, board_id)
 
 
-def read_priority_levels(db: sqlite3.Connection, board_id: int) -> list[PriorityLevel]:
+def read_priority_levels(db: Connection, board_id: int) -> list[PriorityLevel]:
     saved = get_board_setting(db, board_id, PRIORITY_LEVELS_KEY)
     if saved is None:
         return DEFAULT_PRIORITY_LEVELS
@@ -51,7 +50,7 @@ def read_priority_levels(db: sqlite3.Connection, board_id: int) -> list[Priority
 @router.put("/priority-levels")
 def save_priority_levels(
     levels: list[PriorityLevel],
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_owned_board_id),
 ) -> list[PriorityLevel]:
     """
@@ -78,7 +77,7 @@ def save_priority_levels(
 
 @router.get("/auto-merge")
 def get_auto_merge(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> AutoMerge:
     """Включено ли автообъединение донатов одного донатера. По умолчанию выключено."""
@@ -88,7 +87,7 @@ def get_auto_merge(
 @router.put("/auto-merge")
 def save_auto_merge(
     data: AutoMerge,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_owned_board_id),
 ) -> AutoMerge:
     set_board_setting(db, board_id, AUTO_MERGE_KEY, "1" if data.enabled else "0")
@@ -98,7 +97,7 @@ def save_auto_merge(
 
 @router.get("/intake")
 def get_intake(
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_board_id),
 ) -> IntakeSettings:
     """Приём донатов: открыт ли, минимальная сумма, игнорировать ли анонимов."""
@@ -108,7 +107,7 @@ def get_intake(
 @router.put("/intake")
 def save_intake(
     data: IntakeSettings,
-    db: sqlite3.Connection = Depends(get_db),
+    db: Connection = Depends(get_db),
     board_id: int = Depends(get_owned_board_id),
 ) -> IntakeSettings:
     """
