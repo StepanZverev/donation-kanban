@@ -52,18 +52,18 @@ export function MembersSettings() {
                 Новая ссылка
               </ConfirmButton>
               <ConfirmButton
-                title="Выключить ссылку"
-                question="По ссылке больше нельзя будет стать модератором. Те, кто уже стал, останутся."
-                confirmLabel="Выключить"
+                title="Удалить ссылку"
+                question="Ссылка перестанет работать, и все модераторы потеряют доступ к доске."
+                confirmLabel="Удалить"
                 onConfirm={deleteInviteLink}
               >
-                Выключить
+                Удалить
               </ConfirmButton>
             </div>
           </>
         ) : (
           <>
-            <span className={styles.description}>Сейчас выключена: позвать модератора нельзя.</span>
+            <span className={styles.description}>Ссылки нет: позвать модератора нельзя.</span>
             <div className={styles.buttons}>
               <button type="button" className={styles.primaryButton} onClick={createInviteLink}>
                 Сделать ссылку

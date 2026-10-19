@@ -117,6 +117,20 @@ def test_new_or_turned_off_invite_link_stops_old_one(client, moderator):
     assert moderator.post(f"/api/invites/{new_token}/accept").status_code == 404
 
 
+def test_new_invite_link_keeps_moderators_but_deleting_it_removes_them(client, moderator):
+    board_id = invite(client, moderator)
+
+    # Новая ссылка: модератор остаётся
+    client.post(f"/api/boards/{board_id}/invite-link")
+    assert moderator.get(f"/api/boards/{board_id}").status_code == 200
+
+    # Ссылку удалили: модератора больше нет, доска у него пропала
+    client.delete(f"/api/boards/{board_id}/invite-link")
+    assert client.get(f"/api/boards/{board_id}/members").json() == []
+    assert moderator.get(f"/api/boards/{board_id}").status_code == 404
+    assert moderator.get("/api/me").json()["moderated_boards"] == []
+
+
 def test_owner_opening_own_invite_stays_owner(client):
     board_id = invite(client, client)
     assert client.get(f"/api/boards/{board_id}").json()["role"] == "owner"

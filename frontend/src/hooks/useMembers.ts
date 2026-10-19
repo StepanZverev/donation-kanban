@@ -40,11 +40,13 @@ export function useMembers() {
     }
   }
 
+  // Вместе со ссылкой бэкенд убирает и всех модераторов, поэтому перечитываем и список
   async function deleteInviteLink() {
     try {
-      setInviteToken(await boardsApi.deleteInviteLink(boardId))
+      await boardsApi.deleteInviteLink(boardId)
+      await reload()
     } catch {
-      setError('Не удалось выключить ссылку. Попробуй ещё раз.')
+      setError('Не удалось удалить ссылку. Попробуй ещё раз.')
     }
   }
 

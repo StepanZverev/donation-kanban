@@ -10,6 +10,7 @@
 
 Хозяин видит список модераторов и может убрать любого. Новая ссылка-приглашение
 заменяет старую: старая сразу перестаёт работать (уже принятые приглашения остаются).
+А если ссылку удалить совсем, вместе с ней убираются и все модераторы.
 """
 
 import secrets
@@ -136,8 +137,12 @@ def delete_invite_link(
     board_id: int = Depends(get_owned_board_id),
     db: sqlite3.Connection = Depends(get_db),
 ) -> InviteSettings:
-    """Выключает ссылку-приглашение. Уже принятые приглашения остаются."""
+    """
+    Удаляет ссылку-приглашение и убирает всех модераторов доски:
+    у них доска сразу пропадёт, а позвать снова можно только новой ссылкой.
+    """
     delete_board_setting(db, board_id, INVITE_TOKEN_KEY)
+    db.execute("DELETE FROM board_members WHERE board_id = ?", (board_id,))
     notify_board_changed(db, board_id)
     return InviteSettings(invite_token=None)
 
