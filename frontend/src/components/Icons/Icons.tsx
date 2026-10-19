@@ -131,7 +131,7 @@ export function CheckIcon() {
   )
 }
 
-// Глаз — «показать»
+// Глаз — «показать» и «следить за карточкой»
 export function EyeIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -200,6 +200,15 @@ export function InfoIcon() {
       <circle cx="12" cy="12" r="9.5" stroke="currentColor" strokeWidth="1.6" />
       <path d="M12 11v5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
       <circle cx="12" cy="7.8" r="1.1" fill="currentColor" />
+    </svg>
+  )
+}
+
+// Крестик — «закрыть», «не следить». Размер 12×12.
+export function CloseIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   )
 }

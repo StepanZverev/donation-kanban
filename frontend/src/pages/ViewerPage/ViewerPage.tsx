@@ -1,8 +1,12 @@
 import { useParams } from 'react-router'
+import { useCardFlash } from '../../hooks/useCardFlash'
+import { useFollowedDonor } from '../../hooks/useFollowedDonor'
 import { usePublicBoard } from '../../hooks/usePublicBoard'
+import { FollowPanel } from '../../components/FollowPanel/FollowPanel'
 import { OrderRules } from '../../components/OrderRules/OrderRules'
 import { ViewerCard } from '../../components/ViewerCard/ViewerCard'
 import { ViewerHeader } from '../../components/ViewerHeader/ViewerHeader'
+import { isFollowedDonor } from '../../utils/follow'
 import styles from './ViewerPage.module.css'
 
 // Страница для зрителей: /v/<токен>. Доска стримера только для чтения.
@@ -11,6 +15,8 @@ export function ViewerPage() {
   // Токен — секретная часть ссылки после /v/
   const { token = '' } = useParams()
   const { state, error, getColumnCards } = usePublicBoard(token)
+  const { followedName, follow, unfollow } = useFollowedDonor(token)
+  const { flashedCardId, showCard } = useCardFlash()
 
   if (state.status === 'loading') {
     return <p className={styles.message}>Загружаю доску…</p>
@@ -31,6 +37,15 @@ export function ViewerPage() {
       <header className={styles.header}>
         <ViewerHeader board={board} />
         <OrderRules board={board} />
+        {followedName && (
+          <FollowPanel
+            board={board}
+            followedName={followedName}
+            getColumnCards={getColumnCards}
+            onUnfollow={unfollow}
+            onShowCard={showCard}
+          />
+        )}
       </header>
 
       {error && <p className={styles.error}>{error}</p>}
@@ -49,6 +64,9 @@ export function ViewerPage() {
                   card={card}
                   priorityLevels={board.priorityLevels}
                   isMuted={column.kind === 'done'}
+                  isFollowed={followedName !== null && isFollowedDonor(card, followedName)}
+                  isFlashed={card.id === flashedCardId}
+                  onFollow={follow}
                 />
               ))}
               {cards.length === 0 && <p className={styles.empty}>Пока пусто</p>}
