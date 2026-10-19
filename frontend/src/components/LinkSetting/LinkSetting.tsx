@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
+import { CheckIcon, CopyIcon, EyeIcon, EyeOffIcon } from '../Icons/Icons'
 import styles from './LinkSetting.module.css'
 
 type LinkSettingProps = {
@@ -21,7 +22,8 @@ type LinkSettingProps = {
   onDelete: () => void
 }
 
-// Блок настройки со ссылкой: поле со ссылкой, «Скопировать», «Новая ссылка» и «Удалить».
+// Блок настройки со ссылкой: поле со ссылкой (справа в нём иконки «Показать» и «Скопировать»),
+// под ним «Новая ссылка» и «Удалить».
 // Одинаково выглядит у ссылки для зрителей и у приглашения модератора.
 export function LinkSetting({
   label,
@@ -63,21 +65,36 @@ export function LinkSetting({
     <div className={styles.field}>
       <span className={styles.label}>{label}</span>
       <span className={styles.description}>{description}</span>
-      <input
-        className={styles.input}
-        value={isHidden ? hideSecretPart(url) : url}
-        readOnly
-        onFocus={(event) => !isHidden && event.currentTarget.select()}
-      />
-      <div className={styles.buttons}>
-        <button type="button" className={styles.primaryButton} onClick={handleCopyClick}>
-          {isCopied ? 'Скопировано' : 'Скопировать'}
-        </button>
+      {/* Поле и иконки внутри одной рамки: рамку рисует .inputBox, у самого поля её нет */}
+      <div className={styles.inputBox}>
+        <input
+          className={styles.input}
+          value={isHidden ? hideSecretPart(url) : url}
+          readOnly
+          onFocus={(event) => !isHidden && event.currentTarget.select()}
+        />
         {isSecret && (
-          <button type="button" onClick={handleShowClick}>
-            {isShown ? 'Скрыть' : 'Показать'}
+          <button
+            type="button"
+            className={styles.iconButton}
+            title={isShown ? 'Скрыть ссылку' : 'Показать ссылку'}
+            aria-label={isShown ? 'Скрыть ссылку' : 'Показать ссылку'}
+            onClick={handleShowClick}
+          >
+            {isShown ? <EyeOffIcon /> : <EyeIcon />}
           </button>
         )}
+        <button
+          type="button"
+          className={styles.iconButton}
+          title={isCopied ? 'Скопировано' : 'Скопировать ссылку'}
+          aria-label={isCopied ? 'Скопировано' : 'Скопировать ссылку'}
+          onClick={handleCopyClick}
+        >
+          {isCopied ? <CheckIcon /> : <CopyIcon />}
+        </button>
+      </div>
+      <div className={styles.buttons}>
         <span className={styles.spacer} />
         <ConfirmButton
           title="Сделать новую ссылку"
