@@ -71,8 +71,7 @@ export function IntakeSettingsFields() {
         <label className={styles.text} htmlFor="donation-rules">
           <span className={styles.label}>Свои правила доната</span>
           <span className={styles.description}>
-            Например, правила ивента или что ты хочешь видеть в донате. Зрители увидят этот текст в блоке
-            «Как заказать». На то, какие донаты станут карточками, он не влияет.
+            Зрители увидят этот текст в блоке «Как заказать».
           </span>
         </label>
         <textarea
