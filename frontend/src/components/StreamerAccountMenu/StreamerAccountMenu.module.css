@@ -30,13 +30,20 @@
   }
 }
 
-/* Приём закрыт — вместо точки две красные палочки, как значок паузы */
+/* Приём закрыт — вместо точки значок паузы: две красные палочки близко друг к другу */
 .pause {
   flex-shrink: 0;
-  width: 8px;
+  display: flex;
+  gap: 2px;
   height: 10px;
-  border-left: 3px solid var(--color-error);
-  border-right: 3px solid var(--color-error);
+}
+
+.pause::before,
+.pause::after {
+  content: '';
+  width: 3px;
+  border-radius: 1px;
+  background-color: var(--color-error);
 }
 
 /* Часть выпадашки со статусом DonationAlerts и приёмом */
