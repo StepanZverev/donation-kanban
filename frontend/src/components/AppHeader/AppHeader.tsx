@@ -1,13 +1,12 @@
 import { useBoard } from '../../hooks/useBoard'
 import { AccountMenu } from '../AccountMenu/AccountMenu'
-import { DonationAlertsStatus } from '../DonationAlertsStatus/DonationAlertsStatus'
-import { IntakeToggle } from '../IntakeToggle/IntakeToggle'
 import { Navigation } from '../Navigation/Navigation'
+import { StreamerAccountMenu } from '../StreamerAccountMenu/StreamerAccountMenu'
 import { StreamTotal } from '../StreamTotal/StreamTotal'
 import styles from './AppHeader.module.css'
 
-// Шапка приложения в одну строку: логотип, вкладки, справа сумма за стрим,
-// капсула со статусом DonationAlerts и переключателем приёма заказов и кто вошёл.
+// Шапка приложения в одну строку: логотип, вкладки, справа сумма за стрим и меню аккаунта.
+// Статус DonationAlerts и переключатель приёма — в меню аккаунта (StreamerAccountMenu).
 type AppHeaderProps = {
   // Точки «есть новое» у вкладок (см. useNewDonations)
   hasNewOnBoard: boolean
@@ -39,18 +38,16 @@ export function AppHeader(props: AppHeaderProps) {
         <div className={styles.right}>
           <StreamTotal />
           {board.role === 'owner' ? (
-            // Статус DonationAlerts и переключатель приёма — одна капсула с разделителем:
-            // оба про то, доходят ли донаты до доски. Это дело хозяина доски.
-            <div className={styles.capsule}>
-              <DonationAlertsStatus />
-              <IntakeToggle />
-            </div>
+            // На своей доске в меню ещё статус DonationAlerts и переключатель приёма
+            <StreamerAccountMenu />
           ) : (
-            <span className={styles.moderatorBadge}>
-              Модератор · доска {board.ownerName ?? 'стримера'}
-            </span>
+            <>
+              <span className={styles.moderatorBadge}>
+                Модератор · доска {board.ownerName ?? 'стримера'}
+              </span>
+              <AccountMenu />
+            </>
           )}
-          <AccountMenu />
         </div>
       </div>
     </header>

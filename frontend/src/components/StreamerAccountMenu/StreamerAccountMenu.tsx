@@ -1,0 +1,102 @@
+import { LOGIN_URL, type ListenerStatus } from '../../api/auth'
+import { useDonationAlertsStatus } from '../../hooks/useDonationAlertsStatus'
+import { useIntakeSettings } from '../../hooks/useIntakeSettings'
+import { AccountMenu } from '../AccountMenu/AccountMenu'
+import styles from './StreamerAccountMenu.module.css'
+
+// Что делает DonationAlerts — коротко: в меню и в подсказке у точки
+const listenerLabels: Record<ListenerStatus, string> = {
+  not_configured: 'Не настроен',
+  not_connected: 'Не подключён',
+  connecting: 'Подключаюсь…',
+  listening: 'Слушаю донаты',
+  error: 'Нет связи',
+}
+
+// Пояснение под строкой DonationAlerts. Когда всё работает, пояснять нечего.
+const listenerDescriptions: Record<ListenerStatus, string | null> = {
+  not_configured:
+    'Ключи приложения не вписаны. Впиши DA_CLIENT_ID и DA_CLIENT_SECRET в backend/.env и перезапусти бэкенд.',
+  not_connected: 'Донаты не приходят. Подключи DonationAlerts, чтобы они сами появлялись в очереди.',
+  connecting: null,
+  listening: null,
+  error: 'Связь прервалась. Переподключаюсь сам, нажимать ничего не нужно.',
+}
+
+// Меню аккаунта на своей доске. К обычному меню добавляется то, что нужно только хозяину:
+// индикатор у ника (доходят ли донаты) и в выпадашке статус DonationAlerts и переключатель приёма.
+//
+// Индикатор у ника:
+//   приём закрыт — красная пауза (донаты не попадают на доску, что бы ни делал DA);
+//   иначе точка DonationAlerts: зелёная — слушаю донаты, жёлтая — подключаюсь,
+//   красная — нет связи, серая — не подключён.
+export function StreamerAccountMenu() {
+  const { status, disconnect } = useDonationAlertsStatus()
+  const { settings, changeIntake } = useIntakeSettings()
+
+  // Бэкенд не отвечает — об этом и так скажет доска, показываем обычное меню
+  if (status === null || settings === null) {
+    return <AccountMenu />
+  }
+
+  const listener = status.listener
+  const isIntakeOpen = settings.isOpen
+  const description = listenerDescriptions[listener]
+
+  const indicator = isIntakeOpen ? (
+    <span
+      className={`${styles.dot} ${styles[listener]}`}
+      title={`DonationAlerts: ${listenerLabels[listener].toLowerCase()}`}
+    />
+  ) : (
+    <span className={styles.pause} title="Приём закрыт: новые донаты сразу уходят в историю" />
+  )
+
+  const streamSection = (
+    <div className={styles.section}>
+      <div className={styles.row}>
+        <span className={`${styles.dot} ${styles[listener]}`} />
+        <span className={styles.rowText}>
+          DonationAlerts
+          <span className={styles.rowNote}>{listenerLabels[listener]}</span>
+        </span>
+        {status.configured && !status.connected && (
+          <a className={styles.connectButton} href={LOGIN_URL}>
+            Подключить
+          </a>
+        )}
+        {status.connected && (
+          <button type="button" onClick={handleDisconnectClick}>
+            Отключить
+          </button>
+        )}
+      </div>
+      {description && <p className={styles.description}>{description}</p>}
+
+      {/* Вся строка — переключатель: по клику приём открывается или закрывается */}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={isIntakeOpen}
+        className={isIntakeOpen ? styles.intakeRow : `${styles.intakeRow} ${styles.closed}`}
+        onClick={() => changeIntake({ isOpen: !isIntakeOpen })}
+      >
+        <span className={styles.track} aria-hidden="true" />
+        <span className={styles.rowText}>
+          {isIntakeOpen ? 'Приём открыт' : 'Приём закрыт'}
+          <span className={styles.rowNote}>
+            {isIntakeOpen ? 'Донаты попадают на доску' : 'Донаты сразу уходят в историю'}
+          </span>
+        </span>
+      </button>
+    </div>
+  )
+
+  return <AccountMenu indicator={indicator} streamSection={streamSection} />
+
+  function handleDisconnectClick() {
+    if (window.confirm('Отключить DonationAlerts? Новые донаты перестанут попадать на доску.')) {
+      disconnect()
+    }
+  }
+}
