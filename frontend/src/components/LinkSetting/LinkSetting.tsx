@@ -7,9 +7,10 @@ type LinkSettingProps = {
   label: string
   // Сама ссылка. null — ссылки нет, показываем кнопку «Сделать ссылку»
   url: string | null
-  // Пояснение под названием, когда ссылка есть и когда её нет
+  // Пояснение под названием, когда ссылка есть и когда её нет.
+  // Без emptyDescription, пока ссылки нет, видна одна кнопка «Сделать ссылку».
   description: string
-  emptyDescription: string
+  emptyDescription?: string
   // Секретная ссылка (например, приглашение модератора) по умолчанию скрыта,
   // чтобы стример случайно не показал её на стриме. Скопировать можно и не показывая.
   isSecret?: boolean
@@ -41,8 +42,12 @@ export function LinkSetting({
   if (url === null) {
     return (
       <div className={styles.field}>
-        <span className={styles.label}>{label}</span>
-        <span className={styles.description}>{emptyDescription}</span>
+        {emptyDescription && (
+          <>
+            <span className={styles.label}>{label}</span>
+            <span className={styles.description}>{emptyDescription}</span>
+          </>
+        )}
         <div className={styles.buttons}>
           <button type="button" className={styles.primaryButton} onClick={onCreate}>
             Сделать ссылку
@@ -82,7 +87,12 @@ export function LinkSetting({
         >
           Новая ссылка
         </ConfirmButton>
-        <ConfirmButton title="Удалить ссылку" question={deleteQuestion} confirmLabel="Удалить" onConfirm={onDelete}>
+        <ConfirmButton
+          title="Удалить ссылку"
+          question={deleteQuestion}
+          confirmLabel="Удалить"
+          onConfirm={onDelete}
+        >
           Удалить
         </ConfirmButton>
       </div>
