@@ -1,4 +1,5 @@
 import { useState, type DragEvent } from 'react'
+import { STREAMER_CURRENCY } from '../../defaults'
 import type { BoardColumn, Card, ColumnKind } from '../../types/card'
 import type { PriorityLevel } from '../../utils/priority'
 import { formatMoney } from '../../utils/money'
@@ -96,7 +97,7 @@ export function Column(props: ColumnProps) {
         <h2 className={styles.title}>
           {column.title} <span className={styles.count}>{cards.length}</span>
         </h2>
-        <p className={styles.sum}>{formatMoney(columnSum, 'RUB')}</p>
+        <p className={styles.sum}>{formatMoney(columnSum, STREAMER_CURRENCY)}</p>
 
         <div className={styles.actions}>
           {!isDoneColumn && (

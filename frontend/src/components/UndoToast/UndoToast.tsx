@@ -1,9 +1,7 @@
 import { useEffect } from 'react'
+import { UNDO_TOAST_SECONDS } from '../../defaults'
 import type { UndoableAction } from '../../hooks/useCards'
 import styles from './UndoToast.module.css'
-
-// Сколько плашка висит на экране, прежде чем исчезнуть сама
-const VISIBLE_MS = 8000
 
 type UndoToastProps = {
   action: UndoableAction
@@ -19,7 +17,7 @@ export function UndoToast(props: UndoToastProps) {
 
   // Через несколько секунд плашка закрывается сама.
   useEffect(() => {
-    const timer = window.setTimeout(() => onClose(action.id), VISIBLE_MS)
+    const timer = window.setTimeout(() => onClose(action.id), UNDO_TOAST_SECONDS * 1000)
     return () => window.clearTimeout(timer)
   }, [action.id, onClose])
 

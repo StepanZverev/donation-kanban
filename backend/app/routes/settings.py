@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..board import get_board_id, get_owned_board_id
 from ..db import Connection, get_board_setting, get_db, set_board_setting
+from ..defaults import DEFAULT_PRIORITY_LEVELS
 from ..intake import get_intake_settings, save_intake_settings
 from ..merging import AUTO_MERGE_KEY, is_auto_merge_enabled
 from ..realtime import notify_board_changed
@@ -20,15 +21,6 @@ router = APIRouter(prefix="/api/boards/{board_id}/settings", tags=["Настро
 
 # Ключ в таблице board_settings, под которым уровни лежат одной строкой JSON
 PRIORITY_LEVELS_KEY = "priority_levels"
-
-# Уровни, пока стример ничего не менял. Такие же лежат во фронте: src/utils/priority.ts.
-# Цвета приглушённые и подобраны так, чтобы сумма этим цветом читалась и на светлой, и на тёмной теме.
-DEFAULT_PRIORITY_LEVELS = [
-    PriorityLevel(min_amount=0, name="Низкий", color="#85839a"),  # серый
-    PriorityLevel(min_amount=100, name="Средний", color="#3f9a68"),  # зелёный
-    PriorityLevel(min_amount=500, name="Высокий", color="#c99a24"),  # золотой
-    PriorityLevel(min_amount=1000, name="Топ", color="#d6474f"),  # красный
-]
 
 
 @router.get("/priority-levels")
@@ -43,7 +35,11 @@ def get_priority_levels(
 def read_priority_levels(db: Connection, board_id: int) -> list[PriorityLevel]:
     saved = get_board_setting(db, board_id, PRIORITY_LEVELS_KEY)
     if saved is None:
-        return DEFAULT_PRIORITY_LEVELS
+        # Стример ещё не менял уровни — берём уровни по умолчанию (см. defaults.py)
+        return [
+            PriorityLevel(min_amount=min_amount, name=name, color=color)
+            for min_amount, name, color in DEFAULT_PRIORITY_LEVELS
+        ]
     return [PriorityLevel(**level) for level in json.loads(saved)]
 
 

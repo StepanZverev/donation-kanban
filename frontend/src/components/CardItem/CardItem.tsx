@@ -1,22 +1,19 @@
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from 'react'
+import { GLOW_SECONDS, MERGE_SEPARATOR, SHOW_UNMERGE } from '../../defaults'
 import type { BoardColumn, Card } from '../../types/card'
 import { useIsRecent } from '../../hooks/useIsRecent'
 import { useTimeAgo } from '../../hooks/useTimeAgo'
 import { getCardText, getDonorName } from '../../utils/donor'
 import { formatMoney } from '../../utils/money'
 import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
-import { GLOW_SECONDS, pluralize } from '../../utils/time'
+import { pluralize } from '../../utils/time'
 import { CardMenu } from '../CardMenu/CardMenu'
 import { ChevronLeftIcon, ChevronRightIcon } from '../Icons/Icons'
 import styles from './CardItem.module.css'
 
-// Этой строкой бэкенд разделяет тексты объединённых донатов (MERGE_SEPARATOR в merging.py).
+// Тексты объединённых донатов разделены отдельной строкой с MERGE_SEPARATOR.
 // На карточке вместо неё рисуем пунктирную линию.
-const MERGE_SEPARATOR = '\n⸻\n'
-
-// Пункт «Разъединить» в меню «⋯» пока спрятан: стримеру он не нужен.
-// Сама функция осталась, чтобы вернуть пункт, достаточно поставить true.
-const SHOW_UNMERGE = false
+const MERGE_LINE = `\n${MERGE_SEPARATOR}\n`
 
 type CardItemProps = {
   card: Card
@@ -85,7 +82,7 @@ export function CardItem(props: CardItemProps) {
   const heading = getDonorName(card)
   const text = getCardText(card)
   // Тексты объединённых донатов по отдельности: между ними нарисуем пунктир
-  const textParts = text.split(MERGE_SEPARATOR)
+  const textParts = text.split(MERGE_LINE)
   // Обводку «+ Объединить» показываем, только пока над карточкой держат подходящую
   const showMergeDrop = isDragOver && canMergeOnDrop
   // В карточку слиты другие донаты

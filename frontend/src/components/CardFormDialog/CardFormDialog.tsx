@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { CARD_TEXT_MAX_LENGTH } from '../../defaults'
 import type { CardDraft } from '../../types/card'
 import { getCurrencySymbol } from '../../utils/money'
 import { NickInput } from '../NickInput/NickInput'
@@ -66,7 +67,7 @@ export function CardFormDialog(props: CardFormDialogProps) {
             autoComplete="off"
             value={text}
             onChange={handleTextChange}
-            maxLength={2000}
+            maxLength={CARD_TEXT_MAX_LENGTH}
             rows={5}
             autoFocus
           />

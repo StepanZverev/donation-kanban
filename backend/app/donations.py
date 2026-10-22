@@ -7,14 +7,11 @@
 
 from dataclasses import dataclass
 
-from .board import EMPTY_MESSAGE_TITLE, get_card, get_column_id_by_kind
+from .board import get_card, get_column_id_by_kind
 from .db import Connection, now
+from .defaults import CARD_TITLE_LENGTH, EMPTY_MESSAGE_TITLE
 from .intake import filter_reason
 from .merging import find_auto_merge_target, is_auto_merge_enabled, merge_cards
-
-# Сколько символов сообщения показываем в заголовке карточки
-TITLE_LENGTH = 80
-
 
 @dataclass
 class Donation:
@@ -97,6 +94,6 @@ def split_message(message: str) -> tuple[str, str]:
     message = message.strip()
     if not message:
         return EMPTY_MESSAGE_TITLE, ""
-    if len(message) <= TITLE_LENGTH:
+    if len(message) <= CARD_TITLE_LENGTH:
         return message, ""
-    return message[: TITLE_LENGTH - 1].rstrip() + "…", message
+    return message[: CARD_TITLE_LENGTH - 1].rstrip() + "…", message

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { COLUMN_TITLE_MAX_LENGTH } from '../../defaults'
 import { useBackdropClose } from '../../hooks/useBackdropClose'
 import styles from './ColumnDialog.module.css'
 
@@ -37,7 +38,7 @@ export function ColumnDialog(props: ColumnDialogProps) {
             autoComplete="off"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            maxLength={40}
+            maxLength={COLUMN_TITLE_MAX_LENGTH}
             required
             autoFocus
           />

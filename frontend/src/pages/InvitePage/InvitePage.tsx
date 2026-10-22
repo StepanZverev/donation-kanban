@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
+import { MODERATOR_NICKNAME_MAX_LENGTH } from '../../defaults'
 import { useInvite } from '../../hooks/useInvite'
 import styles from './InvitePage.module.css'
 
@@ -45,7 +46,7 @@ export function InvitePage() {
               <input
                 className={styles.input}
                 value={nickname}
-                maxLength={40}
+                maxLength={MODERATOR_NICKNAME_MAX_LENGTH}
                 placeholder="Например, ник в чате"
                 onChange={(event) => setNickname(event.target.value)}
               />

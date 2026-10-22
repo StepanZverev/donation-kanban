@@ -1,13 +1,11 @@
 import type { PublicBoard } from '../../api/viewer'
+import { FOLLOW_MAX_PLACES } from '../../defaults'
 import type { PublicCard } from '../../types/card'
 import { getAmountToTop, getFollowState, type FollowState } from '../../utils/follow'
 import { formatMoney } from '../../utils/money'
 import { pluralize } from '../../utils/time'
 import { CloseIcon, EyeIcon, InfoIcon } from '../Icons/Icons'
 import styles from './FollowPanel.module.css'
-
-// Сколько мест показываем чипами, остальные — «ещё N»
-const MAX_PLACES = 5
 
 type FollowPanelProps = {
   board: PublicBoard
@@ -107,7 +105,7 @@ function PanelBody(props: PanelBodyProps) {
             Лучшая — <b>{best.place}-е</b> место · <ShowCardLink cardId={best.card.id} onShowCard={onShowCard} />
           </p>
           <div className={styles.places}>
-            {places.slice(0, MAX_PLACES).map((item) => (
+            {places.slice(0, FOLLOW_MAX_PLACES).map((item) => (
               <button
                 key={item.card.id}
                 className={`${styles.place} ${item === best ? styles.bestPlace : ''}`}
@@ -117,8 +115,8 @@ function PanelBody(props: PanelBodyProps) {
                 {item.place}-е
               </button>
             ))}
-            {places.length > MAX_PLACES && (
-              <span className={styles.morePlaces}>ещё {places.length - MAX_PLACES}</span>
+            {places.length > FOLLOW_MAX_PLACES && (
+              <span className={styles.morePlaces}>ещё {places.length - FOLLOW_MAX_PLACES}</span>
             )}
           </div>
         </>

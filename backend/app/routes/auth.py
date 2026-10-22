@@ -13,6 +13,7 @@ from fastapi.responses import RedirectResponse
 from .. import config
 from ..board import create_board, find_user_board, move_cards_to_board
 from ..db import Connection, Row, get_db
+from ..defaults import DA_LOGIN_TIMEOUT_SECONDS
 from ..donationalerts import client
 from ..donationalerts.listener import (
     donation_listeners,
@@ -41,7 +42,6 @@ router = APIRouter(prefix="/api/auth", tags=["DonationAlerts"])
 # Cookie со случайной строкой текущего входа (см. state в client.build_authorize_url).
 # Хранится в браузере, поэтому двое могут входить одновременно и не мешать друг другу.
 STATE_COOKIE = "da_oauth_state"
-STATE_MAX_AGE_SECONDS = 10 * 60
 
 
 @router.get("/status")
@@ -67,7 +67,7 @@ def login() -> RedirectResponse:
     response.set_cookie(
         STATE_COOKIE,
         state,
-        max_age=STATE_MAX_AGE_SECONDS,
+        max_age=DA_LOGIN_TIMEOUT_SECONDS,
         httponly=True,
         samesite="lax",
         secure=config.COOKIE_SECURE,

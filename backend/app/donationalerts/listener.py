@@ -23,6 +23,7 @@ from websockets.asyncio.client import connect as websocket_connect
 from .. import config
 from ..board import create_board, find_user_board
 from ..db import Row, now, open_db
+from ..defaults import DA_MISSED_PAGES, DA_RECONNECT_DELAY_SECONDS
 from ..donations import Donation, add_donation_card
 from ..realtime import board_updates
 from . import client
@@ -30,9 +31,7 @@ from . import client
 log = logging.getLogger("donationalerts")
 
 CENTRIFUGO_URL = "wss://centrifugo.donationalerts.com/connection/websocket"
-RECONNECT_DELAY_SECONDS = 5
-# Сколько страниц истории донатов просматривать при догрузке пропущенных
-MAX_MISSED_PAGES = 5
+
 
 class DonationListener:
     """Слушает донаты одного стримера (user_id — тот, кто подключил DonationAlerts)."""
@@ -78,7 +77,7 @@ class DonationListener:
                 log.exception("Связь с DonationAlerts прервалась, переподключаюсь")
                 self.status = "error"
 
-            await asyncio.sleep(RECONNECT_DELAY_SECONDS)
+            await asyncio.sleep(DA_RECONNECT_DELAY_SECONDS)
 
     async def listen(self, access_token: str) -> None:
         user = await client.get_user(access_token)
@@ -200,7 +199,7 @@ async def import_missed_donations(user_id: int, access_token: str) -> None:
     last_id = connection["last_donation_id"] if connection else 0
     missed: list[dict] = []
 
-    for page in range(1, MAX_MISSED_PAGES + 1):
+    for page in range(1, DA_MISSED_PAGES + 1):
         donations = await client.get_donations(access_token, page)
         newer = [donation for donation in donations if int(donation["id"]) > last_id]
         missed.extend(newer)

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { LOGIN_URL } from '../../api/auth'
 import type { CurrentUser } from '../../api/me'
+import { MODERATOR_NICKNAME_MAX_LENGTH } from '../../defaults'
 import { useBoard } from '../../hooks/useBoard'
 import { useDonationAlertsStatus } from '../../hooks/useDonationAlertsStatus'
 import { useMyNickname } from '../../hooks/useMyNickname'
@@ -57,7 +58,7 @@ export function ModeratorAccountMenu({ user, onLogout }: ModeratorAccountMenuPro
           <input
             id="my-nickname"
             className={styles.input}
-            maxLength={40}
+            maxLength={MODERATOR_NICKNAME_MAX_LENGTH}
             autoComplete="off"
             placeholder={user.name ?? 'Например, Вася с чата'}
             value={nicknameInput}

@@ -1,10 +1,8 @@
 import { useState, type FormEvent, type KeyboardEvent } from 'react'
+import { DONATION_RULES_MAX_LENGTH } from '../../defaults'
 import { useIntakeSettings } from '../../hooks/useIntakeSettings'
 import { ToggleField } from '../ToggleField/ToggleField'
 import styles from './IntakeSettingsFields.module.css'
-
-// Сколько символов можно написать в своих правилах (столько же разрешает бэкенд)
-const MAX_RULES_LENGTH = 500
 
 // Настройки «какие донаты становятся карточками» в разделе «Приём донатов»:
 // принимать ли заказы, минимальная сумма, анонимные донаты, свои правила для зрителей.
@@ -78,7 +76,7 @@ export function IntakeSettingsFields() {
           id="donation-rules"
           className={styles.rulesInput}
           rows={3}
-          maxLength={MAX_RULES_LENGTH}
+          maxLength={DONATION_RULES_MAX_LENGTH}
           placeholder="Например: на этой неделе ивент — заказываем только песни"
           value={rules}
           onChange={(event) => setRulesDraft(event.target.value)}
@@ -93,7 +91,7 @@ export function IntakeSettingsFields() {
             </button>
           )}
           <span className={styles.counter}>
-            {rules.length} / {MAX_RULES_LENGTH}
+            {rules.length} / {DONATION_RULES_MAX_LENGTH}
           </span>
         </div>
       </form>
