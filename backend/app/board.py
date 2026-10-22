@@ -14,12 +14,9 @@
 from fastapi import Depends, HTTPException
 
 from .db import Connection, Row, create_default_columns, get_db, now
+from .defaults import EMPTY_MESSAGE_TITLE
 from .schemas import BoardColumn, Card
 from .users import get_current_user
-
-# Заголовок карточки доната, если донатер ничего не написал
-EMPTY_MESSAGE_TITLE = "Донат без сообщения"
-
 
 def create_board(db: Connection, owner_id: int | None) -> int:
     """

@@ -25,18 +25,11 @@ import psycopg
 from psycopg.rows import dict_row
 
 from . import config
+from .defaults import DEFAULT_COLUMNS
 
 # Соединение с базой и строка из неё. Строку можно читать как словарь: row["title"].
 Connection = psycopg.Connection[dict[str, Any]]
 Row = dict[str, Any]
-
-# Колонки, с которыми доска создаётся впервые.
-DEFAULT_COLUMNS = [
-    ("Очередь", "incoming"),
-    ("В работе", "work"),
-    ("Выполнено", "done"),
-]
-
 
 def now() -> str:
     """
@@ -95,7 +88,7 @@ def get_db() -> Iterator[Connection]:
 
 
 def create_default_columns(db: Connection, board_id: int | None) -> None:
-    """Создаёт доске колонки «Очередь», «В работе» и «Выполнено»."""
+    """Создаёт доске колонки по умолчанию: «Очередь», «В работе» и «Выполнено» (см. defaults.py)."""
     for position, (title, kind) in enumerate(DEFAULT_COLUMNS):
         db.execute(
             "INSERT INTO board_columns (board_id, title, kind, position) VALUES (%s, %s, %s, %s)",

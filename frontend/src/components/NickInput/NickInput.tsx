@@ -1,4 +1,5 @@
 import { useState, type ChangeEvent, type KeyboardEvent } from 'react'
+import { DONOR_NAME_MAX_LENGTH } from '../../defaults'
 import { useDonorSuggestions } from '../../hooks/useDonorSuggestions'
 import styles from './NickInput.module.css'
 
@@ -26,7 +27,7 @@ export function NickInput(props: NickInputProps) {
         autoComplete="off"
         className={styles.input}
         value={value}
-        maxLength={100}
+        maxLength={DONOR_NAME_MAX_LENGTH}
         placeholder="Аноним"
         role="combobox"
         aria-expanded={showList}

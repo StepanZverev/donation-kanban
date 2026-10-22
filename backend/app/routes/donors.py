@@ -7,11 +7,9 @@ from fastapi import APIRouter, Depends
 
 from ..board import get_board_id
 from ..db import Connection, get_db
+from ..defaults import DONOR_SUGGESTIONS_LIMIT
 
 router = APIRouter(prefix="/api/boards/{board_id}/donors", tags=["Донатеры"])
-
-# Сколько ников показывать в подсказке
-SUGGESTIONS_LIMIT = 8
 
 
 @router.get("")
@@ -48,4 +46,4 @@ def list_donors(
             continue
         seen.add(key)
         (starts_with if key.startswith(query) else contains).append(name)
-    return (starts_with + contains)[:SUGGESTIONS_LIMIT]
+    return (starts_with + contains)[:DONOR_SUGGESTIONS_LIMIT]

@@ -6,6 +6,7 @@ import { getBoardUpdatesPath } from '../api/boards'
 import * as cardsApi from '../api/cards'
 import * as columnsApi from '../api/columns'
 import * as historyApi from '../api/history'
+import { MAX_UNDOABLE_ACTIONS } from '../defaults'
 import type { BoardColumn, Card, CardDraft } from '../types/card'
 import { describeCard } from '../utils/donor'
 import { findSameDonorCards, isSameDonor } from '../utils/merging'
@@ -26,9 +27,6 @@ export type UndoableAction = {
   message: string
   undo: () => Promise<unknown>
 }
-
-// Сколько последних действий можно отменить. Более старые просто забываются.
-const MAX_UNDOABLE_ACTIONS = 5
 
 export function useCards() {
   const { id: boardId } = useBoard()

@@ -1,11 +1,11 @@
 // Подсказки ников под полем «Ник»: ищем, пока человек печатает.
-// Запрос уходит не на каждую букву, а когда он остановился на DEBOUNCE_MS.
+// Запрос уходит не на каждую букву, а когда человек перестал печатать
+// (задержка DONOR_SUGGESTIONS_DELAY_MS в src/defaults.ts).
 
 import { useEffect, useState } from 'react'
 import { getDonorSuggestions } from '../api/donors'
+import { DONOR_SUGGESTIONS_DELAY_MS } from '../defaults'
 import { useBoard } from './useBoard'
-
-const DEBOUNCE_MS = 200
 
 export function useDonorSuggestions(query: string) {
   const { id: boardId } = useBoard()
@@ -23,7 +23,7 @@ export function useDonorSuggestions(query: string) {
         })
         // Нет подсказок — ничего страшного, ник можно вписать руками
         .catch(() => {})
-    }, DEBOUNCE_MS)
+    }, DONOR_SUGGESTIONS_DELAY_MS)
 
     return () => {
       isCurrent = false

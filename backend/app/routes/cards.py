@@ -18,8 +18,9 @@ from ..board import (
     get_moderator_name,
 )
 from ..db import Connection, get_db, now
+from ..defaults import STREAMER_CURRENCY
 from ..donations import split_message
-from ..merging import STREAMER_CURRENCY, merge_cards, split_cards
+from ..merging import merge_cards, split_cards
 from ..realtime import notify_board_changed
 from ..schemas import (
     Card,

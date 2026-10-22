@@ -1,8 +1,6 @@
+import { EMPTY_MESSAGE_TITLE } from '../defaults'
 import type { Card } from '../types/card'
 import { formatMoney } from './money'
-
-// Заголовок доната без сообщения (backend/app/board.py, EMPTY_MESSAGE_TITLE)
-const EMPTY_MESSAGE_TITLE = 'Донат без сообщения'
 
 // Ник донатера для экрана. Нет ника — это аноним, и неважно,
 // пришёл донат из DonationAlerts или карточку создали вручную.

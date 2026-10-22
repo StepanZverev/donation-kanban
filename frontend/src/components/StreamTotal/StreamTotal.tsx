@@ -1,3 +1,4 @@
+import { STREAMER_CURRENCY } from '../../defaults'
 import { useStreamTotal } from '../../hooks/useStreamTotal'
 import { formatMoney } from '../../utils/money'
 import { pluralize } from '../../utils/time'
@@ -17,7 +18,7 @@ export function StreamTotal() {
 
   return (
     <div className={styles.total} title="Сумма за стрим">
-      <span className={styles.amount}>{formatMoney(total, 'RUB')}</span>
+      <span className={styles.amount}>{formatMoney(total, STREAMER_CURRENCY)}</span>
       <span className={styles.count}>
         {donationCount} {pluralize(donationCount, ['донат', 'доната', 'донатов'])}
       </span>

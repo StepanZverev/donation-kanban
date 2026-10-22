@@ -21,11 +21,10 @@ from fastapi import Depends, Request, Response
 
 from . import config
 from .db import Connection, Row, get_db, now
+from .defaults import SESSION_DAYS
 
 # Имя cookie, в которой браузер хранит токен сессии
 SESSION_COOKIE = "session"
-# Сколько живёт сессия. Гостю нельзя войти заново, поэтому срок долгий.
-SESSION_DAYS = 365
 
 DONATIONALERTS = "donationalerts"
 

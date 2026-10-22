@@ -17,14 +17,11 @@ from ..board import (
     get_owned_board_id,
 )
 from ..db import Connection, get_db, now
+from ..defaults import MAX_WORK_COLUMNS
 from ..realtime import notify_board_changed
 from ..schemas import BoardColumn, ColumnCreate, ColumnOrder, ColumnUpdate
 
 router = APIRouter(prefix="/api/boards/{board_id}/columns", tags=["Колонки"])
-
-# Сколько может быть промежуточных колонок. Меньше всего — ни одной:
-# тогда на доске остаются только «Очередь» и «Выполнено».
-MAX_WORK_COLUMNS = 3
 
 
 @router.get("")

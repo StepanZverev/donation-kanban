@@ -6,7 +6,7 @@
 // потом — null.
 
 import { useEffect, useState } from 'react'
-import { GLOW_SECONDS } from '../utils/time'
+import { GLOW_SECONDS } from '../defaults'
 
 export function useHighlightSince(seenAt: string | null) {
   // useState запоминает значение только при первой отрисовке страницы

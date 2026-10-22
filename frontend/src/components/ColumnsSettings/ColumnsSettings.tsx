@@ -1,5 +1,6 @@
 import { useState, type KeyboardEvent } from 'react'
-import { MAX_WORK_COLUMNS, useColumnSettings } from '../../hooks/useColumnSettings'
+import { COLUMN_TITLE_MAX_LENGTH, MAX_WORK_COLUMNS } from '../../defaults'
+import { useColumnSettings } from '../../hooks/useColumnSettings'
 import type { BoardColumn } from '../../types/card'
 import { ColumnDialog } from '../ColumnDialog/ColumnDialog'
 import { ColumnsBoardView } from '../ColumnsBoardView/ColumnsBoardView'
@@ -149,7 +150,7 @@ function WorkColumnRow(props: WorkColumnRowProps) {
         onChange={(event) => setTitle(event.target.value)}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        maxLength={40}
+        maxLength={COLUMN_TITLE_MAX_LENGTH}
         aria-label="Название колонки"
       />
 
