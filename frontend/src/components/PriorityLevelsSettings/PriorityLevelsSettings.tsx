@@ -44,80 +44,89 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
 
   return (
     <>
-      {/* Каждый уровень нарисован как карточка доната этого уровня:
-          полоска слева и сумма его цветом. Так сразу видно, как будет выглядеть доска. */}
-      <div className={styles.list}>
+      {/* Один уровень — одна строка, как список колонок на телефоне:
+          цвет, название, с какой суммы и образец карточки этого уровня */}
+      <ol className={styles.list}>
         {draft.map((level, index) => (
-          <div
+          <li
             key={index}
-            className={styles.card}
-            // CSS-переменная с цветом уровня, её используют .card и .amount
+            className={styles.row}
+            // CSS-переменная с цветом уровня, её использует образец карточки
             style={{ '--level-color': level.color } as CSSProperties}
           >
-            <div className={styles.top}>
-              {/* autoComplete="off" во всех полях приложения: иначе Chrome принимает их
-                  за адрес или номер машины и предлагает «сохранить данные» */}
+            {/* Квадратик цвета. Поверх него лежит прозрачный выбор цвета браузера:
+                по клику открывается палитра, можно выбрать любой цвет */}
+            <label className={styles.colorSwatch} title="Цвет уровня">
               <input
-                autoComplete="off"
-                // У нового уровня выделяем название целиком: можно сразу печатать своё
-                ref={index === newLevelIndex ? selectText : undefined}
-                className={styles.nameInput}
-                value={level.name}
-                maxLength={PRIORITY_LEVEL_NAME_MAX_LENGTH}
-                onChange={(event) => handleChange(index, { name: event.target.value })}
-                aria-label="Название уровня"
+                type="color"
+                className={styles.colorInput}
+                value={level.color}
+                onChange={(event) => handleChange(index, { color: event.target.value })}
+                aria-label="Цвет уровня"
               />
-              {/* Пример: так будет выглядеть сумма на карточке этого уровня */}
-              <span className={styles.amount}>{formatMoney(level.minAmount, STREAMER_CURRENCY)}</span>
+            </label>
+
+            {/* autoComplete="off" во всех полях приложения: иначе Chrome принимает их
+                за адрес или номер машины и предлагает «сохранить данные» */}
+            <input
+              autoComplete="off"
+              // У нового уровня выделяем название целиком: можно сразу печатать своё
+              ref={index === newLevelIndex ? selectText : undefined}
+              className={styles.nameInput}
+              value={level.name}
+              maxLength={PRIORITY_LEVEL_NAME_MAX_LENGTH}
+              onChange={(event) => handleChange(index, { name: event.target.value })}
+              aria-label="Название уровня"
+            />
+
+            {/* Первый уровень всегда с 0, его сумму не меняем */}
+            {index === 0 ? (
+              <span className={styles.zero}>от {formatMoney(0, STREAMER_CURRENCY)}</span>
+            ) : (
+              // «₽» стоит внутри рамки поля, справа от числа
+              <label className={styles.amountBox}>
+                <input
+                  autoComplete="off"
+                  type="number"
+                  className={styles.amountInput}
+                  min={1}
+                  value={level.minAmount}
+                  onChange={(event) => handleChange(index, { minAmount: Number(event.target.value) })}
+                  aria-label="С какой суммы"
+                />
+                ₽
+              </label>
+            )}
+
+            {/* Образец: так выглядит карточка этого уровня на доске */}
+            <div className={styles.sample} aria-hidden="true">
+              <span className={styles.sampleName}>Донатер</span>
+              <span className={styles.sampleAmount}>{formatMoney(level.minAmount, STREAMER_CURRENCY)}</span>
             </div>
 
-            <div className={styles.bottom}>
-              {/* Встроенный в браузер выбор цвета: по клику открывается палитра */}
-              <label className={styles.field}>
-                Цвет
-                <input
-                  type="color"
-                  className={styles.colorInput}
-                  value={level.color}
-                  onChange={(event) => handleChange(index, { color: event.target.value })}
-                />
-              </label>
-
-              <label className={styles.field}>
-                От суммы
-                {/* Первый уровень всегда с 0, его сумму не меняем */}
-                {index === 0 ? (
-                  <span className={styles.zero}>{formatMoney(0, STREAMER_CURRENCY)}, всегда</span>
-                ) : (
-                  <input
-                    autoComplete="off"
-                    type="number"
-                    className={styles.amountInput}
-                    min={1}
-                    value={level.minAmount}
-                    onChange={(event) => handleChange(index, { minAmount: Number(event.target.value) })}
-                  />
-                )}
-              </label>
-
+            {/* Первый уровень удалить нельзя: вместо корзины пустое место того же размера */}
+            {index === 0 ? (
+              <span className={styles.iconPlaceholder} />
+            ) : (
               <button
                 type="button"
                 className={styles.iconButton}
-                title={index === 0 ? 'Первый уровень удалить нельзя' : 'Удалить уровень'}
+                title="Удалить уровень"
                 aria-label="Удалить уровень"
-                disabled={index === 0}
                 onClick={() => handleRemove(index)}
               >
                 <TrashIcon />
               </button>
-            </div>
-          </div>
+            )}
+          </li>
         ))}
-      </div>
 
-      <button type="button" className={styles.addButton} onClick={handleAdd}>
-        + Добавить уровень
-      </button>
+        <li>
+          <button type="button" className={styles.addButton} onClick={handleAdd}>
+            + Добавить уровень
+          </button>
+        </li>
+      </ol>
 
       {error && <p className="error-message">{error}</p>}
 
