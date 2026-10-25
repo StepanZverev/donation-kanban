@@ -1,31 +1,19 @@
 // Сумма за стрим в шапке и сброс доски.
 
-import { useCallback, useEffect, useState } from 'react'
-import { getBoardUpdatesPath } from '../api/boards'
 import * as streamApi from '../api/stream'
 import type { StreamTotal } from '../api/stream'
 import { useBoard } from './useBoard'
-import { useBoardUpdates } from './useBoardUpdates'
+import { useBoardData } from './useBoardData'
 
 export function useStreamTotal() {
   const { id: boardId } = useBoard()
-  // null — ещё не загрузили (или бэкенд не отвечает)
-  const [streamTotal, setStreamTotal] = useState<StreamTotal | null>(null)
-
-  const reload = useCallback(() => {
-    streamApi
-      .getStreamTotal(boardId)
-      .then(setStreamTotal)
-      // Бэкенд не отвечает — об этом и так скажет доска, сумму просто не покажем
-      .catch(() => {})
-  }, [boardId])
-
-  useEffect(() => {
-    reload()
-  }, [reload])
-
-  // Пришёл донат, карточку объединили или сбросили доску в другой вкладке
-  useBoardUpdates(reload, getBoardUpdatesPath(boardId))
+  // streamTotal: null — ещё не загрузили (или бэкенд не отвечает).
+  // Об ошибке молчим: что бэкенд не отвечает, и так скажет доска, сумму просто не покажем.
+  const { data: streamTotal, setData: setStreamTotal } = useBoardData<StreamTotal | null>(
+    streamApi.getStreamTotal,
+    null,
+    null,
+  )
 
   async function resetBoard() {
     try {

@@ -1,63 +1,51 @@
 // Раздел настроек «Модераторы»: ссылка-приглашение и список модераторов.
 
-import { useCallback, useEffect, useState } from 'react'
 import * as boardsApi from '../api/boards'
 import type { BoardMember } from '../api/boards'
 import { useBoard } from './useBoard'
-import { useBoardUpdates } from './useBoardUpdates'
+import { useBoardData } from './useBoardData'
+
+type Members = {
+  members: BoardMember[]
+  // Секретная часть ссылки-приглашения. null — приглашения выключены.
+  inviteToken: string | null
+}
+
+// Список и ссылка в разделе рядом, поэтому грузим их вместе
+async function loadMembers(boardId: number): Promise<Members> {
+  const [members, inviteToken] = await Promise.all([boardsApi.getMembers(boardId), boardsApi.getInviteToken(boardId)])
+  return { members, inviteToken }
+}
 
 export function useMembers() {
   const { id: boardId } = useBoard()
-  const [members, setMembers] = useState<BoardMember[]>([])
-  // Секретная часть ссылки-приглашения. null — приглашения выключены (или ещё не загрузили).
-  const [inviteToken, setInviteToken] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  // Кто-то принял приглашение — список обновится сам (useBoardData перечитывает его)
+  const { data, isLoading, error, save } = useBoardData<Members>(
+    loadMembers,
+    { members: [], inviteToken: null },
+    'Не удалось загрузить модераторов. Проверь, что бэкенд запущен.',
+  )
 
-  const reload = useCallback(() => {
-    return Promise.all([boardsApi.getMembers(boardId), boardsApi.getInviteToken(boardId)])
-      .then(([freshMembers, freshToken]) => {
-        setMembers(freshMembers)
-        setInviteToken(freshToken)
-        setError(null)
-      })
-      .catch(() => setError('Не удалось загрузить модераторов. Проверь, что бэкенд запущен.'))
-      .finally(() => setIsLoading(false))
-  }, [boardId])
-
-  useEffect(() => {
-    reload()
-  }, [reload])
-
-  // Кто-то принял приглашение — список обновится сам
-  useBoardUpdates(reload, boardsApi.getBoardUpdatesPath(boardId))
-
-  async function createInviteLink() {
-    try {
-      setInviteToken(await boardsApi.createInviteLink(boardId))
-    } catch {
-      setError('Не удалось сделать ссылку. Попробуй ещё раз.')
-    }
+  function createInviteLink() {
+    return save(() => boardsApi.createInviteLink(boardId), 'Не удалось сделать ссылку. Попробуй ещё раз.')
   }
 
-  // Вместе со ссылкой бэкенд убирает и всех модераторов, поэтому перечитываем и список
-  async function deleteInviteLink() {
-    try {
-      await boardsApi.deleteInviteLink(boardId)
-      await reload()
-    } catch {
-      setError('Не удалось удалить ссылку. Попробуй ещё раз.')
-    }
+  // Вместе со ссылкой бэкенд убирает и всех модераторов: после перезагрузки пропадёт и список
+  function deleteInviteLink() {
+    return save(() => boardsApi.deleteInviteLink(boardId), 'Не удалось удалить ссылку. Попробуй ещё раз.')
   }
 
-  async function removeMember(userId: number) {
-    try {
-      await boardsApi.removeMember(boardId, userId)
-      await reload()
-    } catch {
-      setError('Не удалось убрать модератора. Попробуй ещё раз.')
-    }
+  function removeMember(userId: number) {
+    return save(() => boardsApi.removeMember(boardId, userId), 'Не удалось убрать модератора. Попробуй ещё раз.')
   }
 
-  return { members, inviteToken, isLoading, error, createInviteLink, deleteInviteLink, removeMember }
+  return {
+    members: data.members,
+    inviteToken: data.inviteToken,
+    isLoading,
+    error,
+    createInviteLink,
+    deleteInviteLink,
+    removeMember,
+  }
 }

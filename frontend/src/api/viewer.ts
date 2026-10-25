@@ -3,6 +3,7 @@
 
 import type { BoardColumn, PublicCard } from '../types/card'
 import type { PriorityLevel } from '../utils/priority'
+import { request, requestOrNull } from './request'
 import { toPriorityLevel, type PriorityLevelFromApi } from './settings'
 
 export type ViewerSettings = {
@@ -21,37 +22,28 @@ function toViewerSettings(settings: ViewerSettingsFromApi): ViewerSettings {
   return { publicToken: settings.public_token, donationUrl: settings.donation_url }
 }
 
-// Общая обработка ответа настроек: ошибку бэкенда (например, «нужна ссылка на DonationAlerts»)
-// кладём в текст ошибки, чтобы показать её пользователю.
-async function readViewerSettings(response: Response): Promise<ViewerSettings> {
-  if (!response.ok) {
-    const body = await response.json().catch(() => null)
-    const reason = typeof body?.detail === 'string' ? body.detail : `ошибка ${response.status}`
-    throw new Error(reason)
-  }
-  return toViewerSettings(await response.json())
+// Все запросы настроек отвечают одинаково: какими настройки стали.
+// Если бэкенд не согласен (например, «нужна ссылка на DonationAlerts»),
+// его объяснение будет в ошибке (см. getErrorDetail в api/request.ts).
+async function requestViewerSettings(method: string, url: string, body?: unknown): Promise<ViewerSettings> {
+  return toViewerSettings(await request<ViewerSettingsFromApi>(method, url, body))
 }
 
 export async function getViewerSettings(boardId: number): Promise<ViewerSettings> {
-  return readViewerSettings(await fetch(`/api/boards/${boardId}/settings/viewer`))
+  return requestViewerSettings('GET', `/api/boards/${boardId}/settings/viewer`)
 }
 
 export async function saveDonationUrl(boardId: number, url: string): Promise<ViewerSettings> {
-  const response = await fetch(`/api/boards/${boardId}/settings/viewer/donation-url`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url }),
-  })
-  return readViewerSettings(response)
+  return requestViewerSettings('PUT', `/api/boards/${boardId}/settings/viewer/donation-url`, { url })
 }
 
 // Включает ссылку для зрителей или делает новую (старая перестаёт работать)
 export async function createPublicLink(boardId: number): Promise<ViewerSettings> {
-  return readViewerSettings(await fetch(`/api/boards/${boardId}/settings/viewer/link`, { method: 'POST' }))
+  return requestViewerSettings('POST', `/api/boards/${boardId}/settings/viewer/link`)
 }
 
 export async function deletePublicLink(boardId: number): Promise<ViewerSettings> {
-  return readViewerSettings(await fetch(`/api/boards/${boardId}/settings/viewer/link`, { method: 'DELETE' }))
+  return requestViewerSettings('DELETE', `/api/boards/${boardId}/settings/viewer/link`)
 }
 
 // Полный адрес страницы для зрителей, его стример копирует и выкладывает
@@ -119,14 +111,10 @@ type PublicBoardFromApi = {
 
 // Доска для зрителя. null — ссылка не работает (неверная или стример её выключил).
 export async function getPublicBoard(token: string): Promise<PublicBoard | null> {
-  const response = await fetch(`/api/public/boards/${encodeURIComponent(token)}`)
-  if (response.status === 404) {
+  const board = await requestOrNull<PublicBoardFromApi>('GET', `/api/public/boards/${encodeURIComponent(token)}`)
+  if (board === null) {
     return null
   }
-  if (!response.ok) {
-    throw new Error(`Не удалось загрузить доску: ${response.status}`)
-  }
-  const board: PublicBoardFromApi = await response.json()
   return {
     streamerName: board.streamer_name,
     streamerAvatarUrl: board.streamer_avatar_url,

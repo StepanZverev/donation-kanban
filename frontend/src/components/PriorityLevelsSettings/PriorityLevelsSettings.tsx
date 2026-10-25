@@ -1,4 +1,5 @@
 import { useState, type CSSProperties } from 'react'
+import { getErrorDetail } from '../../api/request'
 import { NEW_LEVEL_COLOR, PRIORITY_LEVEL_NAME_MAX_LENGTH, STREAMER_CURRENCY } from '../../defaults'
 import { usePriorityLevels } from '../../hooks/usePriorityLevels'
 import { formatMoney } from '../../utils/money'
@@ -161,7 +162,8 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
     try {
       await onSave(draft)
     } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : 'Не удалось сохранить')
+      // Бэкенд обычно объясняет, что не так: например, нет уровня от 0
+      setError(`Не удалось сохранить: ${getErrorDetail(saveError) ?? 'проверь суммы, названия и цвета'}`)
       setIsSaving(false)
     }
   }

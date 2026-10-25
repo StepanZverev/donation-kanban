@@ -1,44 +1,36 @@
 // Раздел настроек «Для зрителей»: ссылка для зрителей и ссылка на донат.
 
-import { useCallback, useEffect, useState } from 'react'
-import { getBoardUpdatesPath } from '../api/boards'
+import { getErrorDetail } from '../api/request'
 import * as viewerApi from '../api/viewer'
 import type { ViewerSettings } from '../api/viewer'
 import { useBoard } from './useBoard'
-import { useBoardUpdates } from './useBoardUpdates'
+import { useBoardData } from './useBoardData'
 
 export function useViewerSettings() {
   const { id: boardId } = useBoard()
-  // null — ещё не загрузили
-  const [settings, setSettings] = useState<ViewerSettings | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  const reload = useCallback(() => {
-    return viewerApi
-      .getViewerSettings(boardId)
-      .then((loaded) => {
-        setSettings(loaded)
-        setError(null)
-      })
-      .catch(() => setError('Не удалось загрузить настройки. Проверь, что бэкенд запущен.'))
-  }, [boardId])
-
-  useEffect(() => {
-    reload()
-  }, [reload])
-
-  // Настройки могли поменять в другой вкладке
-  useBoardUpdates(reload, getBoardUpdatesPath(boardId))
+  // settings: null — ещё не загрузили
+  const {
+    data: settings,
+    setData: setSettings,
+    error,
+    setError,
+  } = useBoardData<ViewerSettings | null>(
+    viewerApi.getViewerSettings,
+    null,
+    'Не удалось загрузить настройки. Проверь, что бэкенд запущен.',
+  )
 
   // Все действия устроены одинаково: отправить запрос и показать то, что вернул сервер.
-  // Ошибку показываем рядом с настройками. Возвращает true, если сохранилось.
+  // Ошибку показываем рядом с настройками, с объяснением бэкенда, если оно есть.
+  // Возвращает true, если сохранилось.
   async function run(request: () => Promise<ViewerSettings>) {
     try {
       setSettings(await request())
       setError(null)
       return true
     } catch (requestError) {
-      setError(`Не удалось сохранить: ${(requestError as Error).message}`)
+      const detail = getErrorDetail(requestError)
+      setError(detail ? `Не удалось сохранить: ${detail}` : 'Не удалось сохранить. Попробуй ещё раз.')
       return false
     }
   }

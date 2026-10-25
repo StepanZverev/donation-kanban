@@ -1,6 +1,7 @@
 // Запросы про текущего пользователя: кто я и выход.
 
 import { toBoardInfo, type BoardInfo, type BoardRole } from './boards'
+import { request } from './request'
 
 // Как пользователь приходит с сервера (snake_case, см. CurrentUser в backend/app/schemas.py)
 type CurrentUserFromApi = {
@@ -26,11 +27,7 @@ export type CurrentUser = {
 
 // Первый запрос сам создаёт гостя: бэкенд запомнит браузер по cookie
 export async function getMe(): Promise<CurrentUser> {
-  const response = await fetch('/api/me')
-  if (!response.ok) {
-    throw new Error(`Не удалось узнать, кто вошёл: ${response.status}`)
-  }
-  const user: CurrentUserFromApi = await response.json()
+  const user = await request<CurrentUserFromApi>('GET', '/api/me')
   return {
     id: user.id,
     name: user.name,
@@ -43,8 +40,5 @@ export async function getMe(): Promise<CurrentUser> {
 }
 
 export async function logout(): Promise<void> {
-  const response = await fetch('/api/me/logout', { method: 'POST' })
-  if (!response.ok) {
-    throw new Error(`Не удалось выйти: ${response.status}`)
-  }
+  await request('POST', '/api/me/logout')
 }
