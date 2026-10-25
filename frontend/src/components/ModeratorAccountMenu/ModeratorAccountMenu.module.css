@@ -52,13 +52,6 @@
   outline: none;
 }
 
-.primaryButton {
-  border-color: var(--color-accent);
-  background-color: var(--color-accent);
-  color: var(--color-on-accent);
-  white-space: nowrap;
-}
-
 /* «Взять из DonationAlerts» — выглядит как ссылка */
 .linkButton {
   padding: 0;

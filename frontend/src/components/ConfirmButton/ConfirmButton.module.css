@@ -27,11 +27,3 @@
   justify-content: flex-end;
   gap: 6px;
 }
-
-/* Красная кнопка подтверждения: действие убирает карточки с доски */
-.confirmButton {
-  border-color: var(--color-error);
-  background-color: var(--color-error);
-  color: var(--color-on-accent);
-  font-weight: 600;
-}

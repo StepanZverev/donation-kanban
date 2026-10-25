@@ -1,3 +1,4 @@
+import { SettingField } from '../SettingField/SettingField'
 import styles from './ToggleField.module.css'
 
 type ToggleFieldProps = {
@@ -10,16 +11,12 @@ type ToggleFieldProps = {
 
 // Строка настройки: название и пояснение слева, переключатель справа.
 // Внутри обычная галочка (checkbox), просто нарисованная как переключатель.
+// Строка — это <label>: клик в любом её месте переключает.
 export function ToggleField(props: ToggleFieldProps) {
   const { label, description, checked, onChange } = props
 
   return (
-    <label className={styles.field}>
-      <span className={styles.text}>
-        <span className={styles.label}>{label}</span>
-        <span className={styles.description}>{description}</span>
-      </span>
-
+    <SettingField layout="row" element="label" className={styles.field} label={label} description={description}>
       <input
         type="checkbox"
         role="switch"
@@ -27,6 +24,6 @@ export function ToggleField(props: ToggleFieldProps) {
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
       />
-    </label>
+    </SettingField>
   )
 }

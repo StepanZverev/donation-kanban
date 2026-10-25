@@ -21,13 +21,6 @@
   margin-bottom: 20px;
 }
 
-.error {
-  padding: 8px 12px;
-  border-radius: 6px;
-  background-color: var(--color-error-background);
-  color: var(--color-error);
-}
-
 /* Колонки делят ширину поровну */
 .board {
   display: flex;

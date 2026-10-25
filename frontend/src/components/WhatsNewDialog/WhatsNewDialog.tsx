@@ -1,6 +1,5 @@
-import { useEffect, useRef } from 'react'
 import { CHANGELOG } from '../../changelog'
-import { useBackdropClose } from '../../hooks/useBackdropClose'
+import { Modal } from '../Modal/Modal'
 import styles from './WhatsNewDialog.module.css'
 
 type WhatsNewDialogProps = {
@@ -10,41 +9,30 @@ type WhatsNewDialogProps = {
 // Окно «Что нового»: версии приложения и что в каждой поменялось, сверху самая новая.
 // Родитель показывает компонент, только пока окно открыто.
 export function WhatsNewDialog({ onClose }: WhatsNewDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null)
-  const backdropClose = useBackdropClose(onClose)
-
-  // showModal() открывает окно поверх страницы и затемняет фон
-  useEffect(() => {
-    dialogRef.current?.showModal()
-  }, [])
-
   return (
-    // onClose срабатывает и при нажатии Esc, а клик по серому фону закрывает окно
-    <dialog ref={dialogRef} className={styles.dialog} onClose={onClose} {...backdropClose}>
-      <div className={styles.content}>
-        <h2 className={styles.heading}>Что нового</h2>
-        <div className={styles.releases}>
-          {CHANGELOG.map((release) => (
-            <section key={release.version}>
-              <h3 className={styles.version}>
-                {release.version}
-                <span className={styles.date}> · {formatDate(release.date)}</span>
-              </h3>
-              <ul className={styles.changes}>
-                {release.changes.map((change) => (
-                  <li key={change}>{change}</li>
-                ))}
-              </ul>
-            </section>
-          ))}
-        </div>
-        <div className={styles.actions}>
-          <button type="button" onClick={onClose}>
-            Закрыть
-          </button>
-        </div>
+    // Заголовок и «Закрыть» стоят на месте, а список версий прокручивается между ними
+    <Modal heading="Что нового" width={480} onClose={onClose}>
+      <div className={styles.releases}>
+        {CHANGELOG.map((release) => (
+          <section key={release.version}>
+            <h3 className={styles.version}>
+              {release.version}
+              <span className={styles.date}> · {formatDate(release.date)}</span>
+            </h3>
+            <ul className={styles.changes}>
+              {release.changes.map((change) => (
+                <li key={change}>{change}</li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
-    </dialog>
+      <div className={styles.actions}>
+        <button type="button" onClick={onClose}>
+          Закрыть
+        </button>
+      </div>
+    </Modal>
   )
 }
 

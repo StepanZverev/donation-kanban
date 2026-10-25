@@ -105,7 +105,7 @@ export function HistoryPage(props: HistoryPageProps) {
         />
       </div>
 
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <p className={`error-message ${styles.error}`}>{error}</p>}
 
       {/* Прокручивается только список, фильтр и поиск остаются на месте */}
       <div className={styles.list}>

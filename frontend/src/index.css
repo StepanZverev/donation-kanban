@@ -132,6 +132,32 @@ button:disabled {
   opacity: 0.5;
 }
 
+/* Главная кнопка — с акцентной заливкой: «Сохранить», «Добавить», «Сделать ссылку».
+   Ставится обычным классом: <button className="primary-button"> */
+.primary-button {
+  border-color: var(--color-accent);
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+  white-space: nowrap;
+}
+
+/* Кнопка действия, которое не вернуть или которое убирает карточки с доски:
+   «Отклонить», «Очистить», «Удалить» */
+.danger-button {
+  border-color: var(--color-error);
+  background-color: var(--color-error);
+  color: var(--color-on-accent);
+  font-weight: 600;
+}
+
+/* Плашка с ошибкой: «Не удалось загрузить…», «Не удалось сохранить…» */
+.error-message {
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: var(--color-error-background);
+  color: var(--color-error);
+}
+
 /* Приложение ровно в высоту окна: у браузера не появляется своя прокрутка,
    а длинные списки прокручиваются внутри (колонки доски, список истории).
    Строки сверху вниз: шапка, страница (забирает всю оставшуюся высоту). */

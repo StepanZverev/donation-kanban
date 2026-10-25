@@ -1,26 +1,7 @@
-.dialog {
-  width: min(420px, calc(100vw - 32px));
-  padding: 0;
-  border: none;
-  border-radius: 12px;
-  background-color: var(--color-surface);
-  color: inherit;
-}
-
-.dialog::backdrop {
-  background-color: var(--color-backdrop);
-}
-
 .form {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 20px;
-}
-
-.heading {
-  margin: 0;
-  font-size: 18px;
 }
 
 .field {
@@ -44,14 +25,6 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-}
-
-/* Красная кнопка: карточка уходит с доски */
-.submit {
-  border-color: var(--color-error);
-  background-color: var(--color-error);
-  color: var(--color-on-accent);
-  font-weight: 600;
 }
 
 /* О какой карточке речь — под заголовком */

@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { CARD_TEXT_MAX_LENGTH } from '../../defaults'
 import type { CardDraft } from '../../types/card'
 import { getCurrencySymbol } from '../../utils/money'
+import { Modal } from '../Modal/Modal'
 import { NickInput } from '../NickInput/NickInput'
-import { useBackdropClose } from '../../hooks/useBackdropClose'
 import styles from './CardFormDialog.module.css'
 
 type CardFormDialogProps = {
@@ -15,28 +15,18 @@ type CardFormDialogProps = {
   onClose: () => void
 }
 
-// Модальное окно на встроенном в браузер теге <dialog>.
+// Окно с формой карточки: создание и редактирование.
 // Компонент показывается только пока открыт: родитель рендерит его или не рендерит.
 export function CardFormDialog(props: CardFormDialogProps) {
   const { heading, initialDraft, currency, onSubmit, onClose } = props
-  const dialogRef = useRef<HTMLDialogElement>(null)
-  const backdropClose = useBackdropClose(onClose)
   const [donorName, setDonorName] = useState(initialDraft.donorName)
   // Сумму храним строкой, как она написана в поле: так можно стереть её целиком
   const [amount, setAmount] = useState(initialDraft.amount === null ? '' : String(initialDraft.amount))
   const [text, setText] = useState(initialDraft.text)
 
-  // showModal() открывает окно поверх страницы и затемняет фон.
-  useEffect(() => {
-    dialogRef.current?.showModal()
-  }, [])
-
   return (
-    // onClose срабатывает и при нажатии Esc, а клик по серому фону — как «Отмена»
-    <dialog ref={dialogRef} className={styles.dialog} onClose={onClose} {...backdropClose}>
+    <Modal heading={heading} width={480} onClose={onClose}>
       <form className={styles.form} onSubmit={handleSubmit}>
-        <h2 className={styles.heading}>{heading}</h2>
-
         {/* Ник и сумма в одну строку */}
         <div className={styles.row}>
           <label className={`${styles.field} ${styles.nick}`}>
@@ -82,7 +72,7 @@ export function CardFormDialog(props: CardFormDialogProps) {
           </button>
         </div>
       </form>
-    </dialog>
+    </Modal>
   )
 
   function handleAmountChange(event: ChangeEvent<HTMLInputElement>) {

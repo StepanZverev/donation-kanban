@@ -5,6 +5,7 @@ import { usePriorityLevels } from '../../hooks/usePriorityLevels'
 import { formatMoney } from '../../utils/money'
 import type { PriorityLevel } from '../../utils/priority'
 import { TrashIcon } from '../Icons/Icons'
+import { SettingsSection } from '../SettingsSection/SettingsSection'
 import styles from './PriorityLevelsSettings.module.css'
 
 // Раздел «Уровни приоритета» на странице настроек.
@@ -12,17 +13,15 @@ export function PriorityLevelsSettings() {
   const { levels, saveLevels } = usePriorityLevels()
 
   return (
-    <section className={styles.section}>
-      <h2 className={styles.title}>Уровни приоритета</h2>
-      <p className={styles.hint}>
-        Цвет полоски и суммы на карточке зависит от суммы доната. Уровень действует от своей суммы до суммы
-        следующего уровня. Первый уровень всегда начинается с 0.
-      </p>
+    <SettingsSection
+      title="Уровни приоритета"
+      hint="Цвет полоски и суммы на карточке зависит от суммы доната. Уровень действует от своей суммы до суммы следующего уровня. Первый уровень всегда начинается с 0."
+    >
 
       {/* key: когда уровни на сервере поменялись (сохранили здесь или в другой вкладке),
           редактор создаётся заново и показывает свежие уровни */}
       <PriorityLevelsEditor key={JSON.stringify(levels)} levels={levels} onSave={saveLevels} />
-    </section>
+    </SettingsSection>
   )
 }
 
@@ -120,10 +119,10 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
         + Добавить уровень
       </button>
 
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <p className="error-message">{error}</p>}
 
       <div className={styles.footer}>
-        <button type="button" className={styles.saveButton} disabled={!isChanged || isSaving} onClick={handleSave}>
+        <button type="button" className="primary-button" disabled={!isChanged || isSaving} onClick={handleSave}>
           {isSaving ? 'Сохраняю…' : 'Сохранить'}
         </button>
         <button type="button" disabled={!isChanged || isSaving} onClick={handleReset}>

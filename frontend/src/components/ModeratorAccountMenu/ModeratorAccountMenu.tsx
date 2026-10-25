@@ -64,7 +64,7 @@ export function ModeratorAccountMenu({ user, onLogout }: ModeratorAccountMenuPro
             value={nicknameInput}
             onChange={(event) => setNicknameDraft(event.target.value)}
           />
-          <button type="submit" className={styles.primaryButton} disabled={nicknameDraft === null}>
+          <button type="submit" className="primary-button" disabled={nicknameDraft === null}>
             Сохранить
           </button>
         </div>

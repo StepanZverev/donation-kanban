@@ -1,17 +1,16 @@
 import { useState } from 'react'
 import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
 import { CheckIcon, CopyIcon, EyeIcon, EyeOffIcon } from '../Icons/Icons'
+import { SettingField } from '../SettingField/SettingField'
 import styles from './LinkSetting.module.css'
 
 type LinkSettingProps = {
   // Название блока, например «Ссылка для зрителей»
   label: string
-  // Сама ссылка. null — ссылки нет, показываем кнопку «Сделать ссылку»
+  // Сама ссылка. null — ссылки нет, видна одна кнопка «Сделать ссылку»
   url: string | null
-  // Пояснение под названием, когда ссылка есть и когда её нет.
-  // Без emptyDescription, пока ссылки нет, видна одна кнопка «Сделать ссылку».
+  // Пояснение под названием
   description: string
-  emptyDescription?: string
   // Секретная ссылка (например, приглашение модератора) по умолчанию скрыта,
   // чтобы стример случайно не показал её на стриме. Скопировать можно и не показывая.
   isSecret?: boolean
@@ -29,7 +28,6 @@ export function LinkSetting({
   label,
   url,
   description,
-  emptyDescription,
   isSecret = false,
   newLinkQuestion,
   deleteQuestion,
@@ -43,18 +41,10 @@ export function LinkSetting({
 
   if (url === null) {
     return (
-      <div className={styles.field}>
-        {emptyDescription && (
-          <>
-            <span className={styles.label}>{label}</span>
-            <span className={styles.description}>{emptyDescription}</span>
-          </>
-        )}
-        <div className={styles.buttons}>
-          <button type="button" className={styles.primaryButton} onClick={onCreate}>
-            Сделать ссылку
-          </button>
-        </div>
+      <div className={styles.empty}>
+        <button type="button" className="primary-button" onClick={onCreate}>
+          Сделать ссылку
+        </button>
       </div>
     )
   }
@@ -62,9 +52,7 @@ export function LinkSetting({
   const isHidden = isSecret && !isShown
 
   return (
-    <div className={styles.field}>
-      <span className={styles.label}>{label}</span>
-      <span className={styles.description}>{description}</span>
+    <SettingField layout="column" label={label} description={description}>
       {/* Поле и иконки внутри одной рамки: рамку рисует .inputBox, у самого поля её нет */}
       <div className={styles.inputBox}>
         <input
@@ -113,7 +101,7 @@ export function LinkSetting({
           Удалить
         </ConfirmButton>
       </div>
-    </div>
+    </SettingField>
   )
 
   function handleShowClick() {

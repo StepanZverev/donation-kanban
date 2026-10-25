@@ -325,10 +325,7 @@
   color: var(--color-text-secondary);
 }
 
+/* Плашка ошибки (error-message в index.css) — без лишних отступов: их задаёт .page */
 .error {
   margin: 0;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background-color: var(--color-error-background);
-  color: var(--color-error);
 }

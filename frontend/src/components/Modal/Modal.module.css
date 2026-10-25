@@ -1,0 +1,30 @@
+/* padding: 0 — содержимое занимает всё окно, иначе клик по краю окна
+   считался бы кликом по фону (см. useBackdropClose) */
+.dialog {
+  width: calc(100vw - 32px);
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--color-surface);
+  color: inherit;
+}
+
+/* Затемнение страницы под окном */
+.dialog::backdrop {
+  background-color: var(--color-backdrop);
+}
+
+/* Высокое окно («Что нового») не вылезает за экран: внутри него прокручивается список */
+.content {
+  box-sizing: border-box;
+  max-height: min(600px, calc(100vh - 64px));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 18px;
+}

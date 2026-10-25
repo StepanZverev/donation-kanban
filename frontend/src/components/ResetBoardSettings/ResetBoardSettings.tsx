@@ -3,6 +3,7 @@ import { useStreamTotal } from '../../hooks/useStreamTotal'
 import { formatMoney } from '../../utils/money'
 import { pluralize } from '../../utils/time'
 import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
+import { SettingField } from '../SettingField/SettingField'
 import styles from './ResetBoardSettings.module.css'
 
 // «Сбросить доску» в разделе «Приём донатов»: конец стрима, начинаем с чистого листа.
@@ -18,16 +19,17 @@ export function ResetBoardSettings() {
   const cardsWord = pluralize(boardCardCount, ['карточка', 'карточки', 'карточек'])
 
   return (
-    <div className={styles.field}>
-      <span className={styles.text}>
-        <span className={styles.label}>Сбросить доску</span>
-        <span className={styles.description}>
+    <SettingField
+      layout="row"
+      label="Сбросить доску"
+      description={
+        <>
           Сумма за стрим ({formatMoney(total, STREAMER_CURRENCY)}) обнулится, а все карточки уйдут с доски в
           историю: из «Выполнено» — как выполненные, остальные — как удалённые. Сейчас на доске{' '}
           {boardCardCount} {cardsWord}.
-        </span>
-      </span>
-
+        </>
+      }
+    >
       <ConfirmButton
         className={styles.button}
         title="Сбросить доску"
@@ -41,6 +43,6 @@ export function ResetBoardSettings() {
       >
         Сбросить
       </ConfirmButton>
-    </div>
+    </SettingField>
   )
 }

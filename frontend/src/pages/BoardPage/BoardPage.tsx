@@ -79,7 +79,7 @@ export function BoardPage(props: BoardPageProps) {
   return (
     // full-width: доске нужны боковые поля экрана под зоны «Удалить» и «Выполнено» (см. index.css)
     <div className={`${styles.page} full-width`} onDragOver={handleDragMove}>
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <p className={`error-message ${styles.error}`}>{error}</p>}
 
       {activeColumnId !== undefined && (
         <div className={styles.tabs}>
