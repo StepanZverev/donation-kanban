@@ -301,24 +301,3 @@ def unmerge(
 
     notify_board_changed(db, board_id)
     return restored
-
-
-@router.delete("/{card_id}")
-def remove_card(
-    card_id: int,
-    db: Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
-    moderator_name: str | None = Depends(get_moderator_name),
-) -> Card:
-    """
-    Убирает карточку с доски в историю (насовсем она не удаляется).
-    Если карточка была в «Выполнено», в истории пометим её как выполненную,
-    иначе — как удалённую.
-    """
-    card = get_board_card(db, board_id, card_id)
-    done_column_id = get_column_id_by_kind(db, board_id, "done")
-    reason = "done" if card.column_id == done_column_id else "deleted"
-    archive_card(db, card_id, reason, archived_by=moderator_name)
-
-    notify_board_changed(db, board_id)
-    return get_card(db, board_id, card_id)

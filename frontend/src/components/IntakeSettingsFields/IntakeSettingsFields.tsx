@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type KeyboardEvent } from 'react'
-import { DONATION_RULES_MAX_LENGTH } from '../../defaults'
+import { DONATION_RULES_MAX_LENGTH, STREAMER_CURRENCY } from '../../defaults'
 import { useIntakeSettings } from '../../hooks/useIntakeSettings'
+import { getCurrencySymbol } from '../../utils/money'
 import { ToggleField } from '../ToggleField/ToggleField'
 import styles from './IntakeSettingsFields.module.css'
 
@@ -54,7 +55,7 @@ export function IntakeSettingsFields() {
             onBlur={handleMinAmountBlur}
             onKeyDown={handleMinAmountKeyDown}
           />
-          <span className={styles.currency}>₽</span>
+          <span className={styles.currency}>{getCurrencySymbol(STREAMER_CURRENCY)}</span>
         </span>
       </label>
 

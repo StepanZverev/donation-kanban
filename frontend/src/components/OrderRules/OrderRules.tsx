@@ -1,6 +1,7 @@
 import type { PublicBoard } from '../../api/viewer'
+import { STREAMER_CURRENCY } from '../../defaults'
 import { useRulesCollapsed } from '../../hooks/useRulesCollapsed'
-import { formatMoney } from '../../utils/money'
+import { formatMoney, getCurrencySymbol } from '../../utils/money'
 import { ChevronDownIcon, InfoIcon } from '../Icons/Icons'
 import styles from './OrderRules.module.css'
 
@@ -49,7 +50,7 @@ export function OrderRules(props: OrderRulesProps) {
           <ul className={styles.list}>
             {minAmount && (
               <li>
-                <span className={styles.icon}>₽</span> Донат <b>от {minAmount}</b>
+                <span className={styles.icon}>{getCurrencySymbol(STREAMER_CURRENCY)}</span> Донат <b>от {minAmount}</b>
               </li>
             )}
             <li>

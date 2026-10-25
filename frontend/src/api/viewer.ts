@@ -3,6 +3,7 @@
 
 import type { BoardColumn, PublicCard } from '../types/card'
 import type { PriorityLevel } from '../utils/priority'
+import { toPriorityLevel, type PriorityLevelFromApi } from './settings'
 
 export type ViewerSettings = {
   // Секретная часть ссылки для зрителей (/v/<токен>). null — ссылка выключена.
@@ -106,7 +107,7 @@ type PublicBoardFromApi = {
     streamer_amount: number | null
     merge_count: number
   }[]
-  priority_levels: { min_amount: number; name: string; color: string }[]
+  priority_levels: PriorityLevelFromApi[]
   donation_url: string
   intake_open: boolean
   min_amount: number
@@ -143,11 +144,7 @@ export async function getPublicBoard(token: string): Promise<PublicBoard | null>
       streamerAmount: card.streamer_amount,
       mergeCount: card.merge_count,
     })),
-    priorityLevels: board.priority_levels.map((level) => ({
-      minAmount: level.min_amount,
-      name: level.name,
-      color: level.color,
-    })),
+    priorityLevels: board.priority_levels.map(toPriorityLevel),
     donationUrl: board.donation_url,
     intakeOpen: board.intake_open,
     minAmount: board.min_amount,

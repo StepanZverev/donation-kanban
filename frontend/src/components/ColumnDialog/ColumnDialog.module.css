@@ -49,6 +49,6 @@
 .submit {
   border-color: var(--color-accent);
   background-color: var(--color-accent);
-  color: #ffffff;
+  color: var(--color-on-accent);
   font-weight: 600;
 }

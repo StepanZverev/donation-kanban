@@ -10,8 +10,8 @@ Python говорит с ним через библиотеку psycopg. ORM н�
 Таблицы описаны не здесь, а в папке backend/migrations: при старте сервера
 недостающие миграции применяются сами (см. migrations.py).
 
-Пара отличий от SQLite, которые важно помнить, когда пишешь запрос:
-- значения подставляются через %s, а не через ?: "SELECT * FROM cards WHERE id = %s";
+Что важно помнить, когда пишешь запрос:
+- значения подставляются через %s: "SELECT * FROM cards WHERE id = %s" (никогда не вклеивай их в текст запроса сам);
 - id только что добавленной строки узнаём через RETURNING id (см. create_board);
 - знак % в самом тексте запроса нужно писать как %%, иначе psycopg примет его за подстановку.
 """
@@ -79,12 +79,8 @@ def get_db() -> Iterator[Connection]:
     `db: Connection = Depends(get_db)`. После ответа изменения
     сохраняются (commit), а соединение закрывается.
     """
-    connection = connect()
-    try:
+    with open_db() as connection:
         yield connection
-        connection.commit()
-    finally:
-        connection.close()
 
 
 def create_default_columns(db: Connection, board_id: int | None) -> None:
@@ -112,6 +108,15 @@ def set_board_setting(db: Connection, board_id: int, key: str, value: str) -> No
         """,
         (board_id, key, value),
     )
+
+
+def find_board_by_setting(db: Connection, key: str, value: str) -> int | None:
+    """
+    Доска, у которой настройка key равна value, или None. Так находим доску
+    по секретной ссылке: для зрителей (public_token) или приглашению модератора (invite_token).
+    """
+    row = db.execute("SELECT board_id FROM board_settings WHERE key = %s AND value = %s", (key, value)).fetchone()
+    return row["board_id"] if row else None
 
 
 def delete_board_setting(db: Connection, board_id: int, key: str) -> None:

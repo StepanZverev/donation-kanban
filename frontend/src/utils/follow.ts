@@ -2,6 +2,7 @@
 
 import type { PublicBoard } from '../api/viewer'
 import type { BoardColumn, PublicCard } from '../types/card'
+import { isSameDonorName } from './donor'
 
 // Карточка ника в «Очереди» и её место (1 — самая верхняя)
 export type QueuePlace = {
@@ -22,7 +23,7 @@ export type FollowState =
 
 // Тот же ли это ник. Без учёта регистра, как при слиянии (utils/merging.ts)
 export function isFollowedDonor(card: PublicCard, followedName: string) {
-  return card.donorName !== null && card.donorName.toLowerCase() === followedName.toLowerCase()
+  return isSameDonorName(card.donorName, followedName)
 }
 
 // getColumnCards отдаёт карточки колонки в том порядке, в каком они на доске сверху вниз

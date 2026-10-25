@@ -87,7 +87,7 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
                 От суммы
                 {/* Первый уровень всегда с 0, его сумму не меняем */}
                 {index === 0 ? (
-                  <span className={styles.zero}>0 ₽, всегда</span>
+                  <span className={styles.zero}>{formatMoney(0, STREAMER_CURRENCY)}, всегда</span>
                 ) : (
                   <input
                     autoComplete="off"

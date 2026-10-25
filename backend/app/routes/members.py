@@ -19,7 +19,17 @@ import anyio.to_thread
 from fastapi import APIRouter, Depends, HTTPException, WebSocket
 
 from ..board import MODERATOR, OWNER, get_board_id, get_board_role, get_owned_board_id
-from ..db import Connection, Row, delete_board_setting, get_board_setting, get_db, now, open_db, set_board_setting
+from ..db import (
+    Connection,
+    Row,
+    delete_board_setting,
+    find_board_by_setting,
+    get_board_setting,
+    get_db,
+    now,
+    open_db,
+    set_board_setting,
+)
 from ..realtime import notify_board_changed, send_updates_until_closed
 from ..schemas import AcceptInvite, BoardInfo, BoardMember, Invite, InviteSettings, MemberNickname
 from ..users import SESSION_COOKIE, find_session_user, get_current_user
@@ -62,14 +72,17 @@ def list_moderated_boards(db: Connection, user_id: int) -> list[BoardInfo]:
     return [get_board_info(db, row["board_id"], user_id) for row in rows]
 
 
+def clean_nickname(nickname: str | None) -> str | None:
+    """Имя модератора без пробелов по краям. Пустое имя или одни пробелы — None: не представился."""
+    return (nickname or "").strip() or None
+
+
 def find_board_by_invite(db: Connection, token: str) -> int:
     """Доска, на которую зовёт ссылка. Неверная или выключенная ссылка — ошибка 404."""
-    row = db.execute(
-        "SELECT board_id FROM board_settings WHERE key = %s AND value = %s", (INVITE_TOKEN_KEY, token)
-    ).fetchone()
-    if row is None:
+    board_id = find_board_by_setting(db, INVITE_TOKEN_KEY, token)
+    if board_id is None:
         raise HTTPException(status_code=404, detail="Приглашение не работает")
-    return row["board_id"]
+    return board_id
 
 
 @router.get("")
@@ -124,11 +137,9 @@ def change_my_nickname(
     """
     if get_board_role(db, board_id, user["id"]) != MODERATOR:
         raise HTTPException(status_code=403, detail="Имя на доске есть только у модератора")
-    # Пустое имя или одни пробелы — как будто не представился
-    nickname = body.nickname.strip() if body.nickname else None
     db.execute(
         "UPDATE board_members SET nickname = %s WHERE board_id = %s AND user_id = %s",
-        (nickname or None, board_id, user["id"]),
+        (clean_nickname(body.nickname), board_id, user["id"]),
     )
     # Хозяин в настройках сразу увидит новое имя
     notify_board_changed(db, board_id)
@@ -240,10 +251,7 @@ def accept_invite(
     В body модератор может написать, как его называть (иначе стример увидит «Гость»).
     """
     board_id = find_board_by_invite(db, token)
-    # Пустое имя или одни пробелы — считаем, что не представился
-    nickname = None
-    if body is not None and body.nickname:
-        nickname = body.nickname.strip() or None
+    nickname = clean_nickname(body.nickname) if body is not None else None
     if get_board_role(db, board_id, user["id"]) is None:
         # ON CONFLICT DO NOTHING: если «Принять» нажали дважды подряд, второй раз ничего не делает
         db.execute(

@@ -102,12 +102,6 @@ export async function moveCard(boardId: number, id: number, columnId: number): P
   return toCard(card)
 }
 
-// Убирает карточку с доски в историю.
-export async function removeCard(boardId: number, id: number): Promise<Card> {
-  const card = await request<CardFromApi>('DELETE', `/api/boards/${boardId}/cards/${id}`)
-  return toCard(card)
-}
-
 // Убирает карточку в историю с явной пометкой — так работают зоны по краям доски
 // и «Отклонить» в меню. note — причина отказа (нужна только для 'rejected').
 export async function archiveCard(

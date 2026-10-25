@@ -40,7 +40,7 @@
 .logoMark svg {
   width: 16px;
   height: 16px;
-  fill: #ffffff;
+  fill: var(--color-on-accent);
 }
 
 /* Правая часть прижата к правому краю */

@@ -18,7 +18,15 @@ import anyio.to_thread
 from fastapi import APIRouter, Depends, HTTPException, WebSocket
 
 from ..board import get_board_cards, get_columns, get_owned_board_id
-from ..db import Connection, delete_board_setting, get_board_setting, get_db, open_db, set_board_setting
+from ..db import (
+    Connection,
+    delete_board_setting,
+    find_board_by_setting,
+    get_board_setting,
+    get_db,
+    open_db,
+    set_board_setting,
+)
 from ..intake import get_intake_settings
 from ..merging import is_auto_merge_enabled
 from ..realtime import board_updates, notify_board_changed, send_updates_until_closed
@@ -46,10 +54,7 @@ def read_viewer_settings(db: Connection, board_id: int) -> ViewerSettings:
 
 def find_board_by_public_token(db: Connection, token: str) -> int | None:
     """Доска, у которой такая ссылка для зрителей. None — ссылка неверная или выключена."""
-    row = db.execute(
-        "SELECT board_id FROM board_settings WHERE key = %s AND value = %s", (PUBLIC_TOKEN_KEY, token)
-    ).fetchone()
-    return row["board_id"] if row else None
+    return find_board_by_setting(db, PUBLIC_TOKEN_KEY, token)
 
 
 def is_allowed_donation_url(url: str) -> bool:

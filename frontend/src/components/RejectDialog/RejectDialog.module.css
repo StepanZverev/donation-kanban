@@ -50,7 +50,7 @@
 .submit {
   border-color: var(--color-error);
   background-color: var(--color-error);
-  color: #ffffff;
+  color: var(--color-on-accent);
   font-weight: 600;
 }
 

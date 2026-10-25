@@ -89,7 +89,7 @@
   padding: 4px 12px;
   border-radius: 6px;
   background-color: var(--color-accent);
-  color: #ffffff;
+  color: var(--color-on-accent);
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
@@ -135,7 +135,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background-color: #ffffff;
+  background-color: var(--color-on-accent);
   transform: translateX(12px);
   transition: transform 0.15s;
 }

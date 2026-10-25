@@ -55,7 +55,7 @@
 .primaryButton {
   border-color: var(--color-accent);
   background-color: var(--color-accent);
-  color: #ffffff;
+  color: var(--color-on-accent);
   white-space: nowrap;
 }
 
@@ -102,7 +102,7 @@
   padding: 4px 12px;
   border-radius: 6px;
   background-color: var(--color-accent);
-  color: #ffffff;
+  color: var(--color-on-accent);
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;

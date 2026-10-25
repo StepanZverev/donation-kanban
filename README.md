@@ -135,13 +135,13 @@ python -m app.import_sqlite donations.db
 | `GET /api/auth/status` | подключён ли DonationAlerts и что делает приёмник донатов |
 | `GET /api/auth/login` | перейти на вход в DonationAlerts |
 | `GET /api/auth/callback` | сюда DonationAlerts возвращает после входа |
-| `POST /api/auth/logout` | отключить DonationAlerts |
+| `POST /api/auth/disconnect` | отключить DonationAlerts |
 | `GET /api/boards/{id}` | чья доска и кто на ней ты (`owner` или `moderator`) |
 | `… /cards`, `… /columns`, `… /history` | карточки, колонки и история доски |
 | `… /settings/...` | настройки доски; менять может только хозяин |
 | `GET … /stream-total`, `POST … /reset` | сумма за стрим и «Сбросить доску» (только хозяин) |
 | `GET … /donors` | подсказки ников донатеров |
-| `POST … /dev/fake-donation` | выдуманный донат для проверки |
+| `POST … /dev/fake-donation` | выдуманный донат для проверки (только при локальном запуске) |
 | `WS … /ws` | живые обновления: сервер шлёт `{"type": "board_changed"}`, когда доска меняется |
 | `GET`/`DELETE … /members/{user_id}` | модераторы доски, убрать модератора (только хозяин) |
 | `GET`/`POST`/`DELETE … /invite-link` | ссылка-приглашение: посмотреть, сделать новую, удалить вместе со всеми модераторами (только хозяин) |

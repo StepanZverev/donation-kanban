@@ -13,10 +13,10 @@ def make_history(client):
     done = client.post("/api/cards", json={"text": "Спеть песню", "column_id": incoming}).json()
     deleted = client.post("/api/cards", json={"text": "Сыграть катку на пистолетах", "column_id": incoming}).json()
     client.post(f"/api/cards/{done['id']}/archive", json={"reason": "done"})
-    client.delete(f"/api/cards/{deleted['id']}")
+    client.post(f"/api/cards/{deleted['id']}/archive", json={"reason": "deleted"})
     donate("Вася", 100, "Привет")
     donation = next(card for card in client.get("/api/cards").json() if card["donor_name"] == "Вася")
-    client.delete(f"/api/cards/{donation['id']}")
+    client.post(f"/api/cards/{donation['id']}/archive", json={"reason": "deleted"})
 
 
 def test_history_filter_by_reason(client):

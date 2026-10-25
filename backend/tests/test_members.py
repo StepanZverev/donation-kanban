@@ -246,7 +246,7 @@ def test_moderator_name_on_cleared_and_deleted_cards(client, moderator):
     board_id = invite(client, moderator)
     base = f"/api/boards/{board_id}"
     deleted = moderator.post(f"{base}/cards", json={"text": "Удалил"}).json()
-    moderator.delete(f"{base}/cards/{deleted['id']}")
+    moderator.post(f"{base}/cards/{deleted['id']}/archive", json={"reason": "deleted"})
     moderator.post(f"{base}/cards", json={"text": "Из очереди веником"})
     assert moderator.post(f"{base}/cards/clear-queue").json() == {"cleared": 1}
 

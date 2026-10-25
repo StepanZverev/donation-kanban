@@ -2,11 +2,12 @@ import type { ChangeEvent } from 'react'
 import type { HistoryFilter } from '../../api/history'
 import { RestoreIcon, SwordIcon, TrashIcon } from '../../components/Icons/Icons'
 import { STREAMER_CURRENCY } from '../../defaults'
+import { useBoard } from '../../hooks/useBoard'
 import { useHighlightSince } from '../../hooks/useHighlightSince'
 import { useHistoryCards } from '../../hooks/useHistoryCards'
 import { useNow } from '../../hooks/useNow'
 import type { Card } from '../../types/card'
-import { getCardText, getDonorName } from '../../utils/donor'
+import { describeCard, getCardText, getDonorName } from '../../utils/donor'
 import { groupByDay } from '../../utils/historyDays'
 import { formatMoney } from '../../utils/money'
 import { pluralize } from '../../utils/time'
@@ -49,13 +50,14 @@ export function HistoryPage(props: HistoryPageProps) {
     restoreCard,
     deleteForever,
   } = useHistoryCards()
+  const isOwner = useBoard().role === 'owner'
   // Текущее время раз в минуту: чтобы после полуночи «Сегодня» стало «Вчера»
   const now = useNow(60_000)
   // Отсеянные донаты новее этого времени пришли, пока история была закрыта
   const highlightSince = useHighlightSince(seenAt)
 
   if (isLoading) {
-    return <p>Загружаю историю…</p>
+    return <p className="app-message">Загружаю историю…</p>
   }
 
   const days = groupByDay(cards, new Date(now))
@@ -171,15 +173,18 @@ export function HistoryPage(props: HistoryPageProps) {
                     >
                       <RestoreIcon />
                     </button>
-                    <button
-                      type="button"
-                      className={`${styles.iconButton} ${styles.dangerButton}`}
-                      title="Удалить навсегда"
-                      aria-label="Удалить навсегда"
-                      onClick={() => handleDeleteForever(card)}
-                    >
-                      <TrashIcon />
-                    </button>
+                    {/* Удалить навсегда может только стример */}
+                    {isOwner && (
+                      <button
+                        type="button"
+                        className={`${styles.iconButton} ${styles.dangerButton}`}
+                        title="Удалить навсегда"
+                        aria-label="Удалить навсегда"
+                        onClick={() => handleDeleteForever(card)}
+                      >
+                        <TrashIcon />
+                      </button>
+                    )}
                   </span>
 
                   {/* Причина отказа — отдельной строкой под текстом */}
@@ -197,8 +202,8 @@ export function HistoryPage(props: HistoryPageProps) {
 
   // Отсеянный донат: отклонён в тот же момент, когда пришёл (на доске не был)
   function isNewCard(card: Card) {
-    const isFiltered = card.archiveReason === 'rejected' && card.archivedAt === card.createdAt
-    return highlightSince !== null && isFiltered && card.createdAt > highlightSince
+    const isAutoRejected = card.archiveReason === 'rejected' && card.archivedAt === card.createdAt
+    return highlightSince !== null && isAutoRejected && card.createdAt > highlightSince
   }
 
   // В выпадающем списке «Все» записано как 'all': у option значение — всегда строка
@@ -212,7 +217,7 @@ export function HistoryPage(props: HistoryPageProps) {
   }
 
   function handleDeleteForever(card: Card) {
-    if (window.confirm(`Удалить «${card.title}» навсегда? Вернуть будет нельзя.`)) {
+    if (window.confirm(`Удалить «${describeCard(card)}» навсегда? Вернуть будет нельзя.`)) {
       deleteForever(card.id)
     }
   }

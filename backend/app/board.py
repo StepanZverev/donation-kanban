@@ -2,9 +2,10 @@
 Общие операции с доской, которые нужны и карточкам, и истории.
 
 У каждого пользователя своя доска. Она создаётся сама, когда пользователь впервые
-что-то открывает на сайте. В каждом эндпоинте доски есть параметр
-`board_id: int = Depends(get_board_id)` — FastAPI сам находит доску того,
-кто прислал запрос.
+открывает сайт. Адреса API доски выглядят так: /api/boards/{board_id}/... В каждом
+эндпоинте доски есть параметр `board_id: int = Depends(get_board_id)` — FastAPI
+берёт id доски из адреса и проверяет, что тот, кто прислал запрос, её хозяин
+или модератор (для настроек — get_owned_board_id, только хозяин).
 
 Почти каждая функция ниже принимает board_id и ищет только внутри этой доски:
 карточку или колонку чужой доски она «не найдёт» и ответит 404.
@@ -14,7 +15,6 @@
 from fastapi import Depends, HTTPException
 
 from .db import Connection, Row, create_default_columns, get_db, now
-from .defaults import EMPTY_MESSAGE_TITLE
 from .schemas import BoardColumn, Card
 from .users import get_current_user
 

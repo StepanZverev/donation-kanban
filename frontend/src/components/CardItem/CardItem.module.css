@@ -174,14 +174,6 @@
   opacity: 0.4;
 }
 
-/* Пунктир между текстами объединённых донатов: во всю ширину текста, бледный,
-   с воздухом сверху и снизу */
-.separator {
-  display: block;
-  margin: 10px 0;
-  border-top: 1px dashed color-mix(in srgb, var(--color-text-secondary) 45%, transparent);
-}
-
 /* Над карточкой держат другую, и их можно объединить: пунктирная обводка акцентным цветом */
 .mergeDrop {
   border-style: dashed;
@@ -245,7 +237,7 @@
   height: 28px;
   border-radius: 50%;
   background-color: var(--color-accent);
-  color: #ffffff;
+  color: var(--color-on-accent);
   font-size: 20px;
   line-height: 1;
 }

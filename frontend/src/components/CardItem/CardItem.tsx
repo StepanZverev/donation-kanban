@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent } from 'react'
-import { GLOW_SECONDS, MERGE_SEPARATOR, SHOW_UNMERGE } from '../../defaults'
+import { GLOW_SECONDS, SHOW_UNMERGE } from '../../defaults'
 import type { BoardColumn, Card } from '../../types/card'
 import { useIsRecent } from '../../hooks/useIsRecent'
 import { useTimeAgo } from '../../hooks/useTimeAgo'
@@ -8,12 +8,9 @@ import { formatMoney } from '../../utils/money'
 import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
 import { pluralize } from '../../utils/time'
 import { CardMenu } from '../CardMenu/CardMenu'
+import { CardText } from '../CardText/CardText'
 import { ChevronLeftIcon, ChevronRightIcon } from '../Icons/Icons'
 import styles from './CardItem.module.css'
-
-// Тексты объединённых донатов разделены отдельной строкой с MERGE_SEPARATOR.
-// На карточке вместо неё рисуем пунктирную линию.
-const MERGE_LINE = `\n${MERGE_SEPARATOR}\n`
 
 type CardItemProps = {
   card: Card
@@ -81,8 +78,6 @@ export function CardItem(props: CardItemProps) {
   // Сверху ник (без ника — «Аноним»), ниже текст
   const heading = getDonorName(card)
   const text = getCardText(card)
-  // Тексты объединённых донатов по отдельности: между ними нарисуем пунктир
-  const textParts = text.split(MERGE_LINE)
   // Обводку «+ Объединить» показываем, только пока над карточкой держат подходящую
   const showMergeDrop = isDragOver && canMergeOnDrop
   // В карточку слиты другие донаты
@@ -129,7 +124,6 @@ export function CardItem(props: CardItemProps) {
       ].join(' ')}
       // CSS-переменная с цветом уровня: ей красятся полоска слева и сумма (CardItem.module.css)
       style={{ '--priority-color': priority.color } as CSSProperties}
-      data-card-id={card.id}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
@@ -180,13 +174,7 @@ export function CardItem(props: CardItemProps) {
             onClick={isTextCut ? handleExpandClick : undefined}
           >
             <div ref={textRef} className={`${styles.text} ${isExpanded ? '' : styles.collapsed}`}>
-              {textParts.map((part, index) => (
-                // Индекс как key подходит: части не переставляются, только дописываются в конец
-                <span key={index}>
-                  {index > 0 && <span className={styles.separator} />}
-                  {part}
-                </span>
-              ))}
+              <CardText text={text} />
             </div>
 
             {isTextCut && (

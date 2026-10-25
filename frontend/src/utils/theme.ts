@@ -4,6 +4,8 @@
 // Первый раз атрибут ставит маленький скрипт в index.html, ещё до загрузки приложения,
 // чтобы страница не мигала светлым фоном. Ключ 'theme' там тот же, что здесь.
 
+import { readSaved, save } from './storage'
+
 export type ThemeMode = 'light' | 'dark' | 'system'
 
 const STORAGE_KEY = 'theme'
@@ -12,17 +14,13 @@ const STORAGE_KEY = 'theme'
 const systemDarkQuery = window.matchMedia('(prefers-color-scheme: dark)')
 
 export function getSavedThemeMode(): ThemeMode {
-  const saved = localStorage.getItem(STORAGE_KEY)
+  const saved = readSaved(STORAGE_KEY)
   return saved === 'light' || saved === 'dark' ? saved : 'system'
 }
 
 export function saveThemeMode(mode: ThemeMode) {
   // «Как в системе» — это отсутствие выбора, поэтому просто стираем запись
-  if (mode === 'system') {
-    localStorage.removeItem(STORAGE_KEY)
-  } else {
-    localStorage.setItem(STORAGE_KEY, mode)
-  }
+  save(STORAGE_KEY, mode === 'system' ? null : mode)
   applyThemeMode(mode)
 }
 

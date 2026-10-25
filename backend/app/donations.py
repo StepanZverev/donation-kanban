@@ -1,8 +1,8 @@
 """
 Превращение доната в карточку.
 
-Пока донаты приходят только из тестового эндпоинта /api/dev/fake-donation,
-позже сюда же будут попадать донаты из DonationAlerts.
+Донаты приходят из DonationAlerts (см. donationalerts/listener.py), а при локальном
+запуске — ещё и с кнопки «Тестовый донат» (routes/dev.py).
 """
 
 from dataclasses import dataclass

@@ -3,34 +3,15 @@
 // Выбор хранится в браузере (localStorage), один на все доски: свернул раз — запомнилось.
 
 import { useState } from 'react'
+import { readSaved, save } from '../utils/storage'
 
 const STORAGE_KEY = 'viewer-rules-collapsed'
 
-function isCollapsedSaved() {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === 'on'
-  } catch {
-    return false
-  }
-}
-
-function saveCollapsed(collapsed: boolean) {
-  try {
-    if (collapsed) {
-      localStorage.setItem(STORAGE_KEY, 'on')
-    } else {
-      localStorage.removeItem(STORAGE_KEY)
-    }
-  } catch {
-    // Браузер не даёт сохранить (например, приватное окно) — выбор проживёт до перезагрузки
-  }
-}
-
 export function useRulesCollapsed() {
-  const [isCollapsed, setIsCollapsed] = useState(isCollapsedSaved)
+  const [isCollapsed, setIsCollapsed] = useState(() => readSaved(STORAGE_KEY) === 'on')
 
   function toggleCollapsed() {
-    saveCollapsed(!isCollapsed)
+    save(STORAGE_KEY, isCollapsed ? null : 'on')
     setIsCollapsed(!isCollapsed)
   }
 

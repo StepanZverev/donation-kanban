@@ -3,13 +3,13 @@
 import type { PriorityLevel } from '../utils/priority'
 
 // В каком виде уровень приходит с сервера (snake_case)
-type PriorityLevelFromApi = {
+export type PriorityLevelFromApi = {
   min_amount: number
   name: string
   color: string
 }
 
-function toPriorityLevel(level: PriorityLevelFromApi): PriorityLevel {
+export function toPriorityLevel(level: PriorityLevelFromApi): PriorityLevel {
   return { minAmount: level.min_amount, name: level.name, color: level.color }
 }
 

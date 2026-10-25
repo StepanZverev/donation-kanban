@@ -3,12 +3,11 @@ import json
 from urllib.parse import parse_qs, urlparse
 
 import httpx2
-import pytest
 from websockets.asyncio.server import serve
 
 from app import config
 from app.db import open_db
-from app.donationalerts import client, listener
+from app.donationalerts import listener
 
 
 def fake_donation(donation_id: int, message: str = "Привет") -> dict:

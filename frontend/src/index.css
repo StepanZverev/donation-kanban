@@ -1,6 +1,6 @@
 /* Цвета в одном месте, чтобы их было легко менять.
    Здесь светлая тема, а ниже в блоке [data-theme='dark'] — тёмная.
-   Какая тема сейчас, решает src/theme.ts: он ставит <html data-theme="light"> или "dark". */
+   Какая тема сейчас, решает src/utils/theme.ts: он ставит <html data-theme="light"> или "dark". */
 :root {
   --color-background: #f4f3f8;
   --color-surface: #ffffff;
@@ -10,6 +10,8 @@
   --color-text-secondary: #6a6680;
   --color-accent: #7c4dff;
   --color-accent-light: #ece5ff;
+  /* Текст и значки на цветной заливке (кнопки, бейджи), кружок переключателя */
+  --color-on-accent: #ffffff;
   /* Красный и зелёный слегка приглушены, чтобы не резали глаз */
   --color-error: #c04a5a;
   --color-error-background: #f8e6e9;
@@ -73,6 +75,7 @@
   --color-text-secondary: #9a95b3;
   --color-accent: #9b78ff;
   --color-accent-light: #2c2348;
+  --color-on-accent: #ffffff;
   --color-error: #e0727f;
   --color-error-background: #33202a;
   --color-success: #62ad85;
