@@ -1,0 +1,45 @@
+# Ставит git-тег vX.Y.Z после мёржа в main, чтобы не делать это вручную.
+#
+# Версия записана в frontend/src/changelog.ts: верхняя запись — текущая.
+# После каждого пуша в main проходим по версиям сверху вниз. Версии без тега
+# ставим тег на мёрж-коммит, в котором она появилась в changelog.ts.
+# Как только встретили версию, у которой тег уже есть, останавливаемся:
+# всё, что ниже, помечено раньше. Если в PR версию не поднимали, новых тегов не будет.
+
+name: Тег версии
+
+on:
+  push:
+    branches: [main]
+
+# Два мёржа подряд: второй запуск ждёт первый, чтобы они не ставили один тег дважды
+concurrency: tag-version
+
+permissions:
+  # Разрешение отправить тег в репозиторий
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Вся история и все теги: нужно найти, в каком коммите появилась версия
+          fetch-depth: 0
+
+      - name: Поставить теги новым версиям
+        run: |
+          for version in $(grep -oP "version: '\K[0-9.]+(?=')" frontend/src/changelog.ts); do
+            tag="v$version"
+            if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
+              echo "$tag уже есть, версии ниже тоже помечены"
+              break
+            fi
+            # Мёрж-коммит в main, где в changelog.ts появилась строка version: '…'
+            commit=$(git log --first-parent --diff-merges=first-parent --reverse --format=%H \
+              -S "version: '$version'" -- frontend/src/changelog.ts | head -1)
+            echo "Ставлю $tag на $commit"
+            git tag "$tag" "$commit"
+            git push origin "$tag"
+          done
