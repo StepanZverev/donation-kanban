@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useParams } from 'react-router'
+import type { CurrentUser } from './api/me'
 import { AppHeader } from './components/AppHeader/AppHeader'
 import { FakeDonationButton } from './components/FakeDonationButton/FakeDonationButton'
 import { BoardContext, useBoard } from './hooks/useBoard'
 import { useBoardInfo } from './hooks/useBoardInfo'
-import { useCurrentUser } from './hooks/useCurrentUser'
+import { CurrentUserContext, useCurrentUser } from './hooks/useCurrentUser'
 import { useDonationSound } from './hooks/useDonationSound'
 import { useNewDonations } from './hooks/useNewDonations'
 import { BoardPage } from './pages/BoardPage/BoardPage'
@@ -18,29 +20,37 @@ import { SETTINGS_SECTIONS } from './pages/SettingsPage/settingsSections'
 //   /invite/<токен> — приглашение стать модератором;
 //   /v/<токен> — страница для зрителей;
 //   всё остальное (/, старые /history и /settings) — на свою доску.
-function App() {
+type AppProps = {
+  // Кто открыл сайт — бэкенд ответил ещё до запуска приложения (см. main.tsx).
+  // null — бэкенд не ответил (или это страница зрителя: там пользователь не нужен).
+  initialUser: CurrentUser | null
+}
+
+function App({ initialUser }: AppProps) {
+  const [user, setUser] = useState(initialUser)
+
   return (
-    <Routes>
-      {/* Страница для зрителей — отдельно от приложения стримера: без шапки,
-          без звука донатов и без запросов к доске стримера */}
-      <Route path="/v/:token" element={<ViewerPage />} />
-      <Route path="/invite/:token" element={<InvitePage />} />
-      <Route path="/boards/:boardId/*" element={<BoardRoute />} />
-      <Route path="*" element={<OwnBoardRedirect />} />
-    </Routes>
+    // Компоненты внутри берут пользователя через useCurrentUser()
+    <CurrentUserContext.Provider value={{ user, setUser }}>
+      <Routes>
+        {/* Страница для зрителей — отдельно от приложения стримера: без шапки,
+            без звука донатов и без запросов к доске стримера */}
+        <Route path="/v/:token" element={<ViewerPage />} />
+        <Route path="/invite/:token" element={<InvitePage />} />
+        <Route path="/boards/:boardId/*" element={<BoardRoute />} />
+        <Route path="*" element={<OwnBoardRedirect />} />
+      </Routes>
+    </CurrentUserContext.Provider>
   )
 }
 
 // Отправляет на свою доску. Остаток адреса сохраняем: /history → /boards/5/history.
 function OwnBoardRedirect() {
   const { pathname } = useLocation()
-  const { user, hasFailed } = useCurrentUser()
+  const { user } = useCurrentUser()
 
-  if (hasFailed) {
-    return <p className="app-message">Не удалось загрузить доску. Проверь, что бэкенд запущен.</p>
-  }
   if (user === null) {
-    return <p className="app-message">Загружаю доску…</p>
+    return <p className="app-message">Не удалось загрузить доску. Проверь, что бэкенд запущен.</p>
   }
   const rest = pathname === '/' ? '' : pathname
   return <Navigate to={`/boards/${user.boardId}${rest}`} replace />

@@ -8,7 +8,7 @@ import { WhatsNewDialog } from '../WhatsNewDialog/WhatsNewDialog'
 import styles from './AccountMenu.module.css'
 
 type AccountMenuProps = {
-  // Кто вошёл и как выйти (useCurrentUser в AppHeader)
+  // Кто вошёл и как выйти (см. useCurrentUser)
   user: CurrentUser
   onLogout: () => void
   // Имя на кнопке и в выпадашке. Без него — имя из DonationAlerts, у гостя «Гость».

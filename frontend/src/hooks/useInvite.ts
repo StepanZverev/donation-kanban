@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import * as boardsApi from '../api/boards'
 import type { Invite } from '../api/boards'
+import { useCurrentUser } from './useCurrentUser'
 
 // loading — ещё грузим, ready — приглашение есть, broken — ссылка не работает
 type InviteState =
@@ -12,6 +13,7 @@ type InviteState =
   | { status: 'error' }
 
 export function useInvite(token: string) {
+  const { reloadUser } = useCurrentUser()
   const [state, setState] = useState<InviteState>({ status: 'loading' })
   const [isAccepting, setIsAccepting] = useState(false)
   const [acceptError, setAcceptError] = useState<string | null>(null)
@@ -30,6 +32,8 @@ export function useInvite(token: string) {
     setAcceptError(null)
     try {
       const board = await boardsApi.acceptInvite(token, nickname)
+      // Теперь доска есть у пользователя в списке: пусть меню аккаунта о ней узнает
+      await reloadUser()
       return board.id
     } catch {
       setAcceptError('Не удалось принять приглашение. Попробуй ещё раз.')
