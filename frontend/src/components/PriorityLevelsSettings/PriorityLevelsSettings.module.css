@@ -42,10 +42,6 @@
   border-color: var(--color-border);
 }
 
-.nameInput:focus {
-  border-color: var(--color-accent);
-  outline: none;
-}
 
 .amount {
   flex-shrink: 0;
@@ -95,10 +91,6 @@
   color: var(--color-text);
 }
 
-.amountInput:focus {
-  border-color: var(--color-accent);
-  outline: none;
-}
 
 .zero {
   color: var(--color-text);

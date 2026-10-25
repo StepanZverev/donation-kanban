@@ -111,6 +111,15 @@ select {
   background-color: var(--color-surface);
 }
 
+/* Поле, в которое печатают, в фокусе подсвечивается фиолетовой рамкой вместо чёрной рамки браузера.
+   Галочки и выбор цвета не трогаем: у них рамки нет. */
+input:not([type='checkbox'], [type='color']):focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-accent);
+  outline: none;
+}
+
 /* Крупные заголовки — фирменным шрифтом */
 h1 {
   font-family: var(--font-display);

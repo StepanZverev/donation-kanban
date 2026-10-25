@@ -34,31 +34,44 @@ export function ColumnsBoardView(props: ColumnsBoardViewProps) {
 
       {workColumns.map((column, index) => (
         <div key={column.id} className={styles.column}>
-          <span className={styles.title}>{column.title}</span>
+          {/* Клик по названию — то же, что карандаш: окно с настройками колонки */}
+          <button
+            type="button"
+            className={styles.title}
+            title="Изменить колонку"
+            onClick={() => onEditClick(column)}
+          >
+            {column.title}
+          </button>
 
           <CardStubs />
 
           <div className={styles.actions}>
-            <button
-              type="button"
-              className={styles.iconButton}
-              title="Левее на доске"
-              aria-label="Левее на доске"
-              disabled={index === 0}
-              onClick={() => onMove(column.id, -1)}
-            >
-              ‹
-            </button>
-            <button
-              type="button"
-              className={styles.iconButton}
-              title="Правее на доске"
-              aria-label="Правее на доске"
-              disabled={index === workColumns.length - 1}
-              onClick={() => onMove(column.id, 1)}
-            >
-              ›
-            </button>
+            {/* Стрелки нужны, только когда промежуточных колонок больше одной */}
+            {workColumns.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className={styles.iconButton}
+                  title="Левее на доске"
+                  aria-label="Левее на доске"
+                  disabled={index === 0}
+                  onClick={() => onMove(column.id, -1)}
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className={styles.iconButton}
+                  title="Правее на доске"
+                  aria-label="Правее на доске"
+                  disabled={index === workColumns.length - 1}
+                  onClick={() => onMove(column.id, 1)}
+                >
+                  ›
+                </button>
+              </>
+            )}
             {/* Карандаш открывает окно с настройками колонки */}
             <button
               type="button"

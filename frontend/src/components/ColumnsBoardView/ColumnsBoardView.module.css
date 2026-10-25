@@ -35,6 +35,19 @@
   white-space: nowrap;
 }
 
+/* Название промежуточной колонки — кнопка: клик открывает окно, как карандаш */
+.title {
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+}
+
+.title:hover {
+  color: var(--color-accent);
+}
+
 .stubs {
   flex: 1;
   display: flex;
