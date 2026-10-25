@@ -14,7 +14,7 @@
   padding: 12px 0;
 }
 
-/* Название и пояснение в строке */
+/* Название и пояснение под ним */
 .text {
   display: flex;
   flex-direction: column;

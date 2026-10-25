@@ -24,17 +24,13 @@ export function SettingField(props: SettingFieldProps) {
   const { label, description, layout, element = 'div', className, children } = props
   // Тег берём из пропса: <Element> превратится в <div> или <label>
   const Element = element
-  const text = (
-    <>
-      <span className={styles.label}>{label}</span>
-      {description && <span className={styles.description}>{description}</span>}
-    </>
-  )
 
   return (
     <Element className={className ? `${styles[layout]} ${className}` : styles[layout]}>
-      {/* В строке название и пояснение — одним столбиком слева */}
-      {layout === 'row' ? <span className={styles.text}>{text}</span> : text}
+      <span className={styles.text}>
+        <span className={styles.label}>{label}</span>
+        {description && <span className={styles.description}>{description}</span>}
+      </span>
       {children}
     </Element>
   )
