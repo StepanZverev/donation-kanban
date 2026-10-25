@@ -17,6 +17,7 @@ from fastapi import HTTPException
 
 from .board import (
     archive_card,
+    get_board_card,
     get_card,
     get_column_id_by_kind,
     get_columns,
@@ -83,10 +84,12 @@ def merge_cards(
     archived_by — имя модератора, если объединяет он (автообъединение доната — None).
     Возвращает target после слияния.
     """
-    cards = [get_card(db, board_id, card_id) for card_id in card_ids]
-    for card in [target, *cards]:
-        if card.archived_at is not None:
-            raise HTTPException(status_code=400, detail="Карточка уже в истории")
+    # Каждую карточку берём один раз: повторный id в списке сложил бы её сумму дважды
+    unique_ids = list(dict.fromkeys(card_ids))
+    # get_board_card проверяет, что карточки ещё на доске, и не даёт двум запросам
+    # одновременно объединить или убрать одну и ту же карточку
+    target = get_board_card(db, board_id, target.id)
+    cards = [get_board_card(db, board_id, card_id) for card_id in unique_ids]
     for card in cards:
         if card.id == target.id or not is_same_donor(card, target):
             raise HTTPException(status_code=400, detail="Объединять можно только карточки одного донатера")

@@ -245,8 +245,12 @@ def accept_invite(
     if body is not None and body.nickname:
         nickname = body.nickname.strip() or None
     if get_board_role(db, board_id, user["id"]) is None:
+        # ON CONFLICT DO NOTHING: если «Принять» нажали дважды подряд, второй раз ничего не делает
         db.execute(
-            "INSERT INTO board_members (board_id, user_id, role, created_at, nickname) VALUES (%s, %s, %s, %s, %s)",
+            """
+            INSERT INTO board_members (board_id, user_id, role, created_at, nickname) VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (board_id, user_id) DO NOTHING
+            """,
             (board_id, user["id"], MODERATOR, now(), nickname),
         )
         # Хозяин в настройках сразу увидит нового модератора

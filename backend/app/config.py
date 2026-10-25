@@ -24,9 +24,16 @@ def get_database_url() -> str:
     # Функция, а не переменная: тесты подменяют DATABASE_URL уже после импорта этого файла
     return os.environ.get("DATABASE_URL", DEFAULT_DATABASE_URL)
 
-# Отдавать cookie только по HTTPS. Локально сайт работает по http, поэтому по умолчанию выключено;
-# на настоящем сервере с HTTPS нужно поставить COOKIE_SECURE=1.
-COOKIE_SECURE = os.environ.get("COOKIE_SECURE", "0") == "1"
+# Сайт открывается по https — значит, это настоящий сервер, а не запуск на своём компьютере
+# (локально сайт работает по http). От этого зависят две настройки ниже.
+IS_PRODUCTION = FRONTEND_URL.startswith("https://")
+
+# Отдавать cookie входа только по HTTPS: на настоящем сервере — да, локально по http так нельзя
+COOKIE_SECURE = IS_PRODUCTION
+
+# Инструменты для разработки (кнопка «Тестовый донат»): только локально. На настоящем сервере
+# выдуманный донат выглядел бы для зрителей как настоящий и попал бы в сумму за стрим.
+DEV_TOOLS_ENABLED = not IS_PRODUCTION
 
 
 def is_donationalerts_configured() -> bool:

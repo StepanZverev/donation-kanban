@@ -3,7 +3,8 @@ import { useBoard } from '../../hooks/useBoard'
 import styles from './FakeDonationButton.module.css'
 
 // Кнопка «Тестовый донат» в правом нижнем углу окна. Нужна только для проверки
-// без настоящих донатов, поэтому стоит в стороне от всего остального. Потом её уберём.
+// без настоящих донатов, поэтому стоит в стороне от всего остального.
+// Есть только при локальном запуске (см. App.tsx и DEV_TOOLS_ENABLED в backend/app/config.py).
 export function FakeDonationButton() {
   const board = useBoard()
 

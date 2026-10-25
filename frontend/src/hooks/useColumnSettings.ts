@@ -33,13 +33,20 @@ export function useColumnSettings() {
   // Только промежуточные колонки, слева направо. «Очередь» и «Выполнено» здесь не настраиваются.
   const workColumns = columns.filter((column) => column.kind === 'work')
 
+  // Возвращает, удалось ли действие.
   async function runAndReload(action: () => Promise<unknown>) {
+    let isSaved = true
     try {
       await action()
     } catch {
-      setError('Не удалось сохранить изменения. Попробуй ещё раз.')
+      isSaved = false
     }
     await reload()
+    // Ошибку показываем после перезагрузки: удачная загрузка сама стирает прошлую ошибку
+    if (!isSaved) {
+      setError('Не удалось сохранить изменения. Попробуй ещё раз.')
+    }
+    return isSaved
   }
 
   function addColumn(title: string) {

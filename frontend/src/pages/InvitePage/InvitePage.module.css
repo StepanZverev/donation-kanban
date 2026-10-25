@@ -35,6 +35,12 @@
   color: var(--color-text-secondary);
 }
 
+.error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-error);
+}
+
 /* Поле «Как тебя называть» с подписью и подсказкой */
 .field {
   display: flex;

@@ -34,8 +34,10 @@ export function useAutoMerge() {
     try {
       await settingsApi.saveAutoMerge(boardId, enabled)
     } catch {
-      setError('Не удалось сохранить настройку. Попробуй ещё раз.')
+      // Сначала возвращаем то, что на самом деле сохранено, потом показываем ошибку:
+      // удачная загрузка сама стирает прошлую ошибку
       await reload()
+      setError('Не удалось сохранить настройку. Попробуй ещё раз.')
     }
   }
 

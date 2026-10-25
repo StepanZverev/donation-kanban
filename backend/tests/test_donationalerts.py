@@ -2,6 +2,7 @@ import asyncio
 import json
 from urllib.parse import parse_qs, urlparse
 
+import httpx2
 import pytest
 from websockets.asyncio.server import serve
 
@@ -71,6 +72,26 @@ def test_login_and_callback(client, fake_da, monkeypatch):
 def test_callback_with_wrong_state_is_rejected(client, fake_da):
     client.get("/api/auth/login", follow_redirects=False)
     assert client.get("/api/auth/callback?code=abc&state=wrong").status_code == 400
+
+
+def test_refused_login_returns_to_site(client, fake_da):
+    """На странице DonationAlerts нажали «Отказаться»: просто возвращаемся на сайт."""
+    client.get("/api/auth/login", follow_redirects=False)
+    callback = client.get("/api/auth/callback?error=access_denied", follow_redirects=False)
+    assert (callback.status_code, callback.headers["location"]) == (307, config.FRONTEND_URL)
+    assert client.get("/api/auth/status").json()["connected"] is False
+
+
+def test_login_returns_to_site_if_donationalerts_fails(client, fake_da, monkeypatch):
+    async def broken_exchange(code):
+        raise httpx2.ConnectError("DonationAlerts не отвечает")
+
+    monkeypatch.setattr("app.donationalerts.client.exchange_code", broken_exchange)
+    login = client.get("/api/auth/login", follow_redirects=False)
+    state = parse_qs(urlparse(login.headers["location"]).query)["state"][0]
+    callback = client.get(f"/api/auth/callback?code=abc&state={state}", follow_redirects=False)
+    assert (callback.status_code, callback.headers["location"]) == (307, config.FRONTEND_URL)
+    assert client.get("/api/auth/status").json()["connected"] is False
 
 
 def add_connection(client_, last_donation_id: int) -> int:

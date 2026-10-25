@@ -44,13 +44,20 @@ export function useHistoryCards() {
   // Карточку могли убрать в историю или переоткрыть в другой вкладке.
   useBoardUpdates(reload, getBoardUpdatesPath(boardId))
 
+  // Возвращает, удалось ли действие.
   async function runAndReload(action: () => Promise<unknown>) {
+    let isSaved = true
     try {
       await action()
     } catch {
-      setError('Не удалось сохранить изменения. Попробуй ещё раз.')
+      isSaved = false
     }
     await reload()
+    // Ошибку показываем после перезагрузки: удачная загрузка сама стирает прошлую ошибку
+    if (!isSaved) {
+      setError('Не удалось сохранить изменения. Попробуй ещё раз.')
+    }
+    return isSaved
   }
 
   function restoreCard(id: number) {

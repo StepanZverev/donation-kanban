@@ -25,7 +25,7 @@ export function WhatsNewDialog({ onClose }: WhatsNewDialogProps) {
         <h2 className={styles.heading}>Что нового</h2>
         <div className={styles.releases}>
           {CHANGELOG.map((release) => (
-            <section key={release.version} className={styles.release}>
+            <section key={release.version}>
               <h3 className={styles.version}>
                 {release.version}
                 <span className={styles.date}> · {formatDate(release.date)}</span>

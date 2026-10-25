@@ -5,7 +5,14 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..board import get_board_id, get_card, get_column, get_column_id_by_kind, return_to_board
+from ..board import (
+    get_board_id,
+    get_card,
+    get_column,
+    get_column_id_by_kind,
+    get_owned_board_id,
+    return_to_board,
+)
 from ..db import Connection, get_db
 from ..merging import unmerge_card
 from ..realtime import notify_board_changed
@@ -89,9 +96,12 @@ def restore_card(
 def delete_forever(
     card_id: int,
     db: Connection = Depends(get_db),
-    board_id: int = Depends(get_board_id),
+    board_id: int = Depends(get_owned_board_id),
 ) -> None:
-    """Удаляет карточку из истории окончательно, без возможности вернуть."""
+    """
+    Удаляет карточку из истории окончательно, без возможности вернуть.
+    Это может только стример: модератор работает с доской, но насовсем ничего не стирает.
+    """
     get_archived_card(db, board_id, card_id)
     db.execute("DELETE FROM cards WHERE id = %s", (card_id,))
     notify_board_changed(db, board_id)

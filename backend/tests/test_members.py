@@ -66,6 +66,9 @@ def test_moderator_works_with_cards(client, moderator):
 def test_settings_are_only_for_owner(client, moderator):
     board_id = invite(client, moderator)
     base = f"/api/boards/{board_id}"
+    work_column = next(column["id"] for column in client.get("/api/columns").json() if column["kind"] == "work")
+    in_history = client.post("/api/cards", json={"text": "Старая"}).json()
+    client.post(f"/api/cards/{in_history['id']}/archive", json={"reason": "done"})
 
     # Читать настройки модератору можно: по ним красятся карточки
     assert moderator.get(f"{base}/settings/priority-levels").status_code == 200
@@ -78,6 +81,16 @@ def test_settings_are_only_for_owner(client, moderator):
         moderator.get(f"{base}/settings/viewer"),
         moderator.get(f"{base}/members"),
         moderator.post(f"{base}/invite-link"),
+        moderator.delete(f"{base}/invite-link"),
+        moderator.put(f"{base}/settings/priority-levels", json=[{"min_amount": 0, "name": "А", "color": "#000000"}]),
+        moderator.patch(f"{base}/columns/{work_column}", json={"title": "Новое"}),
+        moderator.delete(f"{base}/columns/{work_column}"),
+        moderator.put(f"{base}/columns/order", json={"column_ids": [work_column]}),
+        moderator.post(f"{base}/settings/viewer/link"),
+        moderator.delete(f"{base}/settings/viewer/link"),
+        moderator.put(f"{base}/settings/viewer/donation-url", json={"url": ""}),
+        # Удалить из истории навсегда тоже может только стример
+        moderator.delete(f"{base}/history/{in_history['id']}"),
     ]
     assert [response.status_code for response in forbidden] == [403] * len(forbidden)
 

@@ -19,7 +19,9 @@ export function ViewerPage() {
   const { flashedCardId, showCard } = useCardFlash()
 
   if (state.status === 'loading') {
-    return <p className={styles.message}>Загружаю доску…</p>
+    // Первая загрузка не удалась — показываем ошибку, а не вечное «Загружаю»
+    const message = error ? 'Не удалось загрузить доску. Попробуй обновить страницу.' : 'Загружаю доску…'
+    return <p className={styles.message}>{message}</p>
   }
 
   if (state.status === 'broken') {
