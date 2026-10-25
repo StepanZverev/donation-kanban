@@ -48,8 +48,15 @@
     gap: 16px;
   }
 
+  /* Одна строка разделов; не влезают — листаются пальцем вбок */
   .menu {
     flex-direction: row;
-    flex-wrap: wrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .link {
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 }

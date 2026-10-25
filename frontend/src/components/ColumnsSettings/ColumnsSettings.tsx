@@ -25,7 +25,7 @@ export function ColumnsSettings() {
 
   return (
     <SettingsSection
-      title="Колонки доски"
+      title="Колонки"
       hint={
         <>
           «{incomingColumn?.title ?? 'Очередь'}» и «{doneColumn?.title ?? 'Выполнено'}» есть всегда.

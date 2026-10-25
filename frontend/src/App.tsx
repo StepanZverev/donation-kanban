@@ -107,11 +107,14 @@ function StreamerApp() {
       <Routes>
         <Route index element={<BoardPage seenAt={newDonations.boardSeenAt} />} />
         <Route path="history" element={<HistoryPage seenAt={newDonations.historySeenAt} />} />
-        {/* Настройки — только у хозяина доски. У разделов свои адреса: settings/columns… */}
+        {/* Настройки — только у хозяина доски. У разделов свои адреса: settings/board… */}
         {board.role === 'owner' && (
           <Route path="settings" element={<SettingsPage />}>
             {/* settings без раздела — открываем первый */}
             <Route index element={<Navigate to={SETTINGS_SECTIONS[0].path} replace />} />
+            {/* Раньше «Колонки» и «Уровни» были отдельными разделами — старые адреса ведут в «Доску» */}
+            <Route path="columns" element={<Navigate to="../board" replace />} />
+            <Route path="levels" element={<Navigate to="../board" replace />} />
             {SETTINGS_SECTIONS.map((section) => (
               <Route key={section.path} path={section.path} element={section.element} />
             ))}

@@ -10,8 +10,16 @@ import { ViewerSettings } from '../../components/ViewerSettings/ViewerSettings'
 // path — адрес раздела после /settings/, element — что в нём показать.
 // По этому списку App.tsx строит маршруты, а SettingsPage — меню.
 export const SETTINGS_SECTIONS: { path: string; title: string; element: ReactNode }[] = [
-  { path: 'columns', title: 'Колонки', element: <ColumnsSettings /> },
-  { path: 'levels', title: 'Уровни приоритета', element: <PriorityLevelsSettings /> },
+  {
+    path: 'board',
+    title: 'Доска',
+    element: (
+      <>
+        <ColumnsSettings />
+        <PriorityLevelsSettings />
+      </>
+    ),
+  },
   { path: 'donations', title: 'Приём донатов', element: <DonationsSettings /> },
   { path: 'moderators', title: 'Модераторы', element: <MembersSettings /> },
   { path: 'viewers', title: 'Для зрителей', element: <ViewerSettings /> },
