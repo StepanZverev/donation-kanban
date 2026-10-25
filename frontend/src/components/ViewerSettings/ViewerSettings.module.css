@@ -8,10 +8,6 @@
   border-radius: 6px;
 }
 
-.input:focus {
-  border-color: var(--color-accent);
-  outline: none;
-}
 
 .buttons {
   display: flex;

@@ -16,10 +16,6 @@
   text-align: right;
 }
 
-.amountInput:focus {
-  border-color: var(--color-accent);
-  outline: none;
-}
 
 .currency {
   color: var(--color-text-secondary);
@@ -46,10 +42,6 @@
   resize: vertical;
 }
 
-.rulesInput:focus {
-  border-color: var(--color-accent);
-  outline: none;
-}
 
 .rulesButtons {
   display: flex;

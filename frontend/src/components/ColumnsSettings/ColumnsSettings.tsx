@@ -52,7 +52,7 @@ export function ColumnsSettings() {
       {/* Список для узкого экрана: какой из двух видов показать, решает CSS */}
       <div className={styles.listView}>
         <ol className={styles.list}>
-          {incomingColumn && <FixedColumnRow column={incomingColumn} note="всегда первая" />}
+          {incomingColumn && <FixedColumnRow column={incomingColumn} note="Всегда первая" />}
 
           {workColumns.map((column, index) => (
             // В key есть название: если колонку переименуют в другой вкладке,
@@ -62,24 +62,28 @@ export function ColumnsSettings() {
               column={column}
               isFirst={index === 0}
               isLast={index === workColumns.length - 1}
+              canMove={workColumns.length > 1}
               onRename={renameColumn}
               onMove={moveColumn}
               onRemove={handleRemove}
             />
           ))}
 
-          {doneColumn && <FixedColumnRow column={doneColumn} note="всегда последняя" />}
-        </ol>
+          {/* Новая колонка встаёт перед последней, поэтому и кнопка здесь.
+              Окно то же, что и на широком экране. */}
+          <li>
+            <button
+              type="button"
+              className={styles.addButton}
+              disabled={!canAdd}
+              onClick={() => setDialog({ mode: 'create' })}
+            >
+              {canAdd ? '+ Новая колонка' : `Уже ${MAX_WORK_COLUMNS} колонки, больше нельзя`}
+            </button>
+          </li>
 
-        {/* Новая колонка — через то же окно, что и на широком экране */}
-        <button
-          type="button"
-          className={styles.addButton}
-          disabled={!canAdd}
-          onClick={() => setDialog({ mode: 'create' })}
-        >
-          {canAdd ? '+ Новая колонка' : `Уже ${MAX_WORK_COLUMNS} колонки, больше нельзя`}
-        </button>
+          {doneColumn && <FixedColumnRow column={doneColumn} note="Всегда последняя" />}
+        </ol>
       </div>
 
       {dialog && (
@@ -133,6 +137,8 @@ type WorkColumnRowProps = {
   column: BoardColumn
   isFirst: boolean
   isLast: boolean
+  // Двигать есть куда, только если промежуточных колонок больше одной
+  canMove: boolean
   onRename: (id: number, title: string) => void
   onMove: (id: number, step: -1 | 1) => void
   onRemove: (column: BoardColumn) => void
@@ -141,7 +147,7 @@ type WorkColumnRowProps = {
 // Промежуточная колонка: название можно править прямо в поле,
 // сохраняется, когда уходишь из поля или жмёшь Enter.
 function WorkColumnRow(props: WorkColumnRowProps) {
-  const { column, isFirst, isLast, onRename, onMove, onRemove } = props
+  const { column, isFirst, isLast, canMove, onRename, onMove, onRemove } = props
   const [title, setTitle] = useState(column.title)
 
   return (
@@ -158,26 +164,30 @@ function WorkColumnRow(props: WorkColumnRowProps) {
       />
 
       <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.iconButton}
-          title="Левее на доске"
-          aria-label="Левее на доске"
-          disabled={isFirst}
-          onClick={() => onMove(column.id, -1)}
-        >
-          ↑
-        </button>
-        <button
-          type="button"
-          className={styles.iconButton}
-          title="Правее на доске"
-          aria-label="Правее на доске"
-          disabled={isLast}
-          onClick={() => onMove(column.id, 1)}
-        >
-          ↓
-        </button>
+        {canMove && (
+          <>
+            <button
+              type="button"
+              className={styles.iconButton}
+              title="Левее на доске"
+              aria-label="Левее на доске"
+              disabled={isFirst}
+              onClick={() => onMove(column.id, -1)}
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              className={styles.iconButton}
+              title="Правее на доске"
+              aria-label="Правее на доске"
+              disabled={isLast}
+              onClick={() => onMove(column.id, 1)}
+            >
+              ↓
+            </button>
+          </>
+        )}
         <button
           type="button"
           className={`${styles.iconButton} ${styles.dangerButton}`}

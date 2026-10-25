@@ -48,10 +48,6 @@
   font-size: 13px;
 }
 
-.input:focus {
-  border-color: var(--color-accent);
-  outline: none;
-}
 
 /* «Взять из DonationAlerts» — выглядит как ссылка */
 .linkButton {
