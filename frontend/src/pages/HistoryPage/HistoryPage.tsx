@@ -1,6 +1,7 @@
 import type { ChangeEvent } from 'react'
 import type { HistoryFilter } from '../../api/history'
 import { RestoreIcon, SwordIcon, TrashIcon } from '../../components/Icons/Icons'
+import { STREAMER_CURRENCY } from '../../defaults'
 import { useHighlightSince } from '../../hooks/useHighlightSince'
 import { useHistoryCards } from '../../hooks/useHistoryCards'
 import { useNow } from '../../hooks/useNow'
@@ -119,7 +120,7 @@ export function HistoryPage(props: HistoryPageProps) {
                   {day.donationCount} {pluralize(day.donationCount, ['донат', 'доната', 'донатов'])}
                 </span>
               )}
-              {day.total > 0 && <span className={styles.dayTotal}>{formatMoney(day.total, 'RUB')}</span>}
+              {day.total > 0 && <span className={styles.dayTotal}>{formatMoney(day.total, STREAMER_CURRENCY)}</span>}
             </header>
 
             <ul className={styles.rows}>

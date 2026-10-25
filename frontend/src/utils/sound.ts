@@ -3,6 +3,9 @@
 //
 // Включён ли звук, хранится в браузере (localStorage), как и тема:
 // на одном компьютере звук нужен, на телефоне модератора — нет.
+// Громкость — DONATION_SOUND_VOLUME в src/defaults.ts.
+
+import { DONATION_SOUND_VOLUME } from '../defaults'
 
 const STORAGE_KEY = 'donation-sound'
 
@@ -12,8 +15,6 @@ const NOTES = [
   { frequency: 587.3, start: 0, duration: 0.5 },
   { frequency: 784, start: 0.14, duration: 0.7 },
 ]
-// Громкость от 0 до 1. Тихо, чтобы не перебивать стрим.
-const VOLUME = 0.07
 // За сколько секунд нота плавно набирает громкость. Чем дольше, тем мягче начало.
 const FADE_IN_SECONDS = 0.03
 
@@ -55,7 +56,7 @@ export function playDonationSound() {
     // Громкость плавно нарастает и плавно затухает, чтобы не было щелчков
     const noteStart = startTime + note.start
     gain.gain.setValueAtTime(0, noteStart)
-    gain.gain.linearRampToValueAtTime(VOLUME, noteStart + FADE_IN_SECONDS)
+    gain.gain.linearRampToValueAtTime(DONATION_SOUND_VOLUME, noteStart + FADE_IN_SECONDS)
     gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + note.duration)
 
     oscillator.connect(gain).connect(audioContext.destination)

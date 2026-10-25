@@ -6,9 +6,7 @@
 // у зрителя — доска по ссылке /api/public/boards/<токен>/ws.
 
 import { useEffect } from 'react'
-
-// Через сколько пытаться переподключиться, если соединение оборвалось
-const RECONNECT_DELAY_MS = 2000
+import { BOARD_RECONNECT_DELAY_MS } from '../defaults'
 
 export function useBoardUpdates(onChange: () => void, path: string) {
   useEffect(() => {
@@ -37,7 +35,7 @@ export function useBoardUpdates(onChange: () => void, path: string) {
           reconnectTimer = window.setTimeout(() => {
             connect()
             onChange()
-          }, RECONNECT_DELAY_MS)
+          }, BOARD_RECONNECT_DELAY_MS)
         }
       }
     }

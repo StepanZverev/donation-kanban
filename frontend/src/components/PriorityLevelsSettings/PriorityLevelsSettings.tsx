@@ -1,12 +1,10 @@
 import { useState, type CSSProperties } from 'react'
+import { NEW_LEVEL_COLOR, PRIORITY_LEVEL_NAME_MAX_LENGTH, STREAMER_CURRENCY } from '../../defaults'
 import { usePriorityLevels } from '../../hooks/usePriorityLevels'
 import { formatMoney } from '../../utils/money'
 import type { PriorityLevel } from '../../utils/priority'
 import { TrashIcon } from '../Icons/Icons'
 import styles from './PriorityLevelsSettings.module.css'
-
-// Цвет нового уровня, пока стример не выбрал свой
-const NEW_LEVEL_COLOR = '#8250df'
 
 // Раздел «Уровни приоритета» на странице настроек.
 export function PriorityLevelsSettings() {
@@ -65,12 +63,12 @@ function PriorityLevelsEditor(props: PriorityLevelsEditorProps) {
                 ref={index === newLevelIndex ? selectText : undefined}
                 className={styles.nameInput}
                 value={level.name}
-                maxLength={30}
+                maxLength={PRIORITY_LEVEL_NAME_MAX_LENGTH}
                 onChange={(event) => handleChange(index, { name: event.target.value })}
                 aria-label="Название уровня"
               />
               {/* Пример: так будет выглядеть сумма на карточке этого уровня */}
-              <span className={styles.amount}>{formatMoney(level.minAmount, 'RUB')}</span>
+              <span className={styles.amount}>{formatMoney(level.minAmount, STREAMER_CURRENCY)}</span>
             </div>
 
             <div className={styles.bottom}>

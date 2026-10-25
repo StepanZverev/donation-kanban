@@ -16,7 +16,6 @@
 from fastapi import HTTPException
 
 from .board import (
-    EMPTY_MESSAGE_TITLE,
     archive_card,
     get_card,
     get_column_id_by_kind,
@@ -24,23 +23,16 @@ from .board import (
     return_to_board,
 )
 from .db import Connection, get_board_setting, now
+from .defaults import AUTO_MERGE_BY_DEFAULT, EMPTY_MESSAGE_TITLE, MERGE_SEPARATOR, STREAMER_CURRENCY
 from .schemas import Card
 
 # Ключ в таблице board_settings: объединять ли новые донаты автоматически ("1" — да)
 AUTO_MERGE_KEY = "auto_merge"
 
-# Если валюты двух донатов разные (рубли и доллары), сумму считаем в валюте стримера.
-# Пока считаем, что стример получает рубли — как в DonationAlerts по умолчанию.
-STREAMER_CURRENCY = "RUB"
-
-# Строка-разделитель между текстами объединённых донатов.
-# Фронт находит её в описании и рисует вместо неё пунктирную линию (CardItem).
-# Символ редкий, чтобы случайно не встретился в обычном тексте.
-MERGE_SEPARATOR = "⸻"
-
 
 def is_auto_merge_enabled(db: Connection, board_id: int) -> bool:
-    return get_board_setting(db, board_id, AUTO_MERGE_KEY) == "1"
+    saved = get_board_setting(db, board_id, AUTO_MERGE_KEY)
+    return AUTO_MERGE_BY_DEFAULT if saved is None else saved == "1"
 
 
 def is_same_donor(card: Card, other: Card) -> bool:

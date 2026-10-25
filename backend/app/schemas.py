@@ -9,6 +9,17 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from .defaults import (
+    CARD_TEXT_MAX_LENGTH,
+    COLUMN_TITLE_MAX_LENGTH,
+    DONATION_RULES_MAX_LENGTH,
+    DONATION_URL_MAX_LENGTH,
+    DONOR_NAME_MAX_LENGTH,
+    MODERATOR_NICKNAME_MAX_LENGTH,
+    PRIORITY_LEVEL_NAME_MAX_LENGTH,
+    REJECT_NOTE_MAX_LENGTH,
+)
+
 # Literal значит «только одно из этих значений».
 ColumnKind = Literal["incoming", "work", "done"]
 Source = Literal["manual", "donationalerts"]
@@ -30,13 +41,13 @@ class BoardColumn(BaseModel):
 class ColumnCreate(BaseModel):
     """Новая промежуточная колонка. Встаёт последней, прямо перед «Выполнено»."""
 
-    title: str = Field(min_length=1, max_length=40)
+    title: str = Field(min_length=1, max_length=COLUMN_TITLE_MAX_LENGTH)
 
 
 class ColumnUpdate(BaseModel):
     """Переименование колонки."""
 
-    title: str = Field(min_length=1, max_length=40)
+    title: str = Field(min_length=1, max_length=COLUMN_TITLE_MAX_LENGTH)
 
 
 class ColumnOrder(BaseModel):
@@ -55,7 +66,7 @@ class PriorityLevel(BaseModel):
     """
 
     min_amount: float = Field(ge=0)
-    name: str = Field(min_length=1, max_length=30)
+    name: str = Field(min_length=1, max_length=PRIORITY_LEVEL_NAME_MAX_LENGTH)
     # Цвет в виде #rrggbb — именно так его отдаёт <input type="color"> в браузере
     color: str = Field(pattern=r"^#[0-9a-fA-F]{6}$")
 
@@ -77,7 +88,7 @@ class IntakeSettings(BaseModel):
     ignore_anonymous: bool
     # Свои правила доната текстом (например, на ивент). Зритель видит их в «Как заказать».
     # Пустая строка — правил нет.
-    rules: str = Field(default="", max_length=500)
+    rules: str = Field(default="", max_length=DONATION_RULES_MAX_LENGTH)
 
 
 class CardCreate(BaseModel):
@@ -88,8 +99,8 @@ class CardCreate(BaseModel):
 
     # Карточка — как донат: ник, текст и сумма. Без ника — аноним, без текста —
     # «Донат без сообщения». Сумма — в валюте стримера (рубли), её можно не указывать.
-    donor_name: str | None = Field(default=None, max_length=100)
-    text: str = Field(default="", max_length=2000)
+    donor_name: str | None = Field(default=None, max_length=DONOR_NAME_MAX_LENGTH)
+    text: str = Field(default="", max_length=CARD_TEXT_MAX_LENGTH)
     amount: float | None = Field(default=None, ge=0)
     column_id: int | None = None
 
@@ -100,8 +111,8 @@ class CardUpdate(BaseModel):
     Прислать donor_name или amount равными null — значит стереть ник или сумму.
     """
 
-    donor_name: str | None = Field(default=None, max_length=100)
-    text: str | None = Field(default=None, max_length=2000)
+    donor_name: str | None = Field(default=None, max_length=DONOR_NAME_MAX_LENGTH)
+    text: str | None = Field(default=None, max_length=CARD_TEXT_MAX_LENGTH)
     # Сумма в валюте карточки: у доната в долларах — в долларах (см. routes/cards.py)
     amount: float | None = Field(default=None, ge=0)
 
@@ -124,7 +135,7 @@ class CardArchive(BaseModel):
     # «Объединена» сюда не входит: так карточка попадает в историю только через объединение
     reason: Literal["done", "deleted", "rejected"]
     # Причина отказа для «Отклонено», например «не по правилам канала». Можно не писать.
-    note: str = Field(default="", max_length=200)
+    note: str = Field(default="", max_length=REJECT_NOTE_MAX_LENGTH)
 
 
 class CardMerge(BaseModel):
@@ -229,7 +240,7 @@ class ViewerSettings(BaseModel):
 
 
 class DonationUrl(BaseModel):
-    url: str = Field(max_length=300)
+    url: str = Field(max_length=DONATION_URL_MAX_LENGTH)
 
 
 class PublicCard(BaseModel):
@@ -306,13 +317,13 @@ class AcceptInvite(BaseModel):
     """Что модератор пишет, принимая приглашение."""
 
     # Как к нему обращаться: стример увидит это имя в списке модераторов
-    nickname: str | None = Field(default=None, max_length=40)
+    nickname: str | None = Field(default=None, max_length=MODERATOR_NICKNAME_MAX_LENGTH)
 
 
 class MemberNickname(BaseModel):
     """Новое имя модератора на доске. Пустое — стример снова увидит имя из DonationAlerts или «Гость»."""
 
-    nickname: str | None = Field(default=None, max_length=40)
+    nickname: str | None = Field(default=None, max_length=MODERATOR_NICKNAME_MAX_LENGTH)
 
 
 class InviteSettings(BaseModel):

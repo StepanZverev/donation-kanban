@@ -4,13 +4,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { getBoardUpdatesPath } from '../api/boards'
 import * as historyApi from '../api/history'
 import type { HistoryFilter } from '../api/history'
+import { HISTORY_SEARCH_DELAY_MS } from '../defaults'
 import type { Card } from '../types/card'
 import { useBoard } from './useBoard'
 import { useBoardUpdates } from './useBoardUpdates'
-
-// Сколько ждать после последней набранной буквы, прежде чем искать.
-// Чтобы не слать запрос на каждую букву, пока человек печатает.
-const SEARCH_DELAY_MS = 300
 
 export function useHistoryCards() {
   const { id: boardId } = useBoard()
@@ -24,7 +21,7 @@ export function useHistoryCards() {
   const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setSearchQuery(query), SEARCH_DELAY_MS)
+    const timer = window.setTimeout(() => setSearchQuery(query), HISTORY_SEARCH_DELAY_MS)
     return () => window.clearTimeout(timer)
   }, [query])
 

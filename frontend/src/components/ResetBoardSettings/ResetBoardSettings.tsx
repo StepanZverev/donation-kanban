@@ -1,3 +1,4 @@
+import { STREAMER_CURRENCY } from '../../defaults'
 import { useStreamTotal } from '../../hooks/useStreamTotal'
 import { formatMoney } from '../../utils/money'
 import { pluralize } from '../../utils/time'
@@ -21,7 +22,7 @@ export function ResetBoardSettings() {
       <span className={styles.text}>
         <span className={styles.label}>Сбросить доску</span>
         <span className={styles.description}>
-          Сумма за стрим ({formatMoney(total, 'RUB')}) обнулится, а все карточки уйдут с доски в
+          Сумма за стрим ({formatMoney(total, STREAMER_CURRENCY)}) обнулится, а все карточки уйдут с доски в
           историю: из «Выполнено» — как выполненные, остальные — как удалённые. Сейчас на доске{' '}
           {boardCardCount} {cardsWord}.
         </span>

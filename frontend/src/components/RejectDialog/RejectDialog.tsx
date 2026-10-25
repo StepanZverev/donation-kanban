@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { REJECT_NOTE_MAX_LENGTH } from '../../defaults'
 import type { Card } from '../../types/card'
 import { describeCard } from '../../utils/donor'
 import { useBackdropClose } from '../../hooks/useBackdropClose'
@@ -39,7 +40,7 @@ export function RejectDialog(props: RejectDialogProps) {
             autoComplete="off"
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            maxLength={200}
+            maxLength={REJECT_NOTE_MAX_LENGTH}
             placeholder="Например, не по правилам канала"
             autoFocus
           />

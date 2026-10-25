@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends
 
 from ..board import get_board_id
 from ..db import Connection, get_db
+from ..defaults import STREAMER_CURRENCY
 from ..donations import Donation, add_donation_card
 from ..realtime import notify_board_changed
 
@@ -40,7 +41,7 @@ def create_fake_donation(
         username=random.choice(FAKE_NAMES),
         message=random.choice(FAKE_MESSAGES),
         amount=amount,
-        currency="RUB",
+        currency=STREAMER_CURRENCY,
         streamer_amount=amount,
     )
     add_donation_card(db, board_id, donation)

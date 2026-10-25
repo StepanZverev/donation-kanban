@@ -4,8 +4,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as authApi from '../api/auth'
 import type { DonationAlertsStatus } from '../api/auth'
-
-const REFRESH_INTERVAL_MS = 5000
+import { DA_STATUS_REFRESH_MS } from '../defaults'
 
 export function useDonationAlertsStatus() {
   const [status, setStatus] = useState<DonationAlertsStatus | null>(null)
@@ -19,7 +18,7 @@ export function useDonationAlertsStatus() {
 
   useEffect(() => {
     reload()
-    const timer = window.setInterval(reload, REFRESH_INTERVAL_MS)
+    const timer = window.setInterval(reload, DA_STATUS_REFRESH_MS)
     return () => window.clearInterval(timer)
   }, [reload])
 

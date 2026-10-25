@@ -4,7 +4,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { getBoardUpdatesPath } from '../api/boards'
 import * as settingsApi from '../api/settings'
-import { DEFAULT_PRIORITY_LEVELS, type PriorityLevel } from '../utils/priority'
+import { DEFAULT_PRIORITY_LEVELS } from '../defaults'
+import type { PriorityLevel } from '../utils/priority'
 import { useBoard } from './useBoard'
 import { useBoardUpdates } from './useBoardUpdates'
 

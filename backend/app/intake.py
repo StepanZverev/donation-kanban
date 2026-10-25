@@ -13,6 +13,14 @@
 """
 
 from .db import Connection, get_board_setting, set_board_setting
+from .defaults import (
+    ANONYMOUS_NOTE,
+    BELOW_MIN_NOTE,
+    CLOSED_NOTE,
+    IGNORE_ANONYMOUS_BY_DEFAULT,
+    INTAKE_OPEN_BY_DEFAULT,
+    MIN_AMOUNT_BY_DEFAULT,
+)
 from .schemas import IntakeSettings
 
 # Ключи в таблице board_settings
@@ -21,18 +29,16 @@ MIN_AMOUNT_KEY = "min_amount"
 IGNORE_ANONYMOUS_KEY = "ignore_anonymous"
 RULES_KEY = "donation_rules"
 
-# Причины отказа у отсеянных донатов — так их и видно в истории
-CLOSED_NOTE = "Приём был закрыт"
-BELOW_MIN_NOTE = "Меньше минимальной суммы"
-ANONYMOUS_NOTE = "Анонимный донат"
-
 
 def get_intake_settings(db: Connection, board_id: int) -> IntakeSettings:
-    """Настройки приёма. Пока стример ничего не менял: приём открыт, минимума нет, анонимов принимаем."""
+    """Настройки приёма. Чего стример ещё не менял, берём по умолчанию (см. defaults.py)."""
+    open_saved = get_board_setting(db, board_id, INTAKE_OPEN_KEY)
+    min_amount_saved = get_board_setting(db, board_id, MIN_AMOUNT_KEY)
+    ignore_anonymous_saved = get_board_setting(db, board_id, IGNORE_ANONYMOUS_KEY)
     return IntakeSettings(
-        open=get_board_setting(db, board_id, INTAKE_OPEN_KEY) != "0",
-        min_amount=float(get_board_setting(db, board_id, MIN_AMOUNT_KEY) or 0),
-        ignore_anonymous=get_board_setting(db, board_id, IGNORE_ANONYMOUS_KEY) == "1",
+        open=INTAKE_OPEN_BY_DEFAULT if open_saved is None else open_saved == "1",
+        min_amount=MIN_AMOUNT_BY_DEFAULT if min_amount_saved is None else float(min_amount_saved),
+        ignore_anonymous=IGNORE_ANONYMOUS_BY_DEFAULT if ignore_anonymous_saved is None else ignore_anonymous_saved == "1",
         rules=get_board_setting(db, board_id, RULES_KEY) or "",
     )
 
