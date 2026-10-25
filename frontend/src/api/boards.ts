@@ -125,7 +125,6 @@ export async function getInvite(token: string): Promise<Invite | null> {
   return { boardId: invite.board_id, ownerName: invite.owner_name, role: invite.role }
 }
 
-// nickname — как модератор представился (пустая строка — не представился)
 // Модератор меняет, как его называть на этой доске. Пустое имя — «не представился».
 export async function changeMyNickname(boardId: number, nickname: string): Promise<BoardInfo> {
   const response = await fetch(`/api/boards/${boardId}/members/me`, {
@@ -139,6 +138,8 @@ export async function changeMyNickname(boardId: number, nickname: string): Promi
   return toBoardInfo(await response.json())
 }
 
+// Принять приглашение и стать модератором.
+// nickname — как модератор представился (пустая строка — не представился)
 export async function acceptInvite(token: string, nickname: string): Promise<BoardInfo> {
   const response = await fetch(`/api/invites/${encodeURIComponent(token)}/accept`, {
     method: 'POST',

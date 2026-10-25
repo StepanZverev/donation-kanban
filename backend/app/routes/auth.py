@@ -187,8 +187,8 @@ def take_guest_cards(db: Connection, guest: Row, user_id: int) -> None:
     db.execute("DELETE FROM users WHERE id = %s", (guest["id"],))
 
 
-@router.post("/logout")
-async def logout(
+@router.post("/disconnect")
+async def disconnect(
     user: Row = Depends(get_current_user),
     db: Connection = Depends(get_db),
 ) -> dict:

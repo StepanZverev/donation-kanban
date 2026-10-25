@@ -20,8 +20,8 @@ export async function getStatus(): Promise<DonationAlertsStatus> {
   return response.json()
 }
 
-export async function logout(): Promise<void> {
-  const response = await fetch('/api/auth/logout', { method: 'POST' })
+export async function disconnect(): Promise<void> {
+  const response = await fetch('/api/auth/disconnect', { method: 'POST' })
   if (!response.ok) {
     throw new Error(`Не удалось отключить DonationAlerts: ${response.status}`)
   }

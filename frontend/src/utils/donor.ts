@@ -8,6 +8,15 @@ export function getDonorName(card: Pick<Card, 'donorName'>) {
   return card.donorName || 'Аноним'
 }
 
+// Один ли это донатер: ники совпадают без учёта регистра («Вася» = «вася»).
+// Без ника (аноним) — ни с кем не совпадает.
+export function isSameDonorName(name: string | null, other: string | null) {
+  if (!name || !other) {
+    return false
+  }
+  return name.toLowerCase() === other.toLowerCase()
+}
+
 // Текст карточки. Короткий текст лежит в заголовке, а длинный — целиком в описании
 // (в заголовке тогда только его начало), поэтому берём описание, а если его нет — заголовок.
 export function getCardText(card: Pick<Card, 'title' | 'description'>) {

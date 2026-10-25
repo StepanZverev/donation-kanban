@@ -6,6 +6,7 @@
 // Громкость — DONATION_SOUND_VOLUME в src/defaults.ts.
 
 import { DONATION_SOUND_VOLUME } from '../defaults'
+import { readSaved, save } from './storage'
 
 const STORAGE_KEY = 'donation-sound'
 
@@ -20,23 +21,11 @@ const FADE_IN_SECONDS = 0.03
 
 // Звук по умолчанию выключен: запись есть, только если его включили
 export function isSoundEnabled() {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === 'on'
-  } catch {
-    return false
-  }
+  return readSaved(STORAGE_KEY) === 'on'
 }
 
 export function saveSoundEnabled(enabled: boolean) {
-  try {
-    if (enabled) {
-      localStorage.setItem(STORAGE_KEY, 'on')
-    } else {
-      localStorage.removeItem(STORAGE_KEY)
-    }
-  } catch {
-    // Браузер не даёт сохранить (например, приватное окно) — настройка проживёт до перезагрузки
-  }
+  save(STORAGE_KEY, enabled ? 'on' : null)
 }
 
 // Один «звуковой движок» на всё приложение. Браузер разрешает звук только после того,

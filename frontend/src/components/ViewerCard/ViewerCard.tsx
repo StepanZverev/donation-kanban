@@ -4,6 +4,7 @@ import { getCardText, getDonorName } from '../../utils/donor'
 import { getCardElementId } from '../../utils/follow'
 import { formatMoney } from '../../utils/money'
 import { getPriorityLevel, type PriorityLevel } from '../../utils/priority'
+import { CardText } from '../CardText/CardText'
 import { EyeIcon } from '../Icons/Icons'
 import styles from './ViewerCard.module.css'
 
@@ -59,7 +60,11 @@ export function ViewerCard(props: ViewerCardProps) {
       {card.amount !== null && (
         <span className={styles.amount}>{formatMoney(card.amount, card.currency)}</span>
       )}
-      {text && <p className={styles.text}>{text}</p>}
+      {text && (
+        <p className={styles.text}>
+          <CardText text={text} />
+        </p>
+      )}
     </article>
   )
 

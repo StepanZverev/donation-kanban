@@ -1,14 +1,12 @@
 // Какие карточки можно объединить. То же правило, что на бэкенде (backend/app/merging.py):
 // любые карточки на доске с одинаковым ником донатера, в какой бы колонке они ни были.
-// Ник без учёта регистра: «Вася» = «вася». У ручных карточек ника нет — их не объединяем.
+// Ник без учёта регистра: «Вася» = «вася». Карточки без ника (анонимы) не объединяем.
 
 import type { Card } from '../types/card'
+import { isSameDonorName } from './donor'
 
 export function isSameDonor(card: Card, other: Card) {
-  if (!card.donorName || !other.donorName) {
-    return false
-  }
-  return card.donorName.toLowerCase() === other.donorName.toLowerCase()
+  return isSameDonorName(card.donorName, other.donorName)
 }
 
 // Другие карточки того же донатера, которые можно слить в card

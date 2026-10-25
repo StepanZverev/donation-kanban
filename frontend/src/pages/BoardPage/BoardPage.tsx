@@ -73,7 +73,7 @@ export function BoardPage(props: BoardPageProps) {
       : columns[0]?.id
 
   if (isLoading) {
-    return <p>Загружаю карточки…</p>
+    return <p className="app-message">Загружаю карточки…</p>
   }
 
   return (
@@ -172,13 +172,13 @@ export function BoardPage(props: BoardPageProps) {
     </div>
   )
 
-  // id карточки берём из «посылки», которую только что положила сама карточка (CardItem)
   // У объединённой карточки считаем по самому свежему донату в ней
   function isNewCard(card: Card) {
     const lastDonationAt = card.lastDonationAt ?? card.createdAt
     return highlightSince !== null && card.source === 'donationalerts' && lastDonationAt > highlightSince
   }
 
+  // id карточки берём из «посылки», которую только что положила сама карточка (CardItem)
   function handleDragStart(event: DragEvent<HTMLElement>) {
     setDraggedCardId(Number(event.dataTransfer.getData('text/plain')) || null)
   }
@@ -271,7 +271,6 @@ export function BoardPage(props: BoardPageProps) {
     }
     setForm(null)
   }
-
 
   function handleFormClose() {
     setForm(null)

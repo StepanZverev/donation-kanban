@@ -129,7 +129,7 @@ def test_no_donations_without_donationalerts_connection(client, viewer):
     assert viewer.get(f"/api/public/boards/{token}").json()["donations_connected"] is True
 
     # «Отключить» DonationAlerts: донаты больше не станут карточками
-    client.post("/api/auth/logout")
+    client.post("/api/auth/disconnect")
     assert viewer.get(f"/api/public/boards/{token}").json()["donations_connected"] is False
 
 

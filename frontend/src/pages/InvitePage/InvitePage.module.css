@@ -73,7 +73,7 @@
   border: none;
   border-radius: 8px;
   background-color: var(--color-accent);
-  color: #ffffff;
+  color: var(--color-on-accent);
   font-size: 14px;
   font-weight: 600;
   text-decoration: none;

@@ -48,7 +48,6 @@ def test_other_board_cards_cannot_be_changed(client, other):
     assert other.patch(f"/api/cards/{card_id}", json={"text": "Взлом"}).status_code == 404
     assert other.post(f"/api/cards/{card_id}/move", json={"column_id": other_column_id}).status_code == 404
     assert other.post(f"/api/cards/{card_id}/archive", json={"reason": "done"}).status_code == 404
-    assert other.delete(f"/api/cards/{card_id}").status_code == 404
     assert other.post(f"/api/cards/{other_card_id}/merge", json={"card_ids": [card_id]}).status_code == 404
     # Свою карточку в чужую колонку не положить
     assert client.post(f"/api/cards/{card_id}/move", json={"column_id": other_column_id}).status_code == 404
@@ -60,7 +59,7 @@ def test_other_board_cards_cannot_be_changed(client, other):
 
 def test_other_board_history_and_columns_cannot_be_changed(client, other):
     card_id = client.post("/api/cards", json={"text": "В историю"}).json()["id"]
-    client.delete(f"/api/cards/{card_id}")
+    client.post(f"/api/cards/{card_id}/archive", json={"reason": "deleted"})
     work_column_id = client.get("/api/columns").json()[1]["id"]
 
     assert other.get("/api/history").json() == []
@@ -115,7 +114,7 @@ def test_donations_go_to_the_board_of_who_connected_donationalerts(client, other
     # а его «Отключить» не трогает чужое подключение
     assert client.get("/api/auth/status").json()["connected"] is True
     assert other.get("/api/auth/status").json()["connected"] is False
-    other.post("/api/auth/logout")
+    other.post("/api/auth/disconnect")
     assert client.get("/api/auth/status").json()["connected"] is True
 
 
@@ -128,7 +127,7 @@ def test_guest_cards_move_to_account_on_login(client, fake_da, no_listener):
     work_column_id = client.get("/api/columns").json()[1]["id"]
     client.post("/api/cards", json={"text": "Гостевая в работе", "column_id": work_column_id})
     gone_id = client.post("/api/cards", json={"text": "Гостевая в истории"}).json()["id"]
-    client.delete(f"/api/cards/{gone_id}")
+    client.post(f"/api/cards/{gone_id}/archive", json={"reason": "deleted"})
 
     # Вошёл обратно — гостевые карточки на доске аккаунта, в колонках того же вида
     connect_donationalerts(client)

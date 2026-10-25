@@ -24,7 +24,7 @@ export function useDonationAlertsStatus() {
 
   async function disconnect() {
     try {
-      await authApi.logout()
+      await authApi.disconnect()
     } catch {
       // Не получилось — статус после перезагрузки покажет, что DonationAlerts всё ещё подключён
     }

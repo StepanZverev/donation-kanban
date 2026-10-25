@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 // Текущее время, которое само обновляется раз в intervalMs миллисекунд.
-// Нужно, чтобы подписи «40 сек назад» на карточках менялись без перезагрузки.
+// Нужно, чтобы подписи вида «Сегодня» / «Вчера» в истории менялись без перезагрузки.
 export function useNow(intervalMs: number) {
   const [now, setNow] = useState(() => Date.now())
 

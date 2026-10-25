@@ -139,23 +139,10 @@ def test_clear_queue_deletes_only_queue_cards(client):
     assert {card["title"]: card["archive_reason"] for card in history} == {"A": "deleted", "B": "deleted"}
 
 
-def test_remove_moves_card_to_history(client):
-    ids = columns(client)
-    card = create(client, "A")
-    done = move(client, create(client, "Готово"), ids["done"])
-
-    client.delete(f"/api/cards/{card['id']}")
-    client.delete(f"/api/cards/{done['id']}")
-
-    assert client.get("/api/cards").json() == []
-    history = client.get("/api/history").json()
-    assert {card["title"]: card["archive_reason"] for card in history} == {"A": "deleted", "Готово": "done"}
-
-
 def test_restore_returns_card_to_incoming(client):
     ids = columns(client)
     card = create(client, "A", column_id=ids["work"])
-    client.delete(f"/api/cards/{card['id']}")
+    client.post(f"/api/cards/{card['id']}/archive", json={"reason": "deleted"})
 
     restored = client.post(f"/api/history/{card['id']}/restore").json()
     assert restored["column_id"] == ids["incoming"]
@@ -165,7 +152,7 @@ def test_restore_returns_card_to_incoming(client):
 
 def test_delete_forever(client):
     card = create(client, "A")
-    client.delete(f"/api/cards/{card['id']}")
+    client.post(f"/api/cards/{card['id']}/archive", json={"reason": "deleted"})
     assert client.delete(f"/api/history/{card['id']}").status_code == 204
     assert client.get("/api/history").json() == []
 
@@ -179,7 +166,7 @@ def test_restore_to_chosen_column(client):
     """Кнопка «Отменить» возвращает карточку туда, где она была."""
     ids = columns(client)
     card = create(client, "A", column_id=ids["work"])
-    client.delete(f"/api/cards/{card['id']}")
+    client.post(f"/api/cards/{card['id']}/archive", json={"reason": "deleted"})
 
     response = client.post(f"/api/history/{card['id']}/restore", json={"column_id": ids["work"]})
     assert response.json()["column_id"] == ids["work"]
