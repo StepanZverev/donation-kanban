@@ -165,6 +165,26 @@ def get_card(db: Connection, board_id: int, card_id: int) -> Card:
     return Card(**row)
 
 
+def get_board_card(db: Connection, board_id: int, card_id: int) -> Card:
+    """
+    Карточка, которая сейчас на доске (не в истории), — для действия с ней:
+    переместить, убрать в историю, объединить. Карточка из истории — ошибка 400.
+
+    Строку карточки блокируем (FOR UPDATE) до конца запроса. Если стример и модератор
+    в одну секунду делают что-то с одной карточкой (один перетащил в «Выполнено»,
+    другой объединил), второй запрос подождёт первый и увидит, что карточка уже
+    в истории. Иначе сумма карточки могла бы посчитаться дважды.
+    """
+    row = db.execute(
+        "SELECT * FROM cards WHERE id = %s AND board_id = %s FOR UPDATE", (card_id, board_id)
+    ).fetchone()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Карточка не найдена")
+    if row["archived_at"] is not None:
+        raise HTTPException(status_code=400, detail="Карточка уже в истории")
+    return Card(**row)
+
+
 def get_columns(db: Connection, board_id: int) -> list[BoardColumn]:
     """Все колонки доски слева направо."""
     rows = db.execute(
@@ -235,7 +255,7 @@ def archive_card(
     Убирает карточку с доски в историю. reason: 'done' (выполнена), 'deleted' (выкинута),
     'rejected' (отклонена) и т. д. note — пояснение к пометке, например причина отказа.
     archived_by — имя модератора, если это сделал он (см. get_moderator_name).
-    Карточку перед этим уже нашли на этой доске (get_card), здесь доску не проверяем.
+    Карточку перед этим уже нашли на этой доске (get_board_card), здесь доску не проверяем.
     """
     timestamp = now()
     db.execute(

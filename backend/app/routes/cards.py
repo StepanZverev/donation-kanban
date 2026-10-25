@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends
 from ..board import (
     archive_card,
     get_board_cards,
+    get_board_card,
     get_board_id,
     get_card,
     get_column,
@@ -63,7 +64,7 @@ def latest_donations(
             SELECT created_at, archive_reason = 'rejected' AND archived_at = created_at AS is_filtered
             FROM cards
             WHERE board_id = %s AND source = 'donationalerts'
-        )
+        ) AS donations
         """,
         (board_id,),
     ).fetchone()
@@ -232,7 +233,7 @@ def move_card(
     Переносит карточку в любую колонку, без ограничений по направлению:
     например, из «Очереди» сразу в «Выполнено» или из «Выполнено» обратно.
     """
-    get_card(db, board_id, card_id)
+    get_board_card(db, board_id, card_id)
     column = get_column(db, board_id, data.column_id)
 
     timestamp = now()
@@ -257,7 +258,7 @@ def archive(
     (с причиной), из какой бы колонки её ни взяли. Это перетаскивание в зоны по краям доски
     и «Отклонить» в меню карточки.
     """
-    get_card(db, board_id, card_id)
+    get_board_card(db, board_id, card_id)
     # Причина нужна только у «Отклонено», у остальных пометок её не сохраняем
     note = data.note.strip() if data.reason == "rejected" else None
     archive_card(db, card_id, data.reason, note, archived_by=moderator_name)
@@ -314,7 +315,7 @@ def remove_card(
     Если карточка была в «Выполнено», в истории пометим её как выполненную,
     иначе — как удалённую.
     """
-    card = get_card(db, board_id, card_id)
+    card = get_board_card(db, board_id, card_id)
     done_column_id = get_column_id_by_kind(db, board_id, "done")
     reason = "done" if card.column_id == done_column_id else "deleted"
     archive_card(db, card_id, reason, archived_by=moderator_name)

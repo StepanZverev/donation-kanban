@@ -1,8 +1,16 @@
+from app import config
 from app.db import connect
 from app.donationalerts.listener import to_donation
 from app.donations import Donation, add_donation_card, split_message
 
 from .helpers import default_board_id
+
+
+def test_fake_donation_off_on_real_server(client, monkeypatch):
+    # На настоящем сервере (сайт по https) тестовых донатов нет
+    monkeypatch.setattr(config, "DEV_TOOLS_ENABLED", False)
+    assert client.post("/api/dev/fake-donation").status_code == 404
+    assert client.get("/api/cards").json() == []
 
 
 def test_fake_donation_creates_card_in_incoming(client):

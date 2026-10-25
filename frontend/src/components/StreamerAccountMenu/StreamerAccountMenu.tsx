@@ -53,7 +53,7 @@ export function StreamerAccountMenu({ user, onLogout }: StreamerAccountMenuProps
 
   const indicator = isDonationAlertsOff || isIntakeOpen ? (
     <span
-      className={`${styles.dot} ${styles[listener]}`}
+      className={`${styles.dot} ${styles[listener] ?? ''}`}
       title={`DonationAlerts: ${listenerLabels[listener].toLowerCase()}`}
     />
   ) : (
@@ -63,7 +63,7 @@ export function StreamerAccountMenu({ user, onLogout }: StreamerAccountMenuProps
   const streamSection = (
     <div className={styles.section}>
       <div className={styles.row}>
-        <span className={`${styles.dot} ${styles[listener]}`} />
+        <span className={`${styles.dot} ${styles[listener] ?? ''}`} />
         <span className={styles.rowText}>
           DonationAlerts
           <span className={styles.rowNote}>{listenerLabels[listener]}</span>

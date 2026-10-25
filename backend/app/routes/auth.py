@@ -5,8 +5,10 @@
 и с другого устройства можно войти в того же пользователя через DA.
 """
 
+import logging
 import secrets
 
+import httpx2
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 
@@ -38,6 +40,8 @@ from ..users import (
 )
 
 router = APIRouter(prefix="/api/auth", tags=["DonationAlerts"])
+
+log = logging.getLogger("donationalerts")
 
 # Cookie со случайной строкой текущего входа (см. state в client.build_authorize_url).
 # Хранится в браузере, поэтому двое могут входить одновременно и не мешать друг другу.
@@ -77,23 +81,35 @@ def login() -> RedirectResponse:
 
 @router.get("/callback")
 async def callback(
-    code: str,
-    state: str,
     request: Request,
+    code: str | None = None,
+    state: str | None = None,
     db: Connection = Depends(get_db),
 ) -> RedirectResponse:
-    """Сюда DonationAlerts возвращает браузер после того, как пользователь разрешил доступ."""
+    """
+    Сюда DonationAlerts возвращает браузер после страницы входа.
+    Если там нажали «Отказаться», кода нет (вместо него параметр error) — просто возвращаем
+    на сайт: DonationAlerts останется не подключён.
+    """
+    if code is None or state is None:
+        return back_to_site()
     expected_state = request.cookies.get(STATE_COOKIE)
     # compare_digest сравнивает строки за одинаковое время, чтобы state нельзя было подобрать
     if expected_state is None or not secrets.compare_digest(state, expected_state):
         raise HTTPException(status_code=400, detail="Вход устарел или начат не отсюда, попробуй ещё раз")
 
-    tokens = await client.exchange_code(code)
+    try:
+        tokens = await client.exchange_code(code)
+        profile = await client.get_user(tokens["access_token"])
+    except httpx2.HTTPError:
+        # DonationAlerts не ответил или ответил ошибкой. Ничего ещё не сохранили —
+        # возвращаем на сайт, подключить можно ещё раз
+        log.exception("Не удалось завершить вход через DonationAlerts")
+        return back_to_site()
 
     # Кто сейчас открыл сайт в этом браузере (обычно гость) и чей это аккаунт DA
     session_token = request.cookies.get(SESSION_COOKIE)
     current_user = find_session_user(db, session_token)
-    profile = await client.get_user(tokens["access_token"])
     user_id = choose_user(db, str(profile["id"]), current_user)
     update_profile(db, user_id, profile.get("name"), profile.get("avatar"))
     if current_user is not None and current_user["id"] != user_id:
@@ -108,13 +124,19 @@ async def callback(
     await donation_listeners.restart(user_id)
 
     # Возвращаем пользователя на доску
-    response = RedirectResponse(config.FRONTEND_URL)
-    response.delete_cookie(STATE_COOKIE)
+    response = back_to_site()
     if current_user is None or current_user["id"] != user_id:
         # Браузер был у другого пользователя (или ни у кого) — переключаем его сессию
         if session_token:
             delete_session(db, session_token)
         set_session_cookie(response, create_session(db, user_id))
+    return response
+
+
+def back_to_site() -> RedirectResponse:
+    """Возвращает браузер на сайт и стирает cookie текущего входа: он закончен."""
+    response = RedirectResponse(config.FRONTEND_URL)
+    response.delete_cookie(STATE_COOKIE)
     return response
 
 

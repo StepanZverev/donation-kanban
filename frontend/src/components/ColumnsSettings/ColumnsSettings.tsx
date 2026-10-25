@@ -23,7 +23,7 @@ export function ColumnsSettings() {
   const canAdd = workColumns.length < MAX_WORK_COLUMNS
 
   return (
-    <section className={styles.section}>
+    <section>
       <h2 className={styles.title}>Колонки доски</h2>
       <p className={styles.hint}>
         «{incomingColumn?.title ?? 'Очередь'}» и «{doneColumn?.title ?? 'Выполнено'}» есть всегда.

@@ -144,10 +144,8 @@ def test_undo_merge_returns_only_just_merged(client):
     second = card_by_message(client, "Второй")
     third = card_by_message(client, "Третий")
     merge(client, first, second)
-    merge(client, first, third)
-
     client.post(f"/api/cards/{third['id']}/move", json={"column_id": columns(client)["work"]})
-    merge(client, first, card_by_message(client, "Третий"))
+    merge(client, first, third)
 
     unmerge(client, first, third)
 
@@ -155,6 +153,31 @@ def test_undo_merge_returns_only_just_merged(client):
     assert (first["amount"], first["description"]) == (500, "Первый\n⸻\nВторой")
     # «Отменить» возвращает карточку туда, где она была до объединения
     assert card_by_message(client, "Третий")["column_id"] == columns(client)["work"]
+
+
+def test_merge_counts_repeated_card_once(client):
+    """Один и тот же id дважды в списке — сумма карточки прибавляется один раз."""
+    donate("Вася", 200, "Первый")
+    donate("Вася", 300, "Второй")
+    first = card_by_message(client, "Первый")
+    second = card_by_message(client, "Второй")
+    response = client.post(f"/api/cards/{first['id']}/merge", json={"card_ids": [second["id"], second["id"]]})
+    assert response.json()["amount"] == 500
+
+
+def test_card_in_history_cannot_be_moved_or_merged(client):
+    """Карточку, которая уже в истории (например, её только что объединили), трогать нельзя."""
+    donate("Вася", 200, "Первый")
+    donate("Вася", 300, "Второй")
+    first = card_by_message(client, "Первый")
+    second = card_by_message(client, "Второй")
+    merge(client, first, second)
+
+    move = client.post(f"/api/cards/{second['id']}/move", json={"column_id": columns(client)["work"]})
+    archive = client.post(f"/api/cards/{second['id']}/archive", json={"reason": "done"})
+    merge_again = client.post(f"/api/cards/{first['id']}/merge", json={"card_ids": [second["id"]]})
+    assert (move.status_code, archive.status_code, merge_again.status_code) == (400, 400, 400)
+    assert card_by_message(client, "Первый")["amount"] == 500
 
 
 def test_unmerge_from_history_in_any_order(client):

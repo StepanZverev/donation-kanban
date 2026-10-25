@@ -23,7 +23,11 @@ export function useDonationAlertsStatus() {
   }, [reload])
 
   async function disconnect() {
-    await authApi.logout()
+    try {
+      await authApi.logout()
+    } catch {
+      // Не получилось — статус после перезагрузки покажет, что DonationAlerts всё ещё подключён
+    }
     await reload()
   }
 

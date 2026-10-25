@@ -66,13 +66,20 @@ export function useCards() {
 
   // После каждого изменения заново забираем карточки с сервера.
   // Так порядок в колонках всегда совпадает с тем, что посчитал бэкенд.
+  // Возвращает, удалось ли действие.
   async function runAndReload(action: () => Promise<unknown>) {
+    let isSaved = true
     try {
       await action()
     } catch {
-      setError('Не удалось сохранить изменения. Попробуй ещё раз.')
+      isSaved = false
     }
     await reload()
+    // Ошибку показываем после перезагрузки: удачная загрузка сама стирает прошлую ошибку
+    if (!isSaved) {
+      setError('Не удалось сохранить изменения. Попробуй ещё раз.')
+    }
+    return isSaved
   }
 
   function addCard(draft: CardDraft, columnId: number) {
@@ -90,13 +97,16 @@ export function useCards() {
   // Сразу в историю как «выполнено», «удалено» или «отклонено»: зоны по краям доски,
   // крайние стрелки на карточке, «Удалить» и «Отклонить» в меню.
   // note — причина отказа, нужна только для «отклонено».
-  function archiveCard(cardId: number, reason: 'done' | 'deleted' | 'rejected', note = '') {
+  async function archiveCard(cardId: number, reason: 'done' | 'deleted' | 'rejected', note = '') {
     const card = cards.find((boardCard) => boardCard.id === cardId)
     if (!card) {
       return
     }
-    rememberRestore(`${archiveVerbs[reason]}: ${describeCard(card)}`, [card], card.columnId)
-    return runAndReload(() => cardsApi.archiveCard(boardId, card.id, reason, note))
+    const isSaved = await runAndReload(() => cardsApi.archiveCard(boardId, card.id, reason, note))
+    // «Отменить» предлагаем, только если действие удалось: иначе откатывать нечего
+    if (isSaved) {
+      rememberRestore(`${archiveVerbs[reason]}: ${describeCard(card)}`, [card], card.columnId)
+    }
   }
 
   // Другие карточки того же донатера, которые можно слить в эту
@@ -112,10 +122,12 @@ export function useCards() {
 
   // Сливает cardsToMerge в target. Слитые карточки уходят в историю,
   // «Отменить» вернёт их на доску — бэкенд при этом вычтет их суммы и тексты.
-  function mergeCards(target: Card, cardsToMerge: Card[], message: string) {
+  async function mergeCards(target: Card, cardsToMerge: Card[], message: string) {
     const cardIds = cardsToMerge.map((card) => card.id)
-    rememberAction(message, () => cardsApi.unmergeCards(boardId, target.id, cardIds))
-    return runAndReload(() => cardsApi.mergeCards(boardId, target.id, cardIds))
+    const isSaved = await runAndReload(() => cardsApi.mergeCards(boardId, target.id, cardIds))
+    if (isSaved) {
+      rememberAction(message, () => cardsApi.unmergeCards(boardId, target.id, cardIds))
+    }
   }
 
   // «Объединить все донаты в эту карточку» в меню «⋯»
@@ -143,21 +155,22 @@ export function useCards() {
   }
 
   // «Очистить» — все выполненные в историю.
-  function clearDone() {
-    if (doneColumn) {
-      const doneCards = getColumnCards(doneColumn.id)
+  async function clearDone() {
+    // Какие карточки уйдут, запоминаем до очистки: после неё их на доске уже нет
+    const doneCards = doneColumn ? getColumnCards(doneColumn.id) : []
+    const isSaved = await runAndReload(() => cardsApi.clearDone(boardId))
+    if (isSaved && doneColumn) {
       rememberRestore(`Очищено выполненных: ${doneCards.length}`, doneCards, doneColumn.id)
     }
-    return runAndReload(() => cardsApi.clearDone(boardId))
   }
 
   // «Очистить очередь» — все карточки из «Очереди» в историю как удалённые.
-  function clearQueue() {
-    if (incomingColumn) {
-      const queueCards = getColumnCards(incomingColumn.id)
+  async function clearQueue() {
+    const queueCards = incomingColumn ? getColumnCards(incomingColumn.id) : []
+    const isSaved = await runAndReload(() => cardsApi.clearQueue(boardId))
+    if (isSaved && incomingColumn) {
       rememberRestore(`Очищена очередь: ${queueCards.length}`, queueCards, incomingColumn.id)
     }
-    return runAndReload(() => cardsApi.clearQueue(boardId))
   }
 
   // Кладёт действие в стопку для «Отменить». undo — как его откатить.

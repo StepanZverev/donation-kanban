@@ -1,19 +1,33 @@
 """
 Эндпоинты для разработки: позволяют проверить доску без настоящих донатов.
+Работают только при локальном запуске (см. DEV_TOOLS_ENABLED в config.py),
+на настоящем сервере отвечают 404.
 """
 
 import random
 import time
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
+from .. import config
 from ..board import get_board_id
 from ..db import Connection, get_db
 from ..defaults import STREAMER_CURRENCY
 from ..donations import Donation, add_donation_card
 from ..realtime import notify_board_changed
 
-router = APIRouter(prefix="/api/boards/{board_id}/dev", tags=["Для разработки"])
+
+def require_dev_tools() -> None:
+    """Пропускает запрос дальше только при локальном запуске."""
+    if not config.DEV_TOOLS_ENABLED:
+        raise HTTPException(status_code=404, detail="Not Found")
+
+
+router = APIRouter(
+    prefix="/api/boards/{board_id}/dev",
+    tags=["Для разработки"],
+    dependencies=[Depends(require_dev_tools)],
+)
 
 # Пустая строка — анонимный донат
 FAKE_NAMES = ["Вася", "Катя_стрим", "Dimon2007", "", "MegaFan", "ЛёхаПро"]

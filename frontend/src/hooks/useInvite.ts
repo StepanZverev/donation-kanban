@@ -14,6 +14,7 @@ type InviteState =
 export function useInvite(token: string) {
   const [state, setState] = useState<InviteState>({ status: 'loading' })
   const [isAccepting, setIsAccepting] = useState(false)
+  const [acceptError, setAcceptError] = useState<string | null>(null)
 
   useEffect(() => {
     boardsApi
@@ -22,17 +23,21 @@ export function useInvite(token: string) {
       .catch(() => setState({ status: 'error' }))
   }, [token])
 
-  // Принимает приглашение и возвращает id доски, чтобы её открыть.
+  // Принимает приглашение и возвращает id доски, чтобы её открыть, или null, если не вышло.
   // nickname — как модератор представился, стример увидит это имя в списке
   async function accept(nickname: string) {
     setIsAccepting(true)
+    setAcceptError(null)
     try {
       const board = await boardsApi.acceptInvite(token, nickname)
       return board.id
+    } catch {
+      setAcceptError('Не удалось принять приглашение. Попробуй ещё раз.')
+      return null
     } finally {
       setIsAccepting(false)
     }
   }
 
-  return { state, isAccepting, accept }
+  return { state, isAccepting, acceptError, accept }
 }

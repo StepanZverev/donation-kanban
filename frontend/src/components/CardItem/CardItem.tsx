@@ -140,7 +140,7 @@ export function CardItem(props: CardItemProps) {
       {/* Стрелки по бокам видны при наведении на карточку */}
       <button
         type="button"
-        className={`${styles.arrow} ${styles.arrowLeft} ${leftArrow === 'delete' ? styles.danger : ''}`}
+        className={`${styles.arrow} ${leftArrow === 'delete' ? styles.danger : ''}`}
         title={leftArrow === 'delete' ? 'Удалить' : 'В колонку слева'}
         onClick={handleLeftClick}
       >
@@ -203,7 +203,7 @@ export function CardItem(props: CardItemProps) {
 
       <button
         type="button"
-        className={`${styles.arrow} ${styles.arrowRight} ${rightArrow === 'finish' ? styles.success : ''}`}
+        className={`${styles.arrow} ${rightArrow === 'finish' ? styles.success : ''}`}
         title={rightArrow === 'finish' ? 'Выполнено, убрать в историю' : 'В колонку справа'}
         onClick={handleRightClick}
       >

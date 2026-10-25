@@ -111,8 +111,9 @@ function StreamerApp() {
         <Route path="*" element={<Navigate to={`/boards/${board.id}`} replace />} />
       </Routes>
 
-      {/* Только для проверки без настоящих донатов, потом уберём */}
-      <FakeDonationButton />
+      {/* Только для проверки без настоящих донатов. import.meta.env.DEV — сайт запущен
+          через npm run dev, то есть локально; в собранной для сервера версии кнопки нет */}
+      {import.meta.env.DEV && <FakeDonationButton />}
     </main>
   )
 }

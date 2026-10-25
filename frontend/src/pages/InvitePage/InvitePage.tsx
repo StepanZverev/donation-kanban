@@ -9,7 +9,7 @@ import styles from './InvitePage.module.css'
 export function InvitePage() {
   // Токен — секретная часть ссылки после /invite/
   const { token = '' } = useParams()
-  const { state, isAccepting, accept } = useInvite(token)
+  const { state, isAccepting, acceptError, accept } = useInvite(token)
   const navigate = useNavigate()
   // Как назвать модератора: стример увидит это имя в списке модераторов
   const [nickname, setNickname] = useState('')
@@ -63,6 +63,7 @@ export function InvitePage() {
             >
               Принять
             </button>
+            {acceptError && <p className={styles.error}>{acceptError}</p>}
             <p className={styles.note}>
               Входить не обязательно. Но без входа через DonationAlerts доступ запомнится только в
               этом браузере.
@@ -84,6 +85,8 @@ export function InvitePage() {
 
   async function handleAcceptClick() {
     const boardId = await accept(nickname)
-    navigate(`/boards/${boardId}`)
+    if (boardId !== null) {
+      navigate(`/boards/${boardId}`)
+    }
   }
 }

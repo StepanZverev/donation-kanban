@@ -124,9 +124,15 @@ export function LinkSetting({
     if (!url) {
       return
     }
-    await navigator.clipboard.writeText(url)
-    setIsCopied(true)
-    window.setTimeout(() => setIsCopied(false), 2000)
+    try {
+      await navigator.clipboard.writeText(url)
+      setIsCopied(true)
+      window.setTimeout(() => setIsCopied(false), 2000)
+    } catch {
+      // Браузер не дал скопировать (так бывает на сайте без https) — показываем ссылку,
+      // чтобы её можно было выделить и скопировать руками
+      setIsShown(true)
+    }
   }
 }
 

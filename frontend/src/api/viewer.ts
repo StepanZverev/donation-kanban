@@ -60,7 +60,7 @@ export function getPublicPageUrl(token: string) {
 
 // Адрес живых обновлений для зрителя (см. useBoardUpdates)
 export function getPublicUpdatesPath(token: string) {
-  return `/api/public/boards/${token}/ws`
+  return `/api/public/boards/${encodeURIComponent(token)}/ws`
 }
 
 export type PublicBoard = {
