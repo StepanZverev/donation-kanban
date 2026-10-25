@@ -50,7 +50,7 @@ export function ViewerPage() {
         )}
       </header>
 
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <p className="error-message">{error}</p>}
 
       <div className={styles.board}>
         {board.columns.map((column) => {

@@ -1,21 +1,6 @@
-/* Блок со ссылкой: название, пояснение, поле со ссылкой и кнопки под ним.
-   Выглядит как остальные блоки настроек (см. ViewerSettings.module.css) */
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+/* Пока ссылки нет — только кнопка «Сделать ссылку», с тем же отступом, что у блоков настроек */
+.empty {
   padding: 12px 0;
-}
-
-.label {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.description {
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--color-text-secondary);
 }
 
 .inputBox {
@@ -66,11 +51,4 @@
 /* Отодвигает «Новая ссылка» и «Удалить» к правому краю */
 .spacer {
   flex: 1;
-}
-
-.primaryButton {
-  border-color: var(--color-accent);
-  background-color: var(--color-accent);
-  color: var(--color-on-accent);
-  white-space: nowrap;
 }

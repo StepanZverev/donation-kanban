@@ -77,7 +77,7 @@ export function ConfirmButton(props: ConfirmButtonProps) {
               Отмена
             </button>
             {/* autoFocus: окошко сразу в фокусе, и Enter подтверждает, а Esc закрывает */}
-            <button type="button" className={styles.confirmButton} autoFocus onClick={handleConfirm}>
+            <button type="button" className="danger-button" autoFocus onClick={handleConfirm}>
               {confirmLabel}
             </button>
           </div>

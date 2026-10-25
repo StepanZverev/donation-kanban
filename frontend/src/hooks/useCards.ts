@@ -1,8 +1,7 @@
 // Вся логика доски в одном месте: загрузка колонок и карточек и действия с ними.
 // Компоненты получают отсюда готовые данные и функции и ничего не знают про API.
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { getBoardUpdatesPath } from '../api/boards'
+import { useCallback, useRef, useState } from 'react'
 import * as cardsApi from '../api/cards'
 import * as columnsApi from '../api/columns'
 import * as historyApi from '../api/history'
@@ -11,7 +10,7 @@ import type { BoardColumn, Card, CardDraft } from '../types/card'
 import { describeCard } from '../utils/donor'
 import { findSameDonorCards, isSameDonor } from '../utils/merging'
 import { useBoard } from './useBoard'
-import { useBoardUpdates } from './useBoardUpdates'
+import { useBoardData } from './useBoardData'
 
 // Как подписать плашку «Отменить» после того, как карточку убрали в историю
 const archiveVerbs = {
@@ -28,70 +27,47 @@ export type UndoableAction = {
   undo: () => Promise<unknown>
 }
 
+type Board = {
+  columns: BoardColumn[]
+  cards: Card[]
+}
+
+// Колонки и карточки грузим вместе: доске нужны и те и другие сразу
+async function loadBoard(boardId: number): Promise<Board> {
+  const [columns, cards] = await Promise.all([columnsApi.getColumns(boardId), cardsApi.getCards(boardId)])
+  return { columns, cards }
+}
+
 export function useCards() {
   const { id: boardId } = useBoard()
-  const [columns, setColumns] = useState<BoardColumn[]>([])
-  const [cards, setCards] = useState<Card[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  // После каждого изменения (save) заново забираем карточки с сервера.
+  // Так порядок в колонках всегда совпадает с тем, что посчитал бэкенд.
+  const { data, isLoading, error, save } = useBoardData<Board>(
+    loadBoard,
+    { columns: [], cards: [] },
+    'Не удалось загрузить доску. Проверь, что бэкенд запущен.',
+  )
+  const { columns, cards } = data
   // Стопка действий для «Отменить», самое новое — последнее.
   // Хранится только в браузере: после перезагрузки страницы стопка пустая.
   const [undoableActions, setUndoableActions] = useState<UndoableAction[]>([])
   // Счётчик для id действий. useRef — потому что его изменение не должно перерисовывать страницу.
   const nextActionId = useRef(1)
 
-  // Забирает актуальные колонки и карточки с сервера и кладёт их в состояние.
-  const reload = useCallback(() => {
-    return Promise.all([columnsApi.getColumns(boardId), cardsApi.getCards(boardId)])
-      .then(([freshColumns, freshCards]) => {
-        setColumns(freshColumns)
-        setCards(freshCards)
-        setError(null)
-      })
-      .catch(() => setError('Не удалось загрузить доску. Проверь, что бэкенд запущен.'))
-      .finally(() => setIsLoading(false))
-  }, [boardId])
-
-  // Первая загрузка при открытии страницы.
-  useEffect(() => {
-    reload()
-  }, [reload])
-
-  // Изменения от других вкладок и новые донаты.
-  useBoardUpdates(reload, getBoardUpdatesPath(boardId))
-
   // Колонки «Очередь» и «Выполнено» — для кнопок «Очистить»
   const incomingColumn = columns.find((column) => column.kind === 'incoming')
   const doneColumn = columns.find((column) => column.kind === 'done')
 
-  // После каждого изменения заново забираем карточки с сервера.
-  // Так порядок в колонках всегда совпадает с тем, что посчитал бэкенд.
-  // Возвращает, удалось ли действие.
-  async function runAndReload(action: () => Promise<unknown>) {
-    let isSaved = true
-    try {
-      await action()
-    } catch {
-      isSaved = false
-    }
-    await reload()
-    // Ошибку показываем после перезагрузки: удачная загрузка сама стирает прошлую ошибку
-    if (!isSaved) {
-      setError('Не удалось сохранить изменения. Попробуй ещё раз.')
-    }
-    return isSaved
-  }
-
   function addCard(draft: CardDraft, columnId: number) {
-    return runAndReload(() => cardsApi.createCard(boardId, draft, columnId))
+    return save(() => cardsApi.createCard(boardId, draft, columnId))
   }
 
   function editCard(id: number, draft: CardDraft) {
-    return runAndReload(() => cardsApi.updateCard(boardId, id, draft))
+    return save(() => cardsApi.updateCard(boardId, id, draft))
   }
 
   function moveCard(id: number, columnId: number) {
-    return runAndReload(() => cardsApi.moveCard(boardId, id, columnId))
+    return save(() => cardsApi.moveCard(boardId, id, columnId))
   }
 
   // Сразу в историю как «выполнено», «удалено» или «отклонено»: зоны по краям доски,
@@ -102,7 +78,7 @@ export function useCards() {
     if (!card) {
       return
     }
-    const isSaved = await runAndReload(() => cardsApi.archiveCard(boardId, card.id, reason, note))
+    const isSaved = await save(() => cardsApi.archiveCard(boardId, card.id, reason, note))
     // «Отменить» предлагаем, только если действие удалось: иначе откатывать нечего
     if (isSaved) {
       rememberRestore(`${archiveVerbs[reason]}: ${describeCard(card)}`, [card], card.columnId)
@@ -124,7 +100,7 @@ export function useCards() {
   // «Отменить» вернёт их на доску — бэкенд при этом вычтет их суммы и тексты.
   async function mergeCards(target: Card, cardsToMerge: Card[], message: string) {
     const cardIds = cardsToMerge.map((card) => card.id)
-    const isSaved = await runAndReload(() => cardsApi.mergeCards(boardId, target.id, cardIds))
+    const isSaved = await save(() => cardsApi.mergeCards(boardId, target.id, cardIds))
     if (isSaved) {
       rememberAction(message, () => cardsApi.unmergeCards(boardId, target.id, cardIds))
     }
@@ -147,7 +123,7 @@ export function useCards() {
   // «Разъединить» в меню «⋯»: все слитые в карточку донаты возвращаются на доску.
   // «Отменить» сольёт их обратно.
   function unmergeCard(target: Card) {
-    return runAndReload(async () => {
+    return save(async () => {
       const restoredCards = await cardsApi.unmergeCards(boardId, target.id, null)
       const cardIds = restoredCards.map((card) => card.id)
       rememberAction(`Разъединено: ${target.donorName}`, () => cardsApi.mergeCards(boardId, target.id, cardIds))
@@ -158,7 +134,7 @@ export function useCards() {
   async function clearDone() {
     // Какие карточки уйдут, запоминаем до очистки: после неё их на доске уже нет
     const doneCards = doneColumn ? getColumnCards(doneColumn.id) : []
-    const isSaved = await runAndReload(() => cardsApi.clearDone(boardId))
+    const isSaved = await save(() => cardsApi.clearDone(boardId))
     if (isSaved && doneColumn) {
       rememberRestore(`Очищено выполненных: ${doneCards.length}`, doneCards, doneColumn.id)
     }
@@ -167,7 +143,7 @@ export function useCards() {
   // «Очистить очередь» — все карточки из «Очереди» в историю как удалённые.
   async function clearQueue() {
     const queueCards = incomingColumn ? getColumnCards(incomingColumn.id) : []
-    const isSaved = await runAndReload(() => cardsApi.clearQueue(boardId))
+    const isSaved = await save(() => cardsApi.clearQueue(boardId))
     if (isSaved && incomingColumn) {
       rememberRestore(`Очищена очередь: ${queueCards.length}`, queueCards, incomingColumn.id)
     }
@@ -192,7 +168,7 @@ export function useCards() {
   // «Отменить» у конкретного действия
   function undoAction(action: UndoableAction) {
     forgetAction(action.id)
-    return runAndReload(action.undo)
+    return save(action.undo)
   }
 
   // Убирает действие из стопки (плашка закрылась сама или его отменили).

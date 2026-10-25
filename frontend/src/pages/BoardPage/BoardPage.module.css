@@ -12,10 +12,6 @@
 .error {
   grid-column: 2;
   grid-row: 1;
-  padding: 8px 12px;
-  border-radius: 6px;
-  background-color: var(--color-error-background);
-  color: var(--color-error);
 }
 
 /* Колонки во всю высоту доски; лишние карточки прокручиваются внутри колонки */

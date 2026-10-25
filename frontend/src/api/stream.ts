@@ -1,5 +1,7 @@
 // Запросы к API суммы за стрим и сброса доски (backend/app/routes/stream.py).
 
+import { request } from './request'
+
 export type StreamTotal = {
   // Сумма донатов с последнего сброса, в валюте стримера
   total: number
@@ -20,18 +22,10 @@ function toStreamTotal(body: StreamTotalFromApi): StreamTotal {
 }
 
 export async function getStreamTotal(boardId: number): Promise<StreamTotal> {
-  const response = await fetch(`/api/boards/${boardId}/stream-total`)
-  if (!response.ok) {
-    throw new Error(`Не удалось загрузить сумму за стрим: ${response.status}`)
-  }
-  return toStreamTotal(await response.json())
+  return toStreamTotal(await request<StreamTotalFromApi>('GET', `/api/boards/${boardId}/stream-total`))
 }
 
 // «Сбросить доску»: сумма обнуляется, все карточки уходят в историю
 export async function resetBoard(boardId: number): Promise<StreamTotal> {
-  const response = await fetch(`/api/boards/${boardId}/reset`, { method: 'POST' })
-  if (!response.ok) {
-    throw new Error(`Не удалось сбросить доску: ${response.status}`)
-  }
-  return toStreamTotal(await response.json())
+  return toStreamTotal(await request<StreamTotalFromApi>('POST', `/api/boards/${boardId}/reset`))
 }

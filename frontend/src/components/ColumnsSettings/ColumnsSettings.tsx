@@ -5,6 +5,7 @@ import type { BoardColumn } from '../../types/card'
 import { ColumnDialog } from '../ColumnDialog/ColumnDialog'
 import { ColumnsBoardView } from '../ColumnsBoardView/ColumnsBoardView'
 import { TrashIcon } from '../Icons/Icons'
+import { SettingsSection } from '../SettingsSection/SettingsSection'
 import styles from './ColumnsSettings.module.css'
 
 // Какое окно сейчас открыто: создание колонки, переименование или никакое
@@ -23,16 +24,18 @@ export function ColumnsSettings() {
   const canAdd = workColumns.length < MAX_WORK_COLUMNS
 
   return (
-    <section>
-      <h2 className={styles.title}>Колонки доски</h2>
-      <p className={styles.hint}>
-        «{incomingColumn?.title ?? 'Очередь'}» и «{doneColumn?.title ?? 'Выполнено'}» есть всегда.
-        Между ними можно поставить до {MAX_WORK_COLUMNS} колонок, а можно ни одной. Если удалить
-        колонку, её карточки вернутся в «{incomingColumn?.title ?? 'Очередь'}».
-      </p>
-
-      {error && <p className={styles.error}>{error}</p>}
-
+    <SettingsSection
+      title="Колонки доски"
+      hint={
+        <>
+          «{incomingColumn?.title ?? 'Очередь'}» и «{doneColumn?.title ?? 'Выполнено'}» есть всегда.
+          Между ними можно поставить до {MAX_WORK_COLUMNS} колонок, а можно ни одной. Если удалить
+          колонку, её карточки вернутся в «{incomingColumn?.title ?? 'Очередь'}».
+        </>
+      }
+      error={error}
+      isWide
+    >
       <div className={styles.boardView}>
         <ColumnsBoardView
           incomingColumn={incomingColumn}
@@ -88,7 +91,7 @@ export function ColumnsSettings() {
           onClose={() => setDialog(null)}
         />
       )}
-    </section>
+    </SettingsSection>
   )
 
   function handleDialogSubmit(title: string) {

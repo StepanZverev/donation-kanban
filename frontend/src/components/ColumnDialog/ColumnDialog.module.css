@@ -1,26 +1,7 @@
-.dialog {
-  width: min(400px, calc(100vw - 32px));
-  padding: 0;
-  border: none;
-  border-radius: 12px;
-  background-color: var(--color-surface);
-  color: inherit;
-}
-
-.dialog::backdrop {
-  background-color: var(--color-backdrop);
-}
-
 .form {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 20px;
-}
-
-.heading {
-  margin: 0;
-  font-size: 18px;
 }
 
 .field {
@@ -43,12 +24,4 @@
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-}
-
-/* Главная кнопка окна — акцентная */
-.submit {
-  border-color: var(--color-accent);
-  background-color: var(--color-accent);
-  color: var(--color-on-accent);
-  font-weight: 600;
 }

@@ -2,6 +2,8 @@ import { getInvitePageUrl, type BoardMember } from '../../api/boards'
 import { useMembers } from '../../hooks/useMembers'
 import { LinkSetting } from '../LinkSetting/LinkSetting'
 import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
+import { SettingField } from '../SettingField/SettingField'
+import { SettingsSection } from '../SettingsSection/SettingsSection'
 import styles from './MembersSettings.module.css'
 
 // Раздел «Модераторы» на странице настроек: ссылка-приглашение и список тех,
@@ -18,15 +20,11 @@ export function MembersSettings() {
   const inviteUrl = inviteToken ? getInvitePageUrl(inviteToken) : null
 
   return (
-    <section className={styles.section}>
-      <h2 className={styles.title}>Модераторы</h2>
-      <p className={styles.hint}>
-        Модераторы помогают вести доску: двигают, правят и убирают карточки. Настройки, колонки и
-        сброс доски остаются только у тебя.
-      </p>
-
-      {error && <p className={styles.error}>{error}</p>}
-
+    <SettingsSection
+      title="Модераторы"
+      hint="Модераторы помогают вести доску: двигают, правят и убирают карточки. Настройки, колонки и сброс доски остаются только у тебя."
+      error={error}
+    >
       <LinkSetting
         label="Ссылка-приглашение"
         url={inviteUrl}
@@ -40,8 +38,7 @@ export function MembersSettings() {
 
       {/* Список появляется, когда по ссылке пришёл первый модератор */}
       {members.length > 0 && (
-        <div className={styles.field}>
-          <span className={styles.label}>Модераторы</span>
+        <SettingField layout="column" label="Модераторы">
           {members.map((member) => (
             <div key={member.userId} className={styles.member}>
               <span className={styles.memberName}>
@@ -58,9 +55,9 @@ export function MembersSettings() {
               </ConfirmButton>
             </div>
           ))}
-        </div>
+        </SettingField>
       )}
-    </section>
+    </SettingsSection>
   )
 }
 

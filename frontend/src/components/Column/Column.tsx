@@ -4,7 +4,7 @@ import type { BoardColumn, Card, ColumnKind } from '../../types/card'
 import type { PriorityLevel } from '../../utils/priority'
 import { formatMoney } from '../../utils/money'
 import { pluralize } from '../../utils/time'
-import { CardItem } from '../CardItem/CardItem'
+import { CardItem, type CardActions } from '../CardItem/CardItem'
 import { ConfirmButton } from '../ConfirmButton/ConfirmButton'
 import { BroomIcon, PlusIcon } from '../Icons/Icons'
 import styles from './Column.module.css'
@@ -23,47 +23,17 @@ type ColumnProps = {
   cards: Card[]
   // Уровни приоритета для цвета обводки карточек
   priorityLevels: PriorityLevel[]
-  onAddClick: () => void
-  onEditCard: (card: Card) => void
-  // В историю с пометкой «удалено» / «выполнено»
-  onDeleteCard: (card: Card) => void
-  onFinishCard: (card: Card) => void
-  // «Отклонить…» в меню карточки
-  onRejectCard: (card: Card) => void
-  onDropCard: (cardId: number, columnId: number) => void
-  // Есть ли на доске другие карточки того же донатера, и «Объединить все донаты в эту карточку»
-  canMergeAll: (card: Card) => boolean
-  onMergeAll: (card: Card) => void
-  onUnmerge: (card: Card) => void
-  // Можно ли бросить перетаскиваемую карточку на эту, чтобы объединить, и само объединение
-  canMergeOnDrop: (card: Card) => boolean
-  onMergeDrop: (card: Card) => void
+  // Что можно сделать с карточками (см. CardActions в CardItem)
+  cardActions: CardActions
   // Пришёл ли донат карточки, пока стример был на другой вкладке (тогда она мигнёт)
   isNewCard: (card: Card) => boolean
+  onAddClick: () => void
   // «Очистить» есть только у «Очереди» и «Выполнено»
   onClearClick: () => void
 }
 
 export function Column(props: ColumnProps) {
-  const {
-    column,
-    allColumns,
-    cards,
-    priorityLevels,
-    onAddClick,
-    onEditCard,
-    onDeleteCard,
-    onFinishCard,
-    onRejectCard,
-    onDropCard,
-    canMergeAll,
-    onMergeAll,
-    onUnmerge,
-    canMergeOnDrop,
-    onMergeDrop,
-    onClearClick,
-    isNewCard,
-  } = props
+  const { column, allColumns, cards, priorityLevels, cardActions, isNewCard, onAddClick, onClearClick } = props
   // Держат ли сейчас карточку над этой колонкой (чтобы подсветить её).
   const [isDragOver, setIsDragOver] = useState(false)
   const isIncomingColumn = column.kind === 'incoming'
@@ -140,19 +110,9 @@ export function Column(props: ColumnProps) {
             isMuted={isDoneColumn}
             isNew={isNewCard(card)}
             moveTargets={moveTargets}
-            onEdit={onEditCard}
-            onMove={onDropCard}
-            onDelete={onDeleteCard}
-            onReject={onRejectCard}
-            canMergeAll={canMergeAll(card)}
-            onMergeAll={onMergeAll}
-            onUnmerge={onUnmerge}
-            canMergeOnDrop={canMergeOnDrop(card)}
-            onMergeDrop={onMergeDrop}
-            leftArrow={leftColumn ? 'move' : 'delete'}
-            rightArrow={rightColumn ? 'move' : 'finish'}
-            onLeftClick={handleLeftClick}
-            onRightClick={handleRightClick}
+            leftColumn={leftColumn}
+            rightColumn={rightColumn}
+            actions={cardActions}
           />
         ))}
 
@@ -164,24 +124,6 @@ export function Column(props: ColumnProps) {
       </div>
     </section>
   )
-
-  // Стрелка влево: в соседнюю колонку слева, а из «Очереди» — удалить.
-  function handleLeftClick(card: Card) {
-    if (leftColumn) {
-      onDropCard(card.id, leftColumn.id)
-    } else {
-      onDeleteCard(card)
-    }
-  }
-
-  // Стрелка вправо: в соседнюю колонку справа, а из «Выполнено» — в историю как выполненную.
-  function handleRightClick(card: Card) {
-    if (rightColumn) {
-      onDropCard(card.id, rightColumn.id)
-    } else {
-      onFinishCard(card)
-    }
-  }
 
   // Срабатывает много раз в секунду, пока карточку держат над колонкой.
   function handleDragOver(event: DragEvent<HTMLElement>) {
@@ -217,7 +159,7 @@ export function Column(props: ColumnProps) {
     // Бросили в ту же колонку, откуда взяли, — ничего не делаем.
     const isAlreadyHere = cards.some((card) => card.id === cardId)
     if (!isAlreadyHere) {
-      onDropCard(cardId, column.id)
+      cardActions.moveCard(cardId, column.id)
     }
   }
 }

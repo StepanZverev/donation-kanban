@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react'
-import { LOGIN_URL } from '../../api/auth'
 import type { CurrentUser } from '../../api/me'
 import { MODERATOR_NICKNAME_MAX_LENGTH } from '../../defaults'
 import { useBoard } from '../../hooks/useBoard'
 import { useDonationAlertsStatus } from '../../hooks/useDonationAlertsStatus'
 import { useMyNickname } from '../../hooks/useMyNickname'
 import { AccountMenu } from '../AccountMenu/AccountMenu'
+import { DonationAlertsRow } from '../DonationAlertsRow/DonationAlertsRow'
 import { SwordIcon } from '../Icons/Icons'
 import styles from './ModeratorAccountMenu.module.css'
 
@@ -64,7 +64,7 @@ export function ModeratorAccountMenu({ user, onLogout }: ModeratorAccountMenuPro
             value={nicknameInput}
             onChange={(event) => setNicknameDraft(event.target.value)}
           />
-          <button type="submit" className={styles.primaryButton} disabled={nicknameDraft === null}>
+          <button type="submit" className="primary-button" disabled={nicknameDraft === null}>
             Сохранить
           </button>
         </div>
@@ -80,24 +80,13 @@ export function ModeratorAccountMenu({ user, onLogout }: ModeratorAccountMenuPro
 
       {/* Свой DonationAlerts — у тех, кто вошёл через него. Гостю AccountMenu сам предложит подключить. */}
       {!user.isGuest && status && (
-        <div className={styles.daRow}>
-          <span className={styles.daText}>
-            DonationAlerts
-            <span className={styles.hint}>
-              {status.connected ? `Подключён как ${user.name ?? 'ты'}` : 'Не подключён'}
-            </span>
-          </span>
-          {status.connected && (
-            <button type="button" onClick={handleDisconnectClick}>
-              Отключить
-            </button>
-          )}
-          {status.configured && !status.connected && (
-            <a className={styles.connectButton} href={LOGIN_URL}>
-              Подключить
-            </a>
-          )}
-        </div>
+        <DonationAlertsRow
+          className={styles.daRow}
+          status={status}
+          note={status.connected ? `Подключён как ${user.name ?? 'ты'}` : 'Не подключён'}
+          disconnectQuestion="Отключить DonationAlerts? Донаты перестанут приходить на твою собственную доску."
+          onDisconnect={disconnect}
+        />
       )}
     </AccountMenu>
   )
@@ -112,12 +101,6 @@ export function ModeratorAccountMenu({ user, onLogout }: ModeratorAccountMenuPro
     // Сохранилось — поле снова показывает сохранённое имя
     if (isSaved) {
       setNicknameDraft(null)
-    }
-  }
-
-  function handleDisconnectClick() {
-    if (window.confirm('Отключить DonationAlerts? Донаты перестанут приходить на твою собственную доску.')) {
-      disconnect()
     }
   }
 }

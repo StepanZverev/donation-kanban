@@ -1,5 +1,7 @@
 // Запросы про подключение DonationAlerts.
 
+import { request } from './request'
+
 export type ListenerStatus = 'not_configured' | 'not_connected' | 'connecting' | 'listening' | 'error'
 
 export type DonationAlertsStatus = {
@@ -13,16 +15,9 @@ export type DonationAlertsStatus = {
 export const LOGIN_URL = '/api/auth/login'
 
 export async function getStatus(): Promise<DonationAlertsStatus> {
-  const response = await fetch('/api/auth/status')
-  if (!response.ok) {
-    throw new Error(`Не удалось узнать статус DonationAlerts: ${response.status}`)
-  }
-  return response.json()
+  return request<DonationAlertsStatus>('GET', '/api/auth/status')
 }
 
 export async function disconnect(): Promise<void> {
-  const response = await fetch('/api/auth/disconnect', { method: 'POST' })
-  if (!response.ok) {
-    throw new Error(`Не удалось отключить DonationAlerts: ${response.status}`)
-  }
+  await request('POST', '/api/auth/disconnect')
 }

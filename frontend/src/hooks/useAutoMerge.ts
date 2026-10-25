@@ -1,44 +1,22 @@
 // Галочка «Объединять донаты одного донатера автоматически» на странице «Настройки».
 
-import { useCallback, useEffect, useState } from 'react'
-import { getBoardUpdatesPath } from '../api/boards'
 import * as settingsApi from '../api/settings'
 import { useBoard } from './useBoard'
-import { useBoardUpdates } from './useBoardUpdates'
+import { useBoardData } from './useBoardData'
 
 export function useAutoMerge() {
   const { id: boardId } = useBoard()
-  const [isEnabled, setIsEnabled] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const {
+    data: isEnabled,
+    setData: setIsEnabled,
+    error,
+    save,
+  } = useBoardData(settingsApi.getAutoMerge, false, 'Не удалось загрузить настройку. Проверь, что бэкенд запущен.')
 
-  const reload = useCallback(() => {
-    return settingsApi
-      .getAutoMerge(boardId)
-      .then((enabled) => {
-        setIsEnabled(enabled)
-        setError(null)
-      })
-      .catch(() => setError('Не удалось загрузить настройку. Проверь, что бэкенд запущен.'))
-  }, [boardId])
-
-  useEffect(() => {
-    reload()
-  }, [reload])
-
-  // Галочку могли переключить в другой вкладке
-  useBoardUpdates(reload, getBoardUpdatesPath(boardId))
-
-  async function setAutoMerge(enabled: boolean) {
+  function setAutoMerge(enabled: boolean) {
     // Сразу показываем новое состояние, не дожидаясь сервера
     setIsEnabled(enabled)
-    try {
-      await settingsApi.saveAutoMerge(boardId, enabled)
-    } catch {
-      // Сначала возвращаем то, что на самом деле сохранено, потом показываем ошибку:
-      // удачная загрузка сама стирает прошлую ошибку
-      await reload()
-      setError('Не удалось сохранить настройку. Попробуй ещё раз.')
-    }
+    return save(() => settingsApi.saveAutoMerge(boardId, enabled), 'Не удалось сохранить настройку. Попробуй ещё раз.')
   }
 
   return { isEnabled, error, setAutoMerge }

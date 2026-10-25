@@ -4,6 +4,8 @@
 // Все запросы к доске идут по адресам /api/boards/<id доски>/..., поэтому функции
 // в api/cards.ts, api/columns.ts и других первым параметром получают boardId.
 
+import { request, requestOrNull } from './request'
+
 // Кто пользователь на доске: хозяин может всё, модератор — работать с карточками
 export type BoardRole = 'owner' | 'moderator'
 
@@ -29,14 +31,8 @@ export function getBoardUpdatesPath(boardId: number) {
 
 // Доска и роль на ней. null — доски нет или доступа к ней нет (например, модератора убрали).
 export async function getBoard(boardId: number): Promise<BoardInfo | null> {
-  const response = await fetch(`/api/boards/${boardId}`)
-  if (response.status === 404) {
-    return null
-  }
-  if (!response.ok) {
-    throw new Error(`Не удалось загрузить доску: ${response.status}`)
-  }
-  return toBoardInfo(await response.json())
+  const board = await requestOrNull<BoardInfoFromApi>('GET', `/api/boards/${boardId}`)
+  return board ? toBoardInfo(board) : null
 }
 
 export type BoardMember = {
@@ -50,18 +46,16 @@ export type BoardMember = {
   isGuest: boolean
 }
 
+type BoardMemberFromApi = {
+  user_id: number
+  nickname: string | null
+  name: string | null
+  avatar_url: string | null
+  is_guest: boolean
+}
+
 export async function getMembers(boardId: number): Promise<BoardMember[]> {
-  const response = await fetch(`/api/boards/${boardId}/members`)
-  if (!response.ok) {
-    throw new Error(`Не удалось загрузить модераторов: ${response.status}`)
-  }
-  const members: {
-    user_id: number
-    nickname: string | null
-    name: string | null
-    avatar_url: string | null
-    is_guest: boolean
-  }[] = await response.json()
+  const members = await request<BoardMemberFromApi[]>('GET', `/api/boards/${boardId}/members`)
   return members.map((member) => ({
     userId: member.user_id,
     nickname: member.nickname,
@@ -72,32 +66,27 @@ export async function getMembers(boardId: number): Promise<BoardMember[]> {
 }
 
 export async function removeMember(boardId: number, userId: number): Promise<void> {
-  const response = await fetch(`/api/boards/${boardId}/members/${userId}`, { method: 'DELETE' })
-  if (!response.ok) {
-    throw new Error(`Не удалось убрать модератора: ${response.status}`)
-  }
+  await request('DELETE', `/api/boards/${boardId}/members/${userId}`)
 }
 
 // Секретная часть ссылки-приглашения (/invite/<токен>). null — приглашения выключены.
-async function readInviteToken(response: Response): Promise<string | null> {
-  if (!response.ok) {
-    throw new Error(`ошибка ${response.status}`)
-  }
-  const body: { invite_token: string | null } = await response.json()
+// Все три запроса про ссылку отвечают одинаково: какой токен теперь.
+async function requestInviteToken(method: string, boardId: number): Promise<string | null> {
+  const body = await request<{ invite_token: string | null }>(method, `/api/boards/${boardId}/invite-link`)
   return body.invite_token
 }
 
 export async function getInviteToken(boardId: number): Promise<string | null> {
-  return readInviteToken(await fetch(`/api/boards/${boardId}/invite-link`))
+  return requestInviteToken('GET', boardId)
 }
 
 // Включает приглашения или делает новую ссылку (старая перестаёт работать)
 export async function createInviteLink(boardId: number): Promise<string | null> {
-  return readInviteToken(await fetch(`/api/boards/${boardId}/invite-link`, { method: 'POST' }))
+  return requestInviteToken('POST', boardId)
 }
 
 export async function deleteInviteLink(boardId: number): Promise<string | null> {
-  return readInviteToken(await fetch(`/api/boards/${boardId}/invite-link`, { method: 'DELETE' }))
+  return requestInviteToken('DELETE', boardId)
 }
 
 // Полный адрес приглашения, его стример отправляет модератору
@@ -114,40 +103,24 @@ export type Invite = {
 
 // Что за приглашение. null — ссылка не работает (неверная, выключена или заменена).
 export async function getInvite(token: string): Promise<Invite | null> {
-  const response = await fetch(`/api/invites/${encodeURIComponent(token)}`)
-  if (response.status === 404) {
-    return null
-  }
-  if (!response.ok) {
-    throw new Error(`Не удалось открыть приглашение: ${response.status}`)
-  }
-  const invite: { board_id: number; owner_name: string | null; role: BoardRole | null } = await response.json()
-  return { boardId: invite.board_id, ownerName: invite.owner_name, role: invite.role }
+  const invite = await requestOrNull<{ board_id: number; owner_name: string | null; role: BoardRole | null }>(
+    'GET',
+    `/api/invites/${encodeURIComponent(token)}`,
+  )
+  return invite ? { boardId: invite.board_id, ownerName: invite.owner_name, role: invite.role } : null
 }
 
 // Модератор меняет, как его называть на этой доске. Пустое имя — «не представился».
 export async function changeMyNickname(boardId: number, nickname: string): Promise<BoardInfo> {
-  const response = await fetch(`/api/boards/${boardId}/members/me`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nickname }),
-  })
-  if (!response.ok) {
-    throw new Error(`Не удалось сохранить имя: ${response.status}`)
-  }
-  return toBoardInfo(await response.json())
+  const board = await request<BoardInfoFromApi>('PUT', `/api/boards/${boardId}/members/me`, { nickname })
+  return toBoardInfo(board)
 }
 
 // Принять приглашение и стать модератором.
 // nickname — как модератор представился (пустая строка — не представился)
 export async function acceptInvite(token: string, nickname: string): Promise<BoardInfo> {
-  const response = await fetch(`/api/invites/${encodeURIComponent(token)}/accept`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nickname }),
+  const board = await request<BoardInfoFromApi>('POST', `/api/invites/${encodeURIComponent(token)}/accept`, {
+    nickname,
   })
-  if (!response.ok) {
-    throw new Error(`Не удалось принять приглашение: ${response.status}`)
-  }
-  return toBoardInfo(await response.json())
+  return toBoardInfo(board)
 }

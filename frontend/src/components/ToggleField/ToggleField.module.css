@@ -1,28 +1,6 @@
+/* Вся строка нажимается */
 .field {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--color-border);
   cursor: pointer;
-}
-
-.text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.label {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.description {
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--color-text-secondary);
 }
 
 /* Переключатель: убираем обычный вид галочки и рисуем дорожку с кружком */

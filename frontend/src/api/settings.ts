@@ -1,6 +1,7 @@
 // Запросы к API настроек: уровни приоритета карточек, автообъединение и приём донатов.
 
 import type { PriorityLevel } from '../utils/priority'
+import { request } from './request'
 
 // В каком виде уровень приходит с сервера (snake_case)
 export type PriorityLevelFromApi = {
@@ -18,50 +19,29 @@ function toApi(level: PriorityLevel): PriorityLevelFromApi {
 }
 
 export async function getPriorityLevels(boardId: number): Promise<PriorityLevel[]> {
-  const response = await fetch(`/api/boards/${boardId}/settings/priority-levels`)
-  if (!response.ok) {
-    throw new Error(`Не удалось загрузить уровни: ${response.status}`)
-  }
-  const levels: PriorityLevelFromApi[] = await response.json()
+  const levels = await request<PriorityLevelFromApi[]>('GET', `/api/boards/${boardId}/settings/priority-levels`)
   return levels.map(toPriorityLevel)
 }
 
 // Сохраняет все уровни сразу. Если бэкенд не согласен (например, нет уровня от 0),
-// в ошибке будет его объяснение — его можно показать пользователю.
+// в ошибке будет его объяснение (см. getErrorDetail в api/request.ts).
 export async function savePriorityLevels(boardId: number, levels: PriorityLevel[]): Promise<PriorityLevel[]> {
-  const response = await fetch(`/api/boards/${boardId}/settings/priority-levels`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(levels.map(toApi)),
-  })
-  if (!response.ok) {
-    const body = await response.json().catch(() => null)
-    const reason = typeof body?.detail === 'string' ? body.detail : 'проверь суммы, названия и цвета'
-    throw new Error(`Не удалось сохранить: ${reason}`)
-  }
-  const saved: PriorityLevelFromApi[] = await response.json()
+  const saved = await request<PriorityLevelFromApi[]>(
+    'PUT',
+    `/api/boards/${boardId}/settings/priority-levels`,
+    levels.map(toApi),
+  )
   return saved.map(toPriorityLevel)
 }
 
 // Галочка «Объединять донаты одного донатера автоматически»
 export async function getAutoMerge(boardId: number): Promise<boolean> {
-  const response = await fetch(`/api/boards/${boardId}/settings/auto-merge`)
-  if (!response.ok) {
-    throw new Error(`Не удалось загрузить настройку: ${response.status}`)
-  }
-  const body: { enabled: boolean } = await response.json()
+  const body = await request<{ enabled: boolean }>('GET', `/api/boards/${boardId}/settings/auto-merge`)
   return body.enabled
 }
 
 export async function saveAutoMerge(boardId: number, enabled: boolean): Promise<void> {
-  const response = await fetch(`/api/boards/${boardId}/settings/auto-merge`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ enabled }),
-  })
-  if (!response.ok) {
-    throw new Error(`Не удалось сохранить настройку: ${response.status}`)
-  }
+  await request('PUT', `/api/boards/${boardId}/settings/auto-merge`, { enabled })
 }
 
 // Раздел «Приём донатов»: какие донаты становятся карточками (backend/app/intake.py)
@@ -84,11 +64,7 @@ type IntakeSettingsFromApi = {
 }
 
 export async function getIntakeSettings(boardId: number): Promise<IntakeSettings> {
-  const response = await fetch(`/api/boards/${boardId}/settings/intake`)
-  if (!response.ok) {
-    throw new Error(`Не удалось загрузить настройки приёма: ${response.status}`)
-  }
-  const body: IntakeSettingsFromApi = await response.json()
+  const body = await request<IntakeSettingsFromApi>('GET', `/api/boards/${boardId}/settings/intake`)
   return {
     isOpen: body.open,
     minAmount: body.min_amount,
@@ -105,12 +81,5 @@ export async function saveIntakeSettings(boardId: number, settings: IntakeSettin
     ignore_anonymous: settings.ignoreAnonymous,
     rules: settings.rules,
   }
-  const response = await fetch(`/api/boards/${boardId}/settings/intake`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  if (!response.ok) {
-    throw new Error(`Не удалось сохранить настройки приёма: ${response.status}`)
-  }
+  await request('PUT', `/api/boards/${boardId}/settings/intake`, body)
 }

@@ -1,6 +1,5 @@
 import { useAutoMerge } from '../../hooks/useAutoMerge'
 import { ToggleField } from '../ToggleField/ToggleField'
-import styles from './AutoMergeSettings.module.css'
 
 // Переключатель «Объединять автоматически» в разделе «Приём донатов» на странице настроек
 export function AutoMergeSettings() {
@@ -8,7 +7,7 @@ export function AutoMergeSettings() {
 
   return (
     <>
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <p className="error-message">{error}</p>}
 
       <ToggleField
         label="Объединять донаты одного донатера автоматически"

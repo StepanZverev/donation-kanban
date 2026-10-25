@@ -1,5 +1,6 @@
 import { useThemeMode } from '../../hooks/useThemeMode'
 import type { ThemeMode } from '../../utils/theme'
+import { SettingsSection } from '../SettingsSection/SettingsSection'
 import styles from './ThemeSettings.module.css'
 
 // Варианты в том порядке, в каком они стоят на экране
@@ -14,10 +15,7 @@ export function ThemeSettings() {
   const { mode, changeMode } = useThemeMode()
 
   return (
-    <section className={styles.section}>
-      <h2 className={styles.title}>Внешний вид</h2>
-      <p className={styles.hint}>Тема запоминается в этом браузере.</p>
-
+    <SettingsSection title="Внешний вид" hint="Тема запоминается в этом браузере.">
       <div className={styles.options} role="radiogroup" aria-label="Тема">
         {THEME_OPTIONS.map((option) => (
           <button
@@ -32,6 +30,6 @@ export function ThemeSettings() {
           </button>
         ))}
       </div>
-    </section>
+    </SettingsSection>
   )
 }

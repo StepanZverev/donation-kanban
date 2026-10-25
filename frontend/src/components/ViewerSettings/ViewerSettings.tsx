@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { getPublicPageUrl } from '../../api/viewer'
 import { useViewerSettings } from '../../hooks/useViewerSettings'
 import { LinkSetting } from '../LinkSetting/LinkSetting'
+import { SettingField } from '../SettingField/SettingField'
+import { SettingsSection } from '../SettingsSection/SettingsSection'
 import styles from './ViewerSettings.module.css'
 
 // Раздел «Для зрителей» на странице настроек: ссылка, по которой зрители видят доску
@@ -12,21 +14,17 @@ export function ViewerSettings() {
   const [donationUrlDraft, setDonationUrlDraft] = useState('')
 
   if (!settings) {
-    return error ? <p className={styles.error}>{error}</p> : null
+    return error ? <p className="error-message">{error}</p> : null
   }
 
   const publicUrl = settings.publicToken ? getPublicPageUrl(settings.publicToken) : null
 
   return (
-    <section className={styles.section}>
-      <h2 className={styles.title}>Для зрителей</h2>
-      <p className={styles.hint}>
-        Зрители смотрят твою доску по ссылке, без входа. Менять на ней ничего нельзя, только
-        смотреть, и она обновляется сама.
-      </p>
-
-      {error && <p className={styles.error}>{error}</p>}
-
+    <SettingsSection
+      title="Для зрителей"
+      hint="Зрители смотрят твою доску по ссылке, без входа. Менять на ней ничего нельзя, только смотреть, и она обновляется сама."
+      error={error}
+    >
       <LinkSetting
         label="Ссылка для зрителей"
         url={publicUrl}
@@ -37,13 +35,11 @@ export function ViewerSettings() {
         onDelete={deletePublicLink}
       />
 
-      <div className={styles.field}>
-        <span className={styles.label}>Ссылка на донат</span>
-        <span className={styles.description}>
-          Например, https://www.donationalerts.com/r/твой_ник. Тогда у зрителей появится кнопка «+
-          Предложить задачу»: она откроет страницу доната, а донат сам станет карточкой. Кнопка
-          видна, только пока подключён DonationAlerts.
-        </span>
+      <SettingField
+        layout="column"
+        label="Ссылка на донат"
+        description="Например, https://www.donationalerts.com/r/твой_ник. Тогда у зрителей появится кнопка «+ Предложить задачу»: она откроет страницу доната, а донат сам станет карточкой. Кнопка видна, только пока подключён DonationAlerts."
+      >
 
         {/* Ссылка сохранена — показываем её и «Удалить». Нет — поле и «Добавить» */}
         {settings.donationUrl ? (
@@ -66,13 +62,13 @@ export function ViewerSettings() {
               value={donationUrlDraft}
               onChange={(event) => setDonationUrlDraft(event.target.value)}
             />
-            <button type="submit" className={styles.primaryButton} disabled={donationUrlDraft.trim() === ''}>
+            <button type="submit" className="primary-button" disabled={donationUrlDraft.trim() === ''}>
               Добавить
             </button>
           </form>
         )}
-      </div>
-    </section>
+      </SettingField>
+    </SettingsSection>
   )
 
   async function handleDonationUrlSubmit(event: FormEvent<HTMLFormElement>) {

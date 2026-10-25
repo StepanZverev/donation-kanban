@@ -2,6 +2,7 @@
 // а пользуются функциями отсюда.
 
 import type { Card, CardDraft } from '../types/card'
+import { request } from './request'
 
 // Бэкенд пишет поля в snake_case (donor_name), а во фронте принят camelCase (donorName).
 // Описываем, в каком виде карточка приходит с сервера, и переводим её в наш тип.
@@ -53,21 +54,6 @@ export function toCard(card: CardFromApi): Card {
     lastDonationAt: card.last_donation_at ?? null,
     lastMergedAt: card.last_merged_at ?? null,
   }
-}
-
-// Общая обёртка над fetch: шлёт JSON и бросает ошибку, если сервер ответил не 2xx.
-async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
-  const response = await fetch(url, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
-  })
-
-  if (!response.ok) {
-    throw new Error(`Запрос ${method} ${url} завершился ошибкой ${response.status}`)
-  }
-
-  return response.json()
 }
 
 // Бэкенд отдаёт карточки уже в нужном порядке: внутри колонки сверху самый крупный донат
@@ -150,10 +136,9 @@ export type LatestDonations = {
 }
 
 export async function getLatestDonations(boardId: number): Promise<LatestDonations> {
-  const response = await fetch(`/api/boards/${boardId}/cards/latest-donations`)
-  if (!response.ok) {
-    throw new Error(`Не удалось узнать о новых донатах: ${response.status}`)
-  }
-  const body: { on_board: string | null; to_history: string | null } = await response.json()
+  const body = await request<{ on_board: string | null; to_history: string | null }>(
+    'GET',
+    `/api/boards/${boardId}/cards/latest-donations`,
+  )
   return { onBoard: body.on_board, toHistory: body.to_history }
 }

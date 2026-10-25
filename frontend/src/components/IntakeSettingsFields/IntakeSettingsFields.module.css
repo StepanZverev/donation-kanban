@@ -1,37 +1,4 @@
-.error {
-  padding: 8px 12px;
-  border-radius: 6px;
-  background-color: var(--color-error-background);
-  color: var(--color-error);
-}
-
-/* Строка с полем суммы — такая же, как строка с переключателем (ToggleField) */
-.field {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.label {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.description {
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--color-text-secondary);
-}
-
+/* Строки «Минимальная сумма» и «Свои правила» — общий SettingField, здесь только их начинка */
 .amount {
   display: flex;
   align-items: center;
@@ -58,13 +25,15 @@
   color: var(--color-text-secondary);
 }
 
-/* Свои правила: подпись сверху, под ней поле на всю ширину и кнопки */
+/* Свои правила: блок с линией снизу, как у строк вокруг. Под подписью поле на всю ширину и кнопки */
 .rules {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.rulesForm {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--color-border);
 }
 
 .rulesInput {
@@ -86,12 +55,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.primaryButton {
-  border-color: var(--color-accent);
-  background-color: var(--color-accent);
-  color: var(--color-on-accent);
 }
 
 .counter {

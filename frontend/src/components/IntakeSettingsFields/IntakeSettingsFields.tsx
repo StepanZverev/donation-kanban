@@ -2,6 +2,7 @@ import { useState, type FormEvent, type KeyboardEvent } from 'react'
 import { DONATION_RULES_MAX_LENGTH, STREAMER_CURRENCY } from '../../defaults'
 import { useIntakeSettings } from '../../hooks/useIntakeSettings'
 import { getCurrencySymbol } from '../../utils/money'
+import { SettingField } from '../SettingField/SettingField'
 import { ToggleField } from '../ToggleField/ToggleField'
 import styles from './IntakeSettingsFields.module.css'
 
@@ -16,7 +17,7 @@ export function IntakeSettingsFields() {
   const [rulesDraft, setRulesDraft] = useState<string | null>(null)
 
   if (!settings) {
-    return error ? <p className={styles.error}>{error}</p> : null
+    return error ? <p className="error-message">{error}</p> : null
   }
 
   const rules = rulesDraft ?? settings.rules
@@ -24,7 +25,7 @@ export function IntakeSettingsFields() {
 
   return (
     <>
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <p className="error-message">{error}</p>}
 
       <ToggleField
         label="Принимать заказы"
@@ -34,14 +35,12 @@ export function IntakeSettingsFields() {
       />
 
       {/* Сумма сохраняется, когда уходишь из поля или нажимаешь Enter */}
-      <label className={styles.field}>
-        <span className={styles.text}>
-          <span className={styles.label}>Минимальная сумма для карточки</span>
-          <span className={styles.description}>
-            Донаты меньше этой суммы сразу попадают в историю как отклонённые. 0 — без минимума.
-          </span>
-        </span>
-
+      <SettingField
+        layout="row"
+        element="label"
+        label="Минимальная сумма для карточки"
+        description="Донаты меньше этой суммы сразу попадают в историю как отклонённые. 0 — без минимума."
+      >
         <span className={styles.amount}>
           <input
             autoComplete="off"
@@ -57,7 +56,7 @@ export function IntakeSettingsFields() {
           />
           <span className={styles.currency}>{getCurrencySymbol(STREAMER_CURRENCY)}</span>
         </span>
-      </label>
+      </SettingField>
 
       <ToggleField
         label="Игнорировать анонимные донаты"
@@ -66,36 +65,37 @@ export function IntakeSettingsFields() {
         onChange={(ignoreAnonymous) => changeIntake({ ignoreAnonymous })}
       />
 
-      <form className={styles.rules} onSubmit={handleRulesSubmit}>
-        <label className={styles.text} htmlFor="donation-rules">
-          <span className={styles.label}>Свои правила доната</span>
-          <span className={styles.description}>
-            Зрители увидят этот текст в блоке «Как заказать».
-          </span>
-        </label>
-        <textarea
-          id="donation-rules"
-          className={styles.rulesInput}
-          rows={3}
-          maxLength={DONATION_RULES_MAX_LENGTH}
-          placeholder="Например: на этой неделе ивент — заказываем только песни"
-          value={rules}
-          onChange={(event) => setRulesDraft(event.target.value)}
-        />
-        <div className={styles.rulesButtons}>
-          <button className={styles.primaryButton} type="submit" disabled={!isRulesChanged}>
-            Сохранить
-          </button>
-          {settings.rules && (
-            <button type="button" onClick={handleRulesClear}>
-              Очистить
+      <SettingField
+        layout="column"
+        className={styles.rules}
+        label="Свои правила доната"
+        description="Зрители увидят этот текст в блоке «Как заказать»."
+      >
+        <form className={styles.rulesForm} onSubmit={handleRulesSubmit}>
+          <textarea
+            aria-label="Свои правила доната"
+            className={styles.rulesInput}
+            rows={3}
+            maxLength={DONATION_RULES_MAX_LENGTH}
+            placeholder="Например: на этой неделе ивент — заказываем только песни"
+            value={rules}
+            onChange={(event) => setRulesDraft(event.target.value)}
+          />
+          <div className={styles.rulesButtons}>
+            <button className="primary-button" type="submit" disabled={!isRulesChanged}>
+              Сохранить
             </button>
-          )}
-          <span className={styles.counter}>
-            {rules.length} / {DONATION_RULES_MAX_LENGTH}
-          </span>
-        </div>
-      </form>
+            {settings.rules && (
+              <button type="button" onClick={handleRulesClear}>
+                Очистить
+              </button>
+            )}
+            <span className={styles.counter}>
+              {rules.length} / {DONATION_RULES_MAX_LENGTH}
+            </span>
+          </div>
+        </form>
+      </SettingField>
     </>
   )
 

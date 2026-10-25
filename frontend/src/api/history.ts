@@ -2,6 +2,7 @@
 
 import type { Card } from '../types/card'
 import { toCard, type CardFromApi } from './cards'
+import { request } from './request'
 
 // Какие карточки истории показать. reason — только с этой пометкой (null — все),
 // query — поиск по нику и тексту (пустая строка — без поиска).
@@ -20,30 +21,16 @@ export async function getHistory(boardId: number, filter: HistoryFilter): Promis
     params.set('q', filter.query.trim())
   }
 
-  const response = await fetch(`/api/boards/${boardId}/history?${params}`)
-  if (!response.ok) {
-    throw new Error(`Не удалось загрузить историю: ${response.status}`)
-  }
-  const cards: CardFromApi[] = await response.json()
+  const cards = await request<CardFromApi[]>('GET', `/api/boards/${boardId}/history?${params}`)
   return cards.map(toCard)
 }
 
 // Возвращает карточку на доску: в указанную колонку, а если её не указали — в «Очередь».
 export async function restoreCard(boardId: number, id: number, columnId?: number): Promise<void> {
-  const response = await fetch(`/api/boards/${boardId}/history/${id}/restore`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ column_id: columnId ?? null }),
-  })
-  if (!response.ok) {
-    throw new Error(`Не удалось переоткрыть карточку: ${response.status}`)
-  }
+  await request('POST', `/api/boards/${boardId}/history/${id}/restore`, { column_id: columnId ?? null })
 }
 
 // Удаляет карточку из истории насовсем.
 export async function deleteForever(boardId: number, id: number): Promise<void> {
-  const response = await fetch(`/api/boards/${boardId}/history/${id}`, { method: 'DELETE' })
-  if (!response.ok) {
-    throw new Error(`Не удалось удалить карточку: ${response.status}`)
-  }
+  await request('DELETE', `/api/boards/${boardId}/history/${id}`)
 }

@@ -1,4 +1,10 @@
-.section {
+.narrow {
+  max-width: 560px;
+}
+
+/* Заголовок и пояснение узкие даже в широком разделе */
+.title,
+.hint {
   max-width: 560px;
 }
 

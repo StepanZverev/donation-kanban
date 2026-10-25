@@ -9,11 +9,9 @@
 // когда уходим с вкладки, всё, что на ней было, считается увиденным.
 // Новое — то, что пришло позже увиденного.
 
-import { useCallback, useEffect, useState } from 'react'
-import { getBoardUpdatesPath } from '../api/boards'
+import { useState } from 'react'
 import { getLatestDonations, type LatestDonations } from '../api/cards'
-import { useBoard } from './useBoard'
-import { useBoardUpdates } from './useBoardUpdates'
+import { useBoardData } from './useBoardData'
 
 type Page = 'board' | 'history' | 'other'
 
@@ -36,32 +34,22 @@ function isNewer(time: string | null, seenTime: string | undefined) {
 }
 
 export function useNewDonations(pathname: string) {
-  const { id: boardId } = useBoard()
-  const [latest, setLatest] = useState<LatestDonations | null>(null)
-  // null — ещё не загрузили. При первой загрузке всё, что уже есть, считаем увиденным.
+  // Свежие времена донатов. Пришёл донат или что-то поменялось — useBoardData перечитает их.
+  // null — ещё не загрузили. Об ошибке молчим: что бэкенд не отвечает, и так скажет доска,
+  // точки просто не будет.
+  const { data: latest } = useBoardData<LatestDonations | null>(getLatestDonations, null, null)
+  // null — ещё не загрузили
   const [seen, setSeen] = useState<Seen | null>(null)
   // На какой вкладке были в прошлую отрисовку — чтобы заметить, что с неё ушли
   const [page, setPage] = useState(getPage(pathname))
 
-  const reload = useCallback(() => {
-    getLatestDonations(boardId)
-      .then((loaded) => {
-        setLatest(loaded)
-        setSeen((current) => current ?? { onBoard: loaded.onBoard ?? '', toHistory: loaded.toHistory ?? '' })
-      })
-      // Бэкенд не отвечает — об этом и так скажет доска, точки просто не будет
-      .catch(() => {})
-  }, [boardId])
-
-  useEffect(() => {
-    reload()
-  }, [reload])
-
-  // Пришёл донат или что-то поменялось — узнаём свежие времена
-  useBoardUpdates(reload, getBoardUpdatesPath(boardId))
-
-  // Ушли с вкладки — всё, что на ней было, теперь увидено. Состояние меняем прямо
+  // Первая загрузка: всё, что уже есть, считаем увиденным. Состояние меняем прямо
   // во время отрисовки: так React советует отвечать на смену входных данных.
+  if (latest && seen === null) {
+    setSeen({ onBoard: latest.onBoard ?? '', toHistory: latest.toHistory ?? '' })
+  }
+
+  // Ушли с вкладки — всё, что на ней было, теперь увидено
   const currentPage = getPage(pathname)
   if (currentPage !== page) {
     setPage(currentPage)
