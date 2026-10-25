@@ -1,8 +1,9 @@
-import { LOGIN_URL, type ListenerStatus } from '../../api/auth'
+import type { ListenerStatus } from '../../api/auth'
 import type { CurrentUser } from '../../api/me'
 import { useDonationAlertsStatus } from '../../hooks/useDonationAlertsStatus'
 import { useIntakeSettings } from '../../hooks/useIntakeSettings'
 import { AccountMenu } from '../AccountMenu/AccountMenu'
+import { DonationAlertsRow } from '../DonationAlertsRow/DonationAlertsRow'
 import styles from './StreamerAccountMenu.module.css'
 
 // Что делает DonationAlerts — коротко: в меню и в подсказке у точки
@@ -62,23 +63,13 @@ export function StreamerAccountMenu({ user, onLogout }: StreamerAccountMenuProps
 
   const streamSection = (
     <div className={styles.section}>
-      <div className={styles.row}>
-        <span className={`${styles.dot} ${styles[listener] ?? ''}`} />
-        <span className={styles.rowText}>
-          DonationAlerts
-          <span className={styles.rowNote}>{listenerLabels[listener]}</span>
-        </span>
-        {status.configured && !status.connected && (
-          <a className={styles.connectButton} href={LOGIN_URL}>
-            Подключить
-          </a>
-        )}
-        {status.connected && (
-          <button type="button" onClick={handleDisconnectClick}>
-            Отключить
-          </button>
-        )}
-      </div>
+      <DonationAlertsRow
+        status={status}
+        note={listenerLabels[listener]}
+        indicator={<span className={`${styles.dot} ${styles[listener] ?? ''}`} />}
+        disconnectQuestion="Отключить DonationAlerts? Новые донаты перестанут попадать на доску."
+        onDisconnect={disconnect}
+      />
       {description && <p className={styles.description}>{description}</p>}
 
       {/* Вся строка — переключатель: по клику приём открывается или закрывается */}
@@ -105,10 +96,4 @@ export function StreamerAccountMenu({ user, onLogout }: StreamerAccountMenuProps
       {streamSection}
     </AccountMenu>
   )
-
-  function handleDisconnectClick() {
-    if (window.confirm('Отключить DonationAlerts? Новые донаты перестанут попадать на доску.')) {
-      disconnect()
-    }
-  }
 }

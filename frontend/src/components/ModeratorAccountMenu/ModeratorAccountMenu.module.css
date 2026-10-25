@@ -11,7 +11,8 @@
   color: var(--color-text-secondary);
 }
 
-/* Блоки выпадашки разделены линией сверху, как остальные части меню */
+/* Блоки выпадашки (имя и строка своего DonationAlerts) разделены линией сверху,
+   как остальные части меню */
 .section,
 .daRow {
   align-self: stretch;
@@ -76,27 +77,3 @@
   color: var(--color-error);
 }
 
-/* Строка своего DonationAlerts: название с подписью, кнопка справа */
-.daRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.daText {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  font-size: 14px;
-}
-
-/* «Подключить» — ссылка, которая выглядит как главная кнопка */
-.connectButton {
-  padding: 4px 12px;
-  border-radius: 6px;
-  background-color: var(--color-accent);
-  color: var(--color-on-accent);
-  font-size: 13px;
-  font-weight: 600;
-  text-decoration: none;
-}

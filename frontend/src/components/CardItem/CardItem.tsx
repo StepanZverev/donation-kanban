@@ -12,6 +12,28 @@ import { CardText } from '../CardText/CardText'
 import { ChevronLeftIcon, ChevronRightIcon } from '../Icons/Icons'
 import styles from './CardItem.module.css'
 
+// Что можно сделать с карточкой на доске (и можно ли). Всё собрано в один объект:
+// его готовит BoardPage, а Column раздаёт каждой своей карточке.
+export type CardActions = {
+  // «Изменить» в меню «⋯»: окно с формой
+  editCard: (card: Card) => void
+  // В другую колонку: стрелками, через меню или перетаскиванием
+  moveCard: (cardId: number, columnId: number) => void
+  // В историю с пометкой «удалено» или «выполнено»
+  deleteCard: (card: Card) => void
+  finishCard: (card: Card) => void
+  // «Отклонить…» в меню: окно с причиной
+  rejectCard: (card: Card) => void
+  // Есть ли на доске другие карточки того же донатера, и «Объединить все донаты в эту карточку»
+  canMergeAll: (card: Card) => boolean
+  mergeAll: (card: Card) => void
+  // «Разъединить»: вернуть слитые донаты на доску
+  unmerge: (card: Card) => void
+  // Можно ли бросить на карточку ту, которую сейчас тащат, чтобы объединить их, и само объединение
+  canMergeOnDrop: (card: Card) => boolean
+  mergeOnDrop: (card: Card) => void
+}
+
 type CardItemProps = {
   card: Card
   // Уровни приоритета из настроек: по ним выбирается цвет полоски слева и суммы
@@ -22,47 +44,15 @@ type CardItemProps = {
   isNew: boolean
   // Колонки, в которые карточку можно перенести через меню «⋯»
   moveTargets: BoardColumn[]
-  onEdit: (card: Card) => void
-  onMove: (cardId: number, columnId: number) => void
-  onDelete: (card: Card) => void
-  onReject: (card: Card) => void
-  // Есть ли у донатера другие карточки, которые можно слить в эту
-  canMergeAll: boolean
-  onMergeAll: (card: Card) => void
-  // «Разъединить»: вернуть слитые донаты на доску
-  onUnmerge: (card: Card) => void
-  // Можно ли бросить на эту карточку ту, которую сейчас тащат, чтобы объединить их
-  canMergeOnDrop: boolean
-  onMergeDrop: (card: Card) => void
-  // Что делают стрелки по бокам карточки:
-  // move — перенос в соседнюю колонку, delete — удалить (красная), finish — в историю выполненной (зелёная)
-  leftArrow: 'move' | 'delete'
-  rightArrow: 'move' | 'finish'
-  onLeftClick: (card: Card) => void
-  onRightClick: (card: Card) => void
+  // Соседние колонки для стрелок по бокам. Соседа нет (карточка в крайней колонке) —
+  // стрелка слева удаляет карточку (красная), справа — убирает в историю выполненной (зелёная).
+  leftColumn: BoardColumn | undefined
+  rightColumn: BoardColumn | undefined
+  actions: CardActions
 }
 
 export function CardItem(props: CardItemProps) {
-  const {
-    card,
-    priorityLevels,
-    isMuted,
-    isNew,
-    moveTargets,
-    onEdit,
-    onMove,
-    onDelete,
-    onReject,
-    canMergeAll,
-    onMergeAll,
-    onUnmerge,
-    canMergeOnDrop,
-    onMergeDrop,
-    leftArrow,
-    rightArrow,
-    onLeftClick,
-    onRightClick,
-  } = props
+  const { card, priorityLevels, isMuted, isNew, moveTargets, leftColumn, rightColumn, actions } = props
   const [isDragging, setIsDragging] = useState(false)
   // Держат ли над этой карточкой другую (чтобы показать «+ Объединить»)
   const [isDragOver, setIsDragOver] = useState(false)
@@ -78,6 +68,8 @@ export function CardItem(props: CardItemProps) {
   // Сверху ник (без ника — «Аноним»), ниже текст
   const heading = getDonorName(card)
   const text = getCardText(card)
+  // Можно ли бросить на эту карточку ту, которую сейчас тащат
+  const canMergeOnDrop = actions.canMergeOnDrop(card)
   // Обводку «+ Объединить» показываем, только пока над карточкой держат подходящую
   const showMergeDrop = isDragOver && canMergeOnDrop
   // В карточку слиты другие донаты
@@ -134,8 +126,8 @@ export function CardItem(props: CardItemProps) {
       {/* Стрелки по бокам видны при наведении на карточку */}
       <button
         type="button"
-        className={`${styles.arrow} ${leftArrow === 'delete' ? styles.danger : ''}`}
-        title={leftArrow === 'delete' ? 'Удалить' : 'В колонку слева'}
+        className={`${styles.arrow} ${leftColumn ? '' : styles.danger}`}
+        title={leftColumn ? 'В колонку слева' : 'Удалить'}
         onClick={handleLeftClick}
       >
         <ChevronLeftIcon />
@@ -159,7 +151,7 @@ export function CardItem(props: CardItemProps) {
               onMove={handleMove}
               onDelete={handleDelete}
               onReject={handleReject}
-              onMergeAll={canMergeAll ? handleMergeAll : undefined}
+              onMergeAll={actions.canMergeAll(card) ? handleMergeAll : undefined}
               onUnmerge={SHOW_UNMERGE && isMerged ? handleUnmerge : undefined}
             />
           </div>
@@ -191,8 +183,8 @@ export function CardItem(props: CardItemProps) {
 
       <button
         type="button"
-        className={`${styles.arrow} ${rightArrow === 'finish' ? styles.success : ''}`}
-        title={rightArrow === 'finish' ? 'Выполнено, убрать в историю' : 'В колонку справа'}
+        className={`${styles.arrow} ${rightColumn ? '' : styles.success}`}
+        title={rightColumn ? 'В колонку справа' : 'Выполнено, убрать в историю'}
         onClick={handleRightClick}
       >
         <ChevronRightIcon />
@@ -247,7 +239,7 @@ export function CardItem(props: CardItemProps) {
     }
     event.preventDefault()
     event.stopPropagation()
-    onMergeDrop(card)
+    actions.mergeOnDrop(card)
   }
 
   function handleExpandClick() {
@@ -255,34 +247,44 @@ export function CardItem(props: CardItemProps) {
   }
 
   function handleMergeAll() {
-    onMergeAll(card)
+    actions.mergeAll(card)
   }
 
   function handleUnmerge() {
-    onUnmerge(card)
+    actions.unmerge(card)
   }
 
+  // Стрелка влево: в соседнюю колонку слева, а из «Очереди» — удалить
   function handleLeftClick() {
-    onLeftClick(card)
+    if (leftColumn) {
+      actions.moveCard(card.id, leftColumn.id)
+    } else {
+      actions.deleteCard(card)
+    }
   }
 
+  // Стрелка вправо: в соседнюю колонку справа, а из «Выполнено» — в историю как выполненную
   function handleRightClick() {
-    onRightClick(card)
+    if (rightColumn) {
+      actions.moveCard(card.id, rightColumn.id)
+    } else {
+      actions.finishCard(card)
+    }
   }
 
   function handleEdit() {
-    onEdit(card)
+    actions.editCard(card)
   }
 
   function handleMove(columnId: number) {
-    onMove(card.id, columnId)
+    actions.moveCard(card.id, columnId)
   }
 
   function handleDelete() {
-    onDelete(card)
+    actions.deleteCard(card)
   }
 
   function handleReject() {
-    onReject(card)
+    actions.rejectCard(card)
   }
 }

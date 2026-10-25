@@ -5,6 +5,7 @@ import { usePriorityLevels } from '../../hooks/usePriorityLevels'
 import type { Card, CardDraft } from '../../types/card'
 import { getEditableText } from '../../utils/donor'
 import { CardFormDialog } from '../../components/CardFormDialog/CardFormDialog'
+import type { CardActions } from '../../components/CardItem/CardItem'
 import { Column } from '../../components/Column/Column'
 import { ColumnTabs } from '../../components/ColumnTabs/ColumnTabs'
 import { DropZone } from '../../components/DropZone/DropZone'
@@ -71,6 +72,19 @@ export function BoardPage(props: BoardPageProps) {
     selectedColumnId !== null && columns.some((column) => column.id === selectedColumnId)
       ? selectedColumnId
       : columns[0]?.id
+  // Что можно сделать с карточкой: Column раздаёт это каждой своей карточке
+  const cardActions: CardActions = {
+    editCard: handleEditCard,
+    moveCard,
+    deleteCard: handleDeleteCard,
+    finishCard: handleFinishCard,
+    rejectCard: setRejectingCard,
+    canMergeAll: (card) => getMergeableCards(card).length > 0,
+    mergeAll: mergeAllInto,
+    unmerge: unmergeCard,
+    canMergeOnDrop: canMergeDraggedOn,
+    mergeOnDrop: handleMergeDrop,
+  }
 
   if (isLoading) {
     return <p className="app-message">Загружаю карточки…</p>
@@ -115,19 +129,10 @@ export function BoardPage(props: BoardPageProps) {
               allColumns={columns}
               cards={getColumnCards(column.id)}
               priorityLevels={levels}
-              onAddClick={() => handleAddClick(column.id)}
-              onEditCard={handleEditCard}
-              onDeleteCard={handleDeleteCard}
-              onFinishCard={handleFinishCard}
-              onRejectCard={setRejectingCard}
-              onDropCard={moveCard}
-              canMergeAll={(card) => getMergeableCards(card).length > 0}
-              onMergeAll={mergeAllInto}
-              onUnmerge={unmergeCard}
-              canMergeOnDrop={canMergeDraggedOn}
-              onMergeDrop={handleMergeDrop}
-              onClearClick={column.kind === 'incoming' ? clearQueue : clearDone}
+              cardActions={cardActions}
               isNewCard={isNewCard}
+              onAddClick={() => handleAddClick(column.id)}
+              onClearClick={column.kind === 'incoming' ? clearQueue : clearDone}
             />
           </div>
         ))}

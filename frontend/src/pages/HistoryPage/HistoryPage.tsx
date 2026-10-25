@@ -1,13 +1,13 @@
 import type { ChangeEvent } from 'react'
 import type { HistoryFilter } from '../../api/history'
-import { RestoreIcon, SwordIcon, TrashIcon } from '../../components/Icons/Icons'
+import { HistoryRow } from '../../components/HistoryRow/HistoryRow'
 import { STREAMER_CURRENCY } from '../../defaults'
 import { useBoard } from '../../hooks/useBoard'
 import { useHighlightSince } from '../../hooks/useHighlightSince'
 import { useHistoryCards } from '../../hooks/useHistoryCards'
 import { useNow } from '../../hooks/useNow'
 import type { Card } from '../../types/card'
-import { describeCard, getCardText, getDonorName } from '../../utils/donor'
+import { describeCard } from '../../utils/donor'
 import { groupByDay } from '../../utils/historyDays'
 import { formatMoney } from '../../utils/money'
 import { pluralize } from '../../utils/time'
@@ -21,13 +21,6 @@ const FILTERS: { reason: HistoryFilter['reason']; label: string }[] = [
   { reason: 'deleted', label: 'Удалено' },
   { reason: 'merged', label: 'Объединено' },
 ]
-
-const archiveReasonLabels = {
-  done: 'Выполнено',
-  rejected: 'Отклонено',
-  deleted: 'Удалено',
-  merged: 'Объединено',
-}
 
 type HistoryPageProps = {
   // До какого времени отсеянные донаты уже видели (см. useNewDonations).
@@ -127,71 +120,14 @@ export function HistoryPage(props: HistoryPageProps) {
 
             <ul className={styles.rows}>
               {day.cards.map((card) => (
-                <li
+                <HistoryRow
                   key={card.id}
-                  className={isNewCard(card) ? `${styles.row} ${styles.fresh}` : styles.row}
-                >
-                  <span className={styles.time}>{card.archivedAt && formatTime(card.archivedAt)}</span>
-
-                  {card.archiveReason && (
-                    <span className={`${styles.badge} ${styles[card.archiveReason]}`}>
-                      {archiveReasonLabels[card.archiveReason]}
-                    </span>
-                  )}
-
-                  {/* Длинный текст обрезается многоточием, целиком — во всплывающей подсказке.
-                      Справа — метка модератора, если карточку убрал он */}
-                  <span className={styles.what}>
-                    <span className={styles.text} title={getFullText(card)}>
-                      <b className={styles.who}>{getDonorName(card)}</b>
-                      {' · '}
-                      {getCardText(card)}
-                    </span>
-                    {card.archivedBy && (
-                      <span
-                        className={styles.moderator}
-                        title={`${archiveReasonLabels[card.archiveReason ?? 'deleted']} модератором ${card.archivedBy}`}
-                      >
-                        <SwordIcon />
-                        {card.archivedBy}
-                      </span>
-                    )}
-                  </span>
-
-                  <span className={styles.amount}>
-                    {card.amount !== null && formatMoney(card.amount, card.currency)}
-                  </span>
-
-                  {/* Кнопки-иконки; подпись видна во всплывающей подсказке (title) */}
-                  <span className={styles.actions}>
-                    <button
-                      type="button"
-                      className={styles.iconButton}
-                      title="Вернуть на доску"
-                      aria-label="Вернуть на доску"
-                      onClick={() => handleRestore(card)}
-                    >
-                      <RestoreIcon />
-                    </button>
-                    {/* Удалить навсегда может только стример */}
-                    {isOwner && (
-                      <button
-                        type="button"
-                        className={`${styles.iconButton} ${styles.dangerButton}`}
-                        title="Удалить навсегда"
-                        aria-label="Удалить навсегда"
-                        onClick={() => handleDeleteForever(card)}
-                      >
-                        <TrashIcon />
-                      </button>
-                    )}
-                  </span>
-
-                  {/* Причина отказа — отдельной строкой под текстом */}
-                  {card.archiveReason === 'rejected' && card.archiveNote && (
-                    <span className={styles.note}>Причина: {card.archiveNote}</span>
-                  )}
-                </li>
+                  card={card}
+                  isNew={isNewCard(card)}
+                  canDeleteForever={isOwner}
+                  onRestore={handleRestore}
+                  onDeleteForever={handleDeleteForever}
+                />
               ))}
             </ul>
           </section>
@@ -221,14 +157,4 @@ export function HistoryPage(props: HistoryPageProps) {
       deleteForever(card.id)
     }
   }
-}
-
-// Полный текст для всплывающей подсказки
-function getFullText(card: Card) {
-  return `${getDonorName(card)}: ${getCardText(card)}`
-}
-
-// '2026-10-12T13:04:13+00:00' → '16:04' (в часовом поясе пользователя)
-function formatTime(isoDate: string) {
-  return new Date(isoDate).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
 }
