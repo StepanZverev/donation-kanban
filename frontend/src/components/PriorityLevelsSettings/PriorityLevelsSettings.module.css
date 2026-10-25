@@ -1,124 +1,186 @@
+/* Уровни списком, как колонки на телефоне: каждая строка — отдельная плашка */
 .list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-/* Уровень выглядит как карточка доната: тонкая рамка, полоска слева цвета уровня */
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-left: 4px solid var(--level-color);
-  border-radius: 10px;
-  background-color: var(--color-surface);
-}
-
-/* Первая строка, как у карточки: название слева, сумма цветом уровня справа */
-.top {
+/* Один уровень: цвет, название, сумма, образец карточки и корзина.
+   Заливка как у колонок на доске: на ней белые поле суммы и образец карточки заметнее */
+.row {
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 6px 6px 6px 8px;
+  border-radius: 8px;
+  background-color: var(--color-column);
 }
 
-/* Поле названия выглядит как ник на карточке; рамка появляется при наведении и вводе */
+/* Квадратик цвета уровня */
+.colorSwatch {
+  position: relative;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background-color: var(--level-color);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 10%);
+  cursor: pointer;
+}
+
+/* Выбор цвета браузера прозрачный и лежит поверх квадратика */
+.colorInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Название — как поле колонки: рамка появляется при наведении и в фокусе */
 .nameInput {
   flex: 1;
   min-width: 0;
-  margin-left: -6px;
-  padding: 4px 6px;
+  padding: 6px 8px;
   border: 1px solid transparent;
   border-radius: 6px;
+  font-size: 14px;
   background-color: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 15px;
-  font-weight: 600;
 }
 
-.nameInput:hover {
+.nameInput:hover,
+.nameInput:focus {
   border-color: var(--color-border);
+  background-color: var(--color-surface);
 }
 
-
-.amount {
-  flex-shrink: 0;
-  color: var(--level-color);
-  font-family: var(--font-numbers);
-  font-size: 15px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-/* Вторая строка, как подпись внизу карточки: цвет, порог и корзина */
-.bottom {
+/* Рамка вокруг числа и «₽»: выглядит как одно поле */
+.amountBox {
+  box-sizing: border-box;
   display: flex;
-  flex-wrap: wrap;
+  flex-shrink: 0;
   align-items: center;
-  gap: 8px 20px;
+  width: 92px;
+  padding-right: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background-color: var(--color-surface);
+  font-family: var(--font-numbers);
+  font-size: 13px;
+  cursor: text;
+}
+
+.amountBox:focus-within {
+  border-color: var(--color-accent);
+}
+
+.amountInput {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 4px 6px 8px;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  background-color: transparent;
+  outline: none;
+}
+
+/* «от 0 ₽» у первого уровня — на месте поля и той же ширины */
+.zero {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 92px;
+  padding-left: 9px;
   font-size: 13px;
   color: var(--color-text-secondary);
 }
 
-.field {
+/* Образец карточки: полоска слева и сумма цветом уровня */
+.sample {
+  box-sizing: border-box;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-}
-
-/* Квадратик выбора цвета */
-.colorInput {
-  width: 28px;
-  height: 22px;
-  padding: 0;
-  border: none;
-  border-radius: 4px;
-  background: none;
-  cursor: pointer;
-}
-
-.amountInput {
-  width: 90px;
-  padding: 4px 8px;
+  width: 150px;
+  padding: 5px 10px;
   border: 1px solid var(--color-border);
+  border-left: 3px solid var(--level-color);
   border-radius: 6px;
-  font: inherit;
+  background-color: var(--color-surface);
+}
+
+.sampleName {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sampleAmount {
+  color: var(--level-color);
   font-family: var(--font-numbers);
   font-size: 13px;
-  background-color: var(--color-background);
-  color: var(--color-text);
+  font-weight: 700;
+  white-space: nowrap;
 }
 
+/* На телефоне в образце остаётся только сумма, а поля уже, чтобы влезло название */
+@media (max-width: 480px) {
+  .sample {
+    justify-content: flex-end;
+    width: 76px;
+  }
 
-.zero {
-  color: var(--color-text);
+  .amountBox,
+  .zero {
+    width: 80px;
+  }
+
+  .sampleName {
+    display: none;
+  }
+}
+
+.iconButton,
+.iconPlaceholder {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
 }
 
 .iconButton {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  margin-left: auto;
   padding: 0;
   border: none;
+  border-radius: 6px;
   background-color: transparent;
   color: var(--color-text-secondary);
 }
 
-.iconButton:hover:not(:disabled) {
+.iconButton:hover {
   background-color: var(--color-error-background);
   color: var(--color-error);
 }
 
-.iconButton:disabled {
-  opacity: 0.3;
+/* «+ Добавить уровень» — во всю ширину, пунктиром, как «+ Новая колонка» */
+.addButton {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px dashed var(--color-border);
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: 14px;
 }
 
-.addButton {
-  margin-top: 10px;
+.addButton:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 
 .footer {
@@ -126,4 +188,3 @@
   gap: 8px;
   margin-top: 16px;
 }
-
