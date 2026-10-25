@@ -8,15 +8,15 @@
   list-style: none;
 }
 
-/* Один уровень: цвет, название, сумма, образец карточки и корзина */
+/* Один уровень: цвет, название, сумма, образец карточки и корзина.
+   Заливка как у колонок на доске: на ней белые поле суммы и образец карточки заметнее */
 .row {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 6px 6px 8px;
-  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background-color: var(--color-surface);
+  background-color: var(--color-column);
 }
 
 /* Квадратик цвета уровня */
@@ -52,8 +52,10 @@
   background-color: transparent;
 }
 
-.nameInput:hover {
+.nameInput:hover,
+.nameInput:focus {
   border-color: var(--color-border);
+  background-color: var(--color-surface);
 }
 
 /* Рамка вокруг числа и «₽»: выглядит как одно поле */
@@ -66,6 +68,7 @@
   padding-right: 8px;
   border: 1px solid var(--color-border);
   border-radius: 6px;
+  background-color: var(--color-surface);
   font-family: var(--font-numbers);
   font-size: 13px;
   cursor: text;
