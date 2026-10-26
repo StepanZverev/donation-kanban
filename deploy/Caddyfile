@@ -1,0 +1,22 @@
+# Настройка веб-сервера Caddy. {$DOMAIN} — домен из deploy/.env.
+# По домену Caddy сам получает HTTPS-сертификат и продлевает его, а http перенаправляет на https.
+{$DOMAIN} {
+	# Сжимаем ответы, чтобы сайт грузился быстрее
+	encode zstd gzip
+
+	# Запросы к API и WebSocket — бэкенду
+	handle /api/* {
+		reverse_proxy backend:8000
+	}
+
+	# Всё остальное — файлы фронта. Адреса вроде /settings/board — это страницы React,
+	# отдельных файлов для них нет, поэтому отдаём index.html, а дальше разбирается React Router
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+
+		# Файлы в /assets/ меняют имя при каждой сборке, поэтому браузер может хранить их долго
+		header /assets/* Cache-Control "public, max-age=31536000, immutable"
+	}
+}

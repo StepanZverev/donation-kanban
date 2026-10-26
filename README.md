@@ -4,6 +4,7 @@
 
 - `frontend/` — React + TypeScript (Vite)
 - `backend/` — Python, FastAPI, база данных PostgreSQL
+- `deploy/` — запуск на сервере: Docker, HTTPS, бэкапы, автодеплой (инструкция — [deploy/README.md](deploy/README.md))
 
 ## Запуск в режиме разработки
 

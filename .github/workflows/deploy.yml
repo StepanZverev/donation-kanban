@@ -1,0 +1,52 @@
+# Автодеплой: после каждого мёржа в main обновляет сайт на сервере.
+#
+# Заходит на сервер по SSH, забирает свежий main и пересобирает контейнеры
+# (deploy/docker-compose.yml). База и бэкапы при этом не трогаются.
+#
+# Нужны секреты репозитория (Settings → Secrets and variables → Actions),
+# как их получить — в deploy/README.md:
+#   DEPLOY_HOST         — адрес сервера (IP или домен)
+#   DEPLOY_SSH_KEY      — закрытый SSH-ключ пользователя deploy на сервере
+#   DEPLOY_KNOWN_HOSTS  — отпечаток сервера, чтобы не отправить ключ подменённому серверу
+# Пока секретов нет, деплой пропускается.
+
+name: Деплой
+
+on:
+  push:
+    branches: [main]
+  # Кнопка «Run workflow» на вкладке Actions: передеплоить вручную
+  workflow_dispatch:
+
+# Два мёржа подряд: второй деплой ждёт, пока закончится первый
+concurrency: deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+    steps:
+      - name: Обновить сайт на сервере
+        if: env.DEPLOY_HOST != ''
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519
+          ssh "deploy@$DEPLOY_HOST" '
+            set -e
+            cd ~/donation-kanban
+            git fetch origin main
+            git reset --hard origin/main
+            cd deploy
+            docker compose up -d --build
+            docker image prune -f
+          '
+
+      - name: Сервер ещё не настроен
+        if: env.DEPLOY_HOST == ''
+        run: echo "Секрета DEPLOY_HOST нет — деплой пропущен (см. deploy/README.md)"
