@@ -10,3 +10,7 @@ backend/*.db
 .DS_Store
 .idea/
 .vscode/
+
+# Сервер: настройки и бэкапы
+deploy/.env
+deploy/backups/

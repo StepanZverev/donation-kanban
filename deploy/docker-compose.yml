@@ -1,0 +1,73 @@
+# Всё приложение на сервере. Запуск из этой папки: docker compose up -d --build
+# Настройки (домен, пароли, ключи) — в файле deploy/.env рядом, пример — .env.example.
+#
+#   Интернет ──https──► web (Caddy + фронт) ──► backend (FastAPI) ──► postgres
+#                                                                       ▲
+#                                                  backup (копия базы каждую ночь)
+#
+# Наружу открыт только web (порты 80 и 443). База и бэкенд видны лишь внутри Docker.
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      # Сертификаты HTTPS: чтобы не получать их заново при каждом перезапуске
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - backend
+
+  backend:
+    build: ../backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://donation_kanban:${POSTGRES_PASSWORD}@postgres:5432/donation_kanban
+      FRONTEND_URL: https://${DOMAIN}
+      DA_REDIRECT_URI: https://${DOMAIN}/api/auth/callback
+      DA_CLIENT_ID: ${DA_CLIENT_ID}
+      DA_CLIENT_SECRET: ${DA_CLIENT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: donation_kanban
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: donation_kanban
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "donation_kanban"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backup:
+    image: postgres:16
+    restart: unless-stopped
+    entrypoint: ["/backup.sh"]
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      TZ: Europe/Moscow
+    volumes:
+      - ./backup.sh:/backup.sh:ro
+      - ./backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:

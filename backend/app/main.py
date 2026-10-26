@@ -2,11 +2,13 @@
 Точка входа бэкенда. Запуск: uvicorn app.main:app --reload
 """
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from .cleanup import clean_up_forever
 from .db import init_db
 from .donationalerts.listener import donation_listeners
 from .routes import auth, cards, columns, dev, donors, history, me, members, settings, stream, viewer
@@ -20,7 +22,9 @@ async def lifespan(app: FastAPI):
     # Код до yield выполняется один раз при старте сервера, после yield — при остановке.
     init_db()
     donation_listeners.start_all()
+    cleanup_task = asyncio.create_task(clean_up_forever())
     yield
+    cleanup_task.cancel()
     await donation_listeners.stop_all()
 
 
