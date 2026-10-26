@@ -18,6 +18,11 @@ export type Release = {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '0.8.5',
+    date: '2026-10-26',
+    changes: ['На телефоне точка статуса у аватара больше не сливается с рамкой кнопки.'],
+  },
+  {
     version: '0.8.4',
     date: '2026-10-25',
     changes: [
