@@ -4,7 +4,7 @@
 #   curl -fsSL https://raw.githubusercontent.com/StepanZverev/donation-kanban/main/deploy/setup-server.sh | bash
 #
 # Что делает:
-# 1. Обновляет систему, ставит git, Docker и файрвол.
+# 1. Обновляет систему, ставит git, Docker и файрвол, добавляет файл подкачки.
 # 2. Открывает наружу только порты 22 (SSH), 80 и 443 (сайт).
 # 3. Создаёт пользователя deploy, под которым работает сайт и заходит автодеплой.
 # 4. Выключает вход по паролю: на сервер можно зайти только по SSH-ключу.
@@ -23,6 +23,16 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update -q
 apt-get upgrade -yq
 apt-get install -yq git ufw
+
+echo "== Файл подкачки 2 ГБ =="
+# Запас памяти на диске: на сервере с 1–2 ГБ сборка фронта иначе может не поместиться в память
+if ! swapon --show | grep -q .; then
+  fallocate -l 2G /swapfile
+  chmod 600 /swapfile
+  mkswap /swapfile
+  swapon /swapfile
+  echo "/swapfile none swap sw 0 0" >> /etc/fstab
+fi
 
 echo "== Ставлю Docker =="
 if ! command -v docker > /dev/null; then
