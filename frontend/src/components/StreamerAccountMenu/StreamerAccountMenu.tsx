@@ -4,6 +4,7 @@ import { useDonationAlertsStatus } from '../../hooks/useDonationAlertsStatus'
 import { useIntakeSettings } from '../../hooks/useIntakeSettings'
 import { AccountMenu } from '../AccountMenu/AccountMenu'
 import { DonationAlertsRow } from '../DonationAlertsRow/DonationAlertsRow'
+import { GuestConnectTip } from '../GuestConnectTip/GuestConnectTip'
 import styles from './StreamerAccountMenu.module.css'
 
 // Что делает DonationAlerts — коротко: в меню и в подсказке у точки
@@ -44,7 +45,13 @@ export function StreamerAccountMenu({ user, onLogout }: StreamerAccountMenuProps
   // У гостя донатов нет, следить не за чем: обычное меню с «Подключить DonationAlerts».
   // Бэкенд не отвечает — об этом и так скажет доска, тоже показываем обычное меню.
   if (user.isGuest || status === null || settings === null) {
-    return <AccountMenu user={user} onLogout={onLogout} />
+    return (
+      <div className={styles.wrapper}>
+        <AccountMenu user={user} onLogout={onLogout} />
+        {/* Гостю под кнопкой — заметная подсказка подключить DonationAlerts */}
+        {user.isGuest && user.canConnectDonationAlerts && <GuestConnectTip />}
+      </div>
+    )
   }
 
   const listener = status.listener
