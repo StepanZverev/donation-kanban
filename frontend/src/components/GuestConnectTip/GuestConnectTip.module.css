@@ -1,0 +1,74 @@
+/* Плашка под кнопкой аккаунта, прижата к её правому краю.
+   Уголок сверху показывает на кнопку. Открытое меню аккаунта ложится поверх (z-index 10). */
+.tip {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 9;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 36px 12px 14px;
+  border: 1px solid var(--color-accent);
+  border-radius: 10px;
+  background-color: var(--color-surface);
+  box-shadow: 0 8px 24px var(--color-shadow);
+}
+
+/* Уголок: повёрнутый квадрат с такой же рамкой, половина спрятана под плашкой */
+.tip::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 14px;
+  width: 10px;
+  height: 10px;
+  border-top: 1px solid var(--color-accent);
+  border-left: 1px solid var(--color-accent);
+  background-color: var(--color-surface);
+  transform: rotate(45deg);
+}
+
+.text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.connectButton {
+  padding: 5px 14px;
+  border-radius: 6px;
+  background-color: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.closeButton {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+}
+
+.closeButton:hover {
+  background-color: var(--color-column);
+  color: var(--color-text);
+}
+
+/* Пока открыто меню аккаунта (кнопка рядом с aria-expanded="true"), подсказку прячем:
+   иначе её край выглядывает из-под меню */
+:global(div:has(> button[aria-expanded='true'])) ~ .tip {
+  display: none;
+}
