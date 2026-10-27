@@ -33,7 +33,7 @@ def test_too_many_new_guests_from_one_address(monkeypatch):
 
 def test_too_many_cards(client, monkeypatch):
     monkeypatch.setattr(rate_limit, "new_card", RateLimiter(2, 60))
-    statuses = [client.post("/api/cards", json={"title": f"Заказ {i}"}).status_code for i in range(3)]
+    statuses = [client.post("/api/cards", json={"text": f"Заказ {i}"}).status_code for i in range(3)]
     assert statuses == [201, 201, 429]
 
 
