@@ -8,3 +8,5 @@ websockets==17.2
 python-dotenv==1.2.4
 # Драйвер PostgreSQL: через него Python говорит с базой данных
 psycopg[binary]==3.3.6
+# Шифрование токенов DonationAlerts в базе (app/token_crypto.py)
+cryptography==50.0.2

@@ -18,6 +18,7 @@ import asyncio
 import json
 import logging
 
+from cryptography.fernet import InvalidToken
 from websockets.asyncio.client import connect as websocket_connect
 
 from .. import config
@@ -26,6 +27,7 @@ from ..db import Row, now, open_db
 from ..defaults import DA_MISSED_PAGES, DA_RECONNECT_DELAY_SECONDS
 from ..donations import Donation, add_donation_card
 from ..realtime import board_updates
+from ..token_crypto import decrypt_token, encrypt_token
 from . import client
 
 log = logging.getLogger("donationalerts")
@@ -238,7 +240,11 @@ async def refresh_access_token(user_id: int) -> bool:
 
 
 def save_connection(user_id: int, tokens: dict) -> None:
-    """Сохраняет токены DA пользователя: создаёт подключение или обновляет существующее."""
+    """
+    Сохраняет токены DA пользователя: создаёт подключение или обновляет существующее.
+    В базу токены попадают зашифрованными (см. token_crypto.py).
+    """
+    refresh_token = tokens.get("refresh_token")
     with open_db() as db:
         # ON CONFLICT: если подключение уже есть, обновляем токены.
         # DA может не прислать новый refresh_token — тогда старый остаётся действующим (COALESCE).
@@ -250,7 +256,12 @@ def save_connection(user_id: int, tokens: dict) -> None:
                 access_token = excluded.access_token,
                 refresh_token = COALESCE(excluded.refresh_token, da_connections.refresh_token)
             """,
-            (user_id, tokens["access_token"], tokens.get("refresh_token"), now()),
+            (
+                user_id,
+                encrypt_token(tokens["access_token"]),
+                encrypt_token(refresh_token) if refresh_token else None,
+                now(),
+            ),
         )
 
 
@@ -260,8 +271,24 @@ def forget_connection(user_id: int) -> None:
 
 
 def read_connection(user_id: int) -> Row | None:
+    """Подключение DA пользователя с уже расшифрованными токенами."""
     with open_db() as db:
-        return db.execute("SELECT * FROM da_connections WHERE user_id = %s", (user_id,)).fetchone()
+        row = db.execute("SELECT * FROM da_connections WHERE user_id = %s", (user_id,)).fetchone()
+    if row is None:
+        return None
+    refresh_token = row["refresh_token"]
+    try:
+        return {
+            **row,
+            "access_token": decrypt_token(row["access_token"]),
+            "refresh_token": decrypt_token(refresh_token) if refresh_token else None,
+        }
+    except InvalidToken:
+        # Ключ шифрования на сервере сменили: старые токены уже не прочитать.
+        # Стримеру достаточно заново войти через DonationAlerts
+        log.error("Не удалось расшифровать токен DonationAlerts, подключение сброшено")
+        forget_connection(user_id)
+        return None
 
 
 def connected_user_ids() -> list[int]:

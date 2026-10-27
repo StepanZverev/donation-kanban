@@ -12,6 +12,7 @@ from .cleanup import clean_up_forever
 from .db import init_db
 from .donationalerts.listener import donation_listeners
 from .origin_check import check_origin
+from .token_crypto import encrypt_old_tokens
 from .routes import auth, cards, columns, dev, donors, history, me, members, settings, stream, viewer
 
 # Чтобы в терминале были видны наши сообщения (например, «Новый донат от …»)
@@ -22,6 +23,8 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s:     [%(name)s] %(
 async def lifespan(app: FastAPI):
     # Код до yield выполняется один раз при старте сервера, после yield — при остановке.
     init_db()
+    # Токены DA, сохранённые до появления шифрования, шифруем (см. token_crypto.py)
+    encrypt_old_tokens()
     donation_listeners.start_all()
     cleanup_task = asyncio.create_task(clean_up_forever())
     yield
