@@ -1,0 +1,63 @@
+# Проверки на каждый PR: тесты бэкенда и сборка фронта.
+# Особенно нужны для PR от Dependabot: обновление библиотеки может что-то сломать,
+# а после мёржа сайт обновляется сам. Красная галочка в PR — значит, мёржить нельзя.
+
+name: Проверки
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Тесты бэкенда
+    runs-on: ubuntu-latest
+    # Тестам нужна база PostgreSQL — GitHub запускает её рядом в контейнере
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: donation_kanban
+          POSTGRES_PASSWORD: donation_kanban
+          POSTGRES_DB: donation_kanban_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U donation_kanban"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q
+
+  frontend:
+    name: Сборка фронта
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      # Ошибки типов, линтер и сборка — то же, что запускаем локально перед PR
+      - run: npx oxlint
+      - run: npm run build
