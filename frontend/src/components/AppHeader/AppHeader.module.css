@@ -28,19 +28,8 @@
 }
 
 .logoMark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 7px;
-  background-color: var(--color-accent);
-}
-
-.logoMark svg {
-  width: 16px;
-  height: 16px;
-  fill: var(--color-on-accent);
+  width: 30px;
+  height: 30px;
 }
 
 /* Правая часть прижата к правому краю */

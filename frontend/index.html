@@ -2,9 +2,34 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Донатная доска</title>
+    <title>Донат-доска — очередь заказов из донатов для стримеров</title>
+    <!-- Описание для поисковиков: его показывают под заголовком в результатах поиска -->
+    <meta
+      name="description"
+      content="Донаты из DonationAlerts сами превращаются в карточки на канбан-доске: очередь, в работе, выполнено. Модераторы помогают разбирать заказы, зрители видят очередь."
+    />
+
+    <!-- Иконки: вкладка браузера, экран «Домой» на iPhone, установка как приложение -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#7c4dff" />
+
+    <!-- Превью ссылки в Telegram, Discord, VK и т. п. (Open Graph).
+         Картинка — public/og-image.png, адрес должен быть полным, с доменом -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Донат-доска" />
+    <meta property="og:title" content="Донат-доска — очередь заказов из донатов" />
+    <meta
+      property="og:description"
+      content="Донаты из DonationAlerts сами превращаются в карточки на канбан-доске. Для стримеров и модераторов."
+    />
+    <meta property="og:url" content="https://donationdeck.ru/" />
+    <meta property="og:image" content="https://donationdeck.ru/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
 
     <!-- Шрифты: Onest для текста, Unbounded для заголовков, JetBrains Mono для сумм -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

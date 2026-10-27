@@ -18,6 +18,10 @@
 
 		# Файлы в /assets/ меняют имя при каждой сборке, поэтому браузер может хранить их долго
 		header /assets/* Cache-Control "public, max-age=31536000, immutable"
+
+		# Личные страницы не должны попасть в поиск: доски, секретные ссылки для зрителей и приглашения
+		@private path /boards/* /v/* /invite/*
+		header @private X-Robots-Tag "noindex, nofollow"
 	}
 }
 
