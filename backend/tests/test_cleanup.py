@@ -1,4 +1,4 @@
-"""Уборка базы: брошенные гости и просроченные сессии (app/cleanup.py)."""
+"""Уборка базы: брошенные гости, старая история и просроченные сессии (app/cleanup.py)."""
 
 from app.cleanup import clean_up
 from app.db import connect
@@ -78,3 +78,50 @@ def test_expired_sessions_are_deleted(client):
 
     with connect() as db:
         assert db.execute("SELECT count(*) AS n FROM sessions").fetchone()["n"] == 0
+
+
+def card_ids() -> set[int]:
+    with connect() as db:
+        return {row["id"] for row in db.execute("SELECT id FROM cards")}
+
+
+def archive_long_ago(card_id: int) -> None:
+    """Делаем вид, что карточка ушла в историю много лет назад."""
+    with connect() as db:
+        db.execute("UPDATE cards SET archived_at = %s WHERE id = %s", (LONG_AGO, card_id))
+
+
+def test_old_history_is_deleted(client):
+    old_id = client.post("/api/cards", json={"text": "Старый заказ"}).json()["id"]
+    recent_id = client.post("/api/cards", json={"text": "Недавний заказ"}).json()["id"]
+    on_board_id = client.post("/api/cards", json={"text": "Заказ на доске"}).json()["id"]
+    client.delete(f"/api/cards/{old_id}")
+    client.delete(f"/api/cards/{recent_id}")
+    archive_long_ago(old_id)
+    # Карточку на доске не трогаем, даже если её создали давно
+    with connect() as db:
+        db.execute("UPDATE cards SET created_at = %s WHERE id = %s", (LONG_AGO, on_board_id))
+
+    run_clean_up()
+
+    assert card_ids() == {recent_id, on_board_id}
+
+
+def test_old_merged_card_is_kept_while_main_card_is_kept(client):
+    main_id = client.post("/api/cards", json={"donor_name": "Вася", "text": "Основная"}).json()["id"]
+    merged_id = client.post("/api/cards", json={"donor_name": "Вася", "text": "Слитая"}).json()["id"]
+    assert client.post(f"/api/cards/{main_id}/merge", json={"card_ids": [merged_id]}).status_code == 200
+    archive_long_ago(merged_id)
+
+    run_clean_up()
+
+    # Основная на доске — слитую оставляем, иначе её не разъединить
+    assert card_ids() == {main_id, merged_id}
+
+    # Основная тоже давно в истории — уходят обе
+    client.delete(f"/api/cards/{main_id}")
+    archive_long_ago(main_id)
+
+    run_clean_up()
+
+    assert card_ids() == set()
