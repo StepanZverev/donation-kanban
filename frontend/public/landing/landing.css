@@ -286,3 +286,37 @@ p {
   color: var(--color-text-secondary);
   border-top: 1px solid var(--color-border);
 }
+
+/* ---------- Текстовая страница (политика конфиденциальности) ---------- */
+.document {
+  max-width: 760px;
+}
+
+.document h2 {
+  margin: 36px 0 12px;
+  font-size: 24px;
+}
+
+.document ul {
+  margin: 0 0 12px;
+  padding-left: 22px;
+  color: var(--color-text-secondary);
+}
+
+.document li {
+  margin-bottom: 8px;
+}
+
+.document b {
+  color: var(--color-text);
+}
+
+.document a,
+.footer a {
+  color: var(--color-accent);
+}
+
+.document h1 {
+  font-size: clamp(28px, 4vw, 40px);
+  margin-bottom: 8px;
+}

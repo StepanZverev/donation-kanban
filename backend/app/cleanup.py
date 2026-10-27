@@ -42,14 +42,25 @@ def find_abandoned_guests(db: Connection) -> list[int]:
 
 
 def delete_users(db: Connection, user_ids: list[int]) -> None:
-    """Удаляет пользователей с их досками. Порядок важен: сначала то, что ссылается на доску и пользователя."""
+    """
+    Удаляет пользователей со всеми их данными: доски с карточками и историей, подключение
+    DonationAlerts, способы входа, сессии, модераторство на чужих досках.
+    Нужно и уборке брошенных гостей, и кнопке «Удалить аккаунт» (routes/me.py).
+    Порядок важен: сначала то, что ссылается на доску и пользователя.
+    """
     # = ANY(%s): «id входит в список»; список Python psycopg передаёт как массив
     boards = "SELECT id FROM boards WHERE owner_id = ANY(%s)"
+    db.execute(f"DELETE FROM cards WHERE board_id IN ({boards})", (user_ids,))
     db.execute(f"DELETE FROM board_members WHERE board_id IN ({boards})", (user_ids,))
+    # Модераторство на чужих досках. Подпись «убрал модератор Имя» в чужой истории остаётся:
+    # это имя, а не ссылка на пользователя (см. migrations/002_card_archived_by.sql)
+    db.execute("DELETE FROM board_members WHERE user_id = ANY(%s)", (user_ids,))
     db.execute(f"DELETE FROM board_settings WHERE board_id IN ({boards})", (user_ids,))
     db.execute(f"DELETE FROM board_columns WHERE board_id IN ({boards})", (user_ids,))
     db.execute("DELETE FROM boards WHERE owner_id = ANY(%s)", (user_ids,))
     db.execute("DELETE FROM sessions WHERE user_id = ANY(%s)", (user_ids,))
+    db.execute("DELETE FROM da_connections WHERE user_id = ANY(%s)", (user_ids,))
+    db.execute("DELETE FROM user_logins WHERE user_id = ANY(%s)", (user_ids,))
     db.execute("DELETE FROM users WHERE id = ANY(%s)", (user_ids,))
 
 

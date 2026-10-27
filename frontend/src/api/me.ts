@@ -42,3 +42,8 @@ export async function getMe(): Promise<CurrentUser> {
 export async function logout(): Promise<void> {
   await request('POST', '/api/me/logout')
 }
+
+// Удалить аккаунт и все данные. Браузер забывает cookie: дальше это новый посетитель
+export async function deleteAccount(): Promise<void> {
+  await request('DELETE', '/api/me')
+}

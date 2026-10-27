@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { AccountSettings } from '../../components/AccountSettings/AccountSettings'
 import { ColumnsSettings } from '../../components/ColumnsSettings/ColumnsSettings'
 import { DonationsSettings } from '../../components/DonationsSettings/DonationsSettings'
 import { MembersSettings } from '../../components/MembersSettings/MembersSettings'
@@ -24,4 +25,5 @@ export const SETTINGS_SECTIONS: { path: string; title: string; element: ReactNod
   { path: 'moderators', title: 'Модераторы', element: <MembersSettings /> },
   { path: 'viewers', title: 'Для зрителей', element: <ViewerSettings /> },
   { path: 'appearance', title: 'Внешний вид', element: <ThemeSettings /> },
+  { path: 'account', title: 'Аккаунт', element: <AccountSettings /> },
 ]
