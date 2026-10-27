@@ -19,7 +19,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import Depends, Request, Response
 
-from . import config
+from . import config, rate_limit
 from .db import Connection, Row, get_db, now
 from .defaults import SESSION_DAYS
 
@@ -133,6 +133,9 @@ def get_current_user(
     """
     user = find_session_user(db, request.cookies.get(SESSION_COOKIE))
     if user is None:
+        # Каждый браузер без cookie — новый пользователь в базе. Бот мог бы насоздавать
+        # их тысячи, поэтому с одного адреса — не больше RATE_LIMIT_NEW_GUEST в час
+        rate_limit.new_guest.check(rate_limit.client_ip(request))
         user_id = create_user(db)
         set_session_cookie(response, create_session(db, user_id))
     else:

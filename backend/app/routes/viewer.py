@@ -29,6 +29,7 @@ from ..db import (
 )
 from ..intake import get_intake_settings
 from ..merging import is_auto_merge_enabled
+from ..rate_limit import limit_secret_link
 from ..realtime import board_updates, notify_board_changed, send_updates_until_closed
 from ..schemas import DonationUrl, PublicBoard, PublicCard, ViewerSettings
 from .settings import read_priority_levels
@@ -117,7 +118,7 @@ def delete_public_link(
     return read_viewer_settings(db, board_id)
 
 
-@public_router.get("/boards/{token}")
+@public_router.get("/boards/{token}", dependencies=[Depends(limit_secret_link)])
 def get_public_board(token: str, db: Connection = Depends(get_db)) -> PublicBoard:
     """Доска для зрителей. 404 — ссылка неверная или стример её выключил."""
     board_id = find_board_by_public_token(db, token)
