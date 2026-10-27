@@ -25,15 +25,9 @@ export function AppHeader(props: AppHeaderProps) {
     <header className={`${styles.header} full-width`}>
       <div className={styles.content}>
         <div className={styles.logo}>
-          <span className={styles.logoMark} aria-hidden="true">
-            {/* Три столбика разной высоты — как колонки доски */}
-            <svg viewBox="0 0 16 16">
-              <rect x="2" y="3" width="3" height="10" rx="1" />
-              <rect x="6.5" y="3" width="3" height="7" rx="1" />
-              <rect x="11" y="3" width="3" height="4" rx="1" />
-            </svg>
-          </span>
-          Донатная доска
+          {/* Логотип — тот же файл, что иконка вкладки (public/favicon.svg) */}
+          <img className={styles.logoMark} src="/favicon.svg" alt="" />
+          Донат-доска
         </div>
 
         <Navigation hasNewOnBoard={hasNewOnBoard} hasNewInHistory={hasNewInHistory} />

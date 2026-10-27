@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Список публичных страниц для поисковиков. Новые публичные страницы (например, лендинг) дописывать сюда -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://donationdeck.ru/</loc>
+  </url>
+</urlset>

@@ -1,0 +1,7 @@
+# Правила для поисковых роботов. API им не нужно.
+# Личные страницы (доски, ссылки для зрителей и приглашения) закрыты заголовком
+# X-Robots-Tag: noindex в deploy/Caddyfile: так робот их увидит, но в поиск не добавит.
+User-agent: *
+Disallow: /api/
+
+Sitemap: https://donationdeck.ru/sitemap.xml
