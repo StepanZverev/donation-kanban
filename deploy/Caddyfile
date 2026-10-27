@@ -13,14 +13,28 @@
 	# отдельных файлов для них нет, поэтому отдаём index.html, а дальше разбирается React Router
 	handle {
 		root * /srv
+
+		# Кто зашёл впервые (нет cookie входа «session»), видит на главной лендинг — страницу
+		# о сервисе. Поисковые роботы тоже всегда приходят без cookie, поэтому видят его.
+		# У кого cookie есть, тот сразу попадает в приложение и на свою доску
+		@firstVisit {
+			path /
+			not header Cookie *session=*
+		}
+		rewrite @firstVisit /landing.html
+		# По адресу «/» приходит то лендинг, то приложение — браузер не должен брать его из кеша
+		header / Cache-Control "no-cache"
+		header / Vary Cookie
+
 		try_files {path} /index.html
 		file_server
 
 		# Файлы в /assets/ меняют имя при каждой сборке, поэтому браузер может хранить их долго
 		header /assets/* Cache-Control "public, max-age=31536000, immutable"
 
-		# Личные страницы не должны попасть в поиск: доски, секретные ссылки для зрителей и приглашения
-		@private path /boards/* /v/* /invite/*
+		# Не должны попасть в поиск: доски, секретные ссылки для зрителей и приглашения,
+		# а ещё /app — это просто вход в приложение
+		@private path /boards/* /v/* /invite/* /app
 		header @private X-Robots-Tag "noindex, nofollow"
 	}
 }

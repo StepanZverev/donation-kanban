@@ -3,5 +3,7 @@
 # X-Robots-Tag: noindex в deploy/Caddyfile: так робот их увидит, но в поиск не добавит.
 User-agent: *
 Disallow: /api/
+# /app — кнопка «Открыть доску»: робот создал бы себе гостевую доску
+Disallow: /app
 
 Sitemap: https://donationdeck.ru/sitemap.xml
