@@ -55,11 +55,27 @@ Secrets and variables → Actions → New repository secret, имена `DEPLOY_
 ssh deploy@<IP сервера>
 cd donation-kanban/deploy
 cp .env.example .env
-nano .env        # впиши домен, пароль базы и ключи DA; сохранить — Ctrl+O, Enter, выйти — Ctrl+X
+nano .env        # впиши домен, пароль базы, ключи DA и ключ шифрования; сохранить — Ctrl+O, Enter, выйти — Ctrl+X
 docker compose up -d --build
 ```
 
 Через пару минут сайт откроется по `https://<домен>`. Сертификат Caddy получит сам при первом запуске.
+
+### Ключ шифрования токенов
+
+Токены DonationAlerts лежат в базе зашифрованными. Ключ — строка `TOKEN_ENCRYPTION_KEY` в `.env`.
+Без неё `docker compose up` остановится с ошибкой и не тронет работающий сайт. Добавить ключ на уже
+работающий сервер:
+
+```bash
+cd ~/donation-kanban/deploy
+echo "TOKEN_ENCRYPTION_KEY=$(python3 -c 'import base64, os; print(base64.urlsafe_b64encode(os.urandom(32)).decode())')" >> .env
+grep -c TOKEN_ENCRYPTION_KEY .env   # должно вывести 1
+```
+
+Скопируй ключ в менеджер паролей (`grep TOKEN_ENCRYPTION_KEY .env` покажет его — не на стриме):
+в бэкапах базы ключа нет. Потеря ключа не страшна для досок, но всем стримерам придётся заново
+войти через DonationAlerts.
 
 ## Полезные команды
 

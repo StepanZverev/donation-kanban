@@ -34,6 +34,9 @@ services:
       DA_REDIRECT_URI: https://${DOMAIN}/api/auth/callback
       DA_CLIENT_ID: ${DA_CLIENT_ID}
       DA_CLIENT_SECRET: ${DA_CLIENT_SECRET}
+      # Ключ шифрования токенов DonationAlerts в базе. «:?» — если ключа в .env нет,
+      # docker compose остановится с этой ошибкой и не тронет работающий сайт
+      TOKEN_ENCRYPTION_KEY: ${TOKEN_ENCRYPTION_KEY:?Впиши TOKEN_ENCRYPTION_KEY в deploy/.env, см. deploy/README.md}
     depends_on:
       postgres:
         condition: service_healthy
