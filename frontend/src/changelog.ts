@@ -18,6 +18,11 @@ export type Release = {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '0.11.1',
+    date: '2026-10-27',
+    changes: ['Защита: чужой сайт не может от твоего имени менять доску, даже если ты открыл его в соседней вкладке.'],
+  },
+  {
     version: '0.11.0',
     date: '2026-10-27',
     changes: [

@@ -1,0 +1,55 @@
+# Dependabot раз в неделю проверяет, не вышли ли новые версии библиотек, и открывает PR с обновлением.
+# Особенно важно для исправлений уязвимостей: о них Dependabot пишет сразу, не дожидаясь понедельника.
+# Обновления одной экосистемы собираются в один PR (groups), чтобы не было десятка мелких.
+# Мёржить их — как обычные PR: после мёржа сайт обновится сам (автодеплой).
+version: 2
+updates:
+  # Библиотеки бэкенда: backend/requirements.txt и requirements-dev.txt
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Moscow
+    groups:
+      backend:
+        patterns: ["*"]
+        # Крупные обновления (новая major-версия) приходят отдельными PR: в них бывают несовместимые изменения
+        update-types: [minor, patch]
+
+  # Библиотеки фронта: frontend/package.json
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/Moscow
+    groups:
+      frontend:
+        patterns: ["*"]
+        # Крупные обновления (новая major-версия) приходят отдельными PR: в них бывают несовместимые изменения
+        update-types: [minor, patch]
+
+  # Готовые шаги в .github/workflows (actions/checkout и т. п.)
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Базовые образы Docker: python, node, caddy (backend/Dockerfile, deploy/web.Dockerfile).
+  # Версию PostgreSQL в docker-compose.yml Dependabot не трогает: переход на новую major-версию
+  # требует переноса базы вручную, иначе данные не откроются
+  - package-ecosystem: docker
+    directories: [/backend, /deploy]
+    schedule:
+      interval: monthly
+    groups:
+      docker:
+        patterns: ["*"]
+    ignore:
+      # Новые major-версии образов (например, node 22 → 24) — только вручную
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

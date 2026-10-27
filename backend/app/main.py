@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from .cleanup import clean_up_forever
 from .db import init_db
 from .donationalerts.listener import donation_listeners
+from .origin_check import check_origin
 from .routes import auth, cards, columns, dev, donors, history, me, members, settings, stream, viewer
 
 # Чтобы в терминале были видны наши сообщения (например, «Новый донат от …»)
@@ -29,6 +30,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Donation Kanban", lifespan=lifespan)
+
+# Каждый запрос сначала проходит проверку: не прислал ли его чужой сайт (см. origin_check.py)
+app.middleware("http")(check_origin)
 
 # Подключаем группы эндпоинтов из папки routes/
 app.include_router(cards.router)
