@@ -1,0 +1,217 @@
+<!doctype html>
+<!--
+  Лендинг — страница о сервисе для тех, кто зашёл впервые (и для поисковых роботов).
+  Это обычный HTML без React: поисковики, особенно Яндекс, лучше читают готовый текст.
+  Кому её показывать, решает Caddy (deploy/Caddyfile): на «/» без cookie входа — лендинг,
+  с cookie — сразу приложение. Локально страница открывается по адресу /landing.html.
+  Кнопки «Открыть доску» ведут на /app — это уже приложение (см. src/App.tsx).
+-->
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Донат-доска — очередь заказов из донатов для стримеров</title>
+    <meta
+      name="description"
+      content="Донаты из DonationAlerts сами превращаются в карточки на канбан-доске: очередь, в работе, выполнено. Модераторы помогают разбирать заказы, зрители видят очередь по ссылке."
+    />
+    <!-- Главный адрес этой страницы — корень сайта, а не /landing.html -->
+    <link rel="canonical" href="https://donationdeck.ru/" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#7c4dff" />
+
+    <!-- Превью ссылки — то же, что в index.html -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Донат-доска" />
+    <meta property="og:title" content="Донат-доска — очередь заказов из донатов" />
+    <meta
+      property="og:description"
+      content="Донаты из DonationAlerts сами превращаются в карточки на канбан-доске. Для стримеров и модераторов."
+    />
+    <meta property="og:url" content="https://donationdeck.ru/" />
+    <meta property="og:image" content="https://donationdeck.ru/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap"
+    />
+    <link rel="stylesheet" href="/landing/landing.css" />
+  </head>
+
+  <body>
+    <header class="header">
+      <div class="container header-row">
+        <a class="logo" href="/">
+          <img src="/favicon.svg" alt="" width="30" height="30" />
+          Донат-доска
+        </a>
+        <a class="button button-small" href="/app">Открыть доску</a>
+      </div>
+    </header>
+
+    <main>
+      <!-- Первый экран: что это и кнопка -->
+      <section class="hero">
+        <div class="container">
+          <h1>Очередь заказов из&nbsp;донатов для&nbsp;стримеров</h1>
+          <p class="lead">
+            Донаты из DonationAlerts сами становятся карточками на канбан-доске. Видно, что заказали
+            зрители и в каком порядке, а заказы двигаются мышкой: из очереди в работу, из работы в
+            выполненные.
+          </p>
+          <div class="actions">
+            <a class="button" href="/app">Открыть доску</a>
+            <span class="hint">Без регистрации: доска откроется сразу, DonationAlerts подключишь потом</span>
+          </div>
+
+          <!-- picture: в тёмной теме системы показываем тёмный скриншот -->
+          <picture class="screenshot">
+            <source srcset="/landing/board-dark.webp" media="(prefers-color-scheme: dark)" />
+            <img
+              src="/landing/board-light.webp"
+              alt="Доска с колонками «Очередь», «В работе» и «Выполнено» и карточками донатов"
+              width="1920"
+              height="780"
+            />
+          </picture>
+        </div>
+      </section>
+
+      <!-- Как это работает: три шага -->
+      <section class="section">
+        <div class="container">
+          <h2>Как это работает</h2>
+          <ol class="steps">
+            <li>
+              <h3>Подключи DonationAlerts</h3>
+              <p>Один вход через DonationAlerts — и новые донаты с сообщениями сами падают на доску.</p>
+            </li>
+            <li>
+              <h3>Донаты встают в очередь</h3>
+              <p>
+                Каждый донат — карточка с ником, суммой и текстом заказа. Чем больше сумма, тем выше
+                карточка и ярче её цвет.
+              </p>
+            </li>
+            <li>
+              <h3>Выполняй и двигай</h3>
+              <p>
+                Перетащи карточку в «В работе», потом в «Выполнено». Всё сделанное остаётся в истории.
+              </p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- Страница для зрителей -->
+      <section class="section section-alt">
+        <div class="container split">
+          <div>
+            <h2>Зрители видят очередь</h2>
+            <p>
+              Дай зрителям ссылку, например в описании канала или в панели под стримом. Они увидят
+              очередь заказов, правила и кнопку доната, а за своим ником можно следить: видно место в
+              очереди и сколько добавить до первого места.
+            </p>
+            <p>Ссылка только для просмотра: двигать карточки зрители не могут.</p>
+          </div>
+          <picture class="phone">
+            <source srcset="/landing/viewer-dark.webp" media="(prefers-color-scheme: dark)" />
+            <img
+              src="/landing/viewer-light.webp"
+              alt="Страница для зрителей на телефоне: статус стримера, кнопка «Предложить задачу» и очередь"
+              width="780"
+              height="1400"
+              loading="lazy"
+            />
+          </picture>
+        </div>
+      </section>
+
+      <!-- Возможности -->
+      <section class="section">
+        <div class="container">
+          <h2>Что ещё умеет</h2>
+          <ul class="features">
+            <li>
+              <h3>Модераторы</h3>
+              <p>Позови помощника по ссылке-приглашению, и он будет вести доску вместе с тобой.</p>
+            </li>
+            <li>
+              <h3>Уровни приоритета</h3>
+              <p>Свои цвета и пороги сумм: от 100 ₽ — зелёная карточка, от 1000 ₽ — красная.</p>
+            </li>
+            <li>
+              <h3>Правила приёма</h3>
+              <p>Минимальная сумма, запрет анонимов, пауза. Лишние донаты уйдут в историю, а не в очередь.</p>
+            </li>
+            <li>
+              <h3>Объединение донатов</h3>
+              <p>Несколько донатов от одного зрителя можно склеить в одну карточку с общей суммой.</p>
+            </li>
+            <li>
+              <h3>Звук и живые обновления</h3>
+              <p>Новый донат слышно на любой вкладке, а доска обновляется сама у всех, кто её открыл.</p>
+            </li>
+            <li>
+              <h3>Свои колонки</h3>
+              <p>
+                Добавляй колонки, переименовывай и меняй их порядок: «Песни», «Игры», «На потом» — как
+                удобно тебе.
+              </p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Частые вопросы: details раскрывается по клику без всякого JavaScript -->
+      <section class="section section-alt">
+        <div class="container faq">
+          <h2>Вопросы</h2>
+          <details>
+            <summary>Это бесплатно?</summary>
+            <p>Да. Доска, модераторы и страница для зрителей — бесплатно.</p>
+          </details>
+          <details>
+            <summary>Нужна регистрация?</summary>
+            <p>
+              Нет. Доска открывается сразу. Чтобы донаты приходили сами и доска закрепилась за тобой,
+              войди через DonationAlerts — это одна кнопка.
+            </p>
+          </details>
+          <details>
+            <summary>Какие сервисы донатов поддерживаются?</summary>
+            <p>Пока только DonationAlerts. Карточки можно добавлять и вручную.</p>
+          </details>
+          <details>
+            <summary>Можно ли показать доску на стриме?</summary>
+            <p>
+              Да, но для зрителей удобнее отдельная страница: на ней нет настроек и секретных ссылок.
+              Её адрес — в настройках, раздел «Для зрителей».
+            </p>
+          </details>
+        </div>
+      </section>
+
+      <!-- Последний призыв -->
+      <section class="section final">
+        <div class="container">
+          <h2>Попробуй на стриме</h2>
+          <a class="button" href="/app">Открыть доску</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container">© Донат-доска · donationdeck.ru</div>
+    </footer>
+  </body>
+</html>

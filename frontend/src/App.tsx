@@ -19,6 +19,7 @@ import { SETTINGS_SECTIONS } from './pages/SettingsPage/settingsSections'
 //   /boards/5, /boards/5/history, /boards/5/settings/… — доска с id 5 (своя или где ты модератор);
 //   /invite/<токен> — приглашение стать модератором;
 //   /v/<токен> — страница для зрителей;
+//   /app — кнопка «Открыть доску» с лендинга (public/landing.html) ведёт сюда, дальше — на свою доску;
 //   всё остальное (/, старые /history и /settings) — на свою доску.
 type AppProps = {
   // Кто открыл сайт — бэкенд ответил ещё до запуска приложения (см. main.tsx).
@@ -38,6 +39,7 @@ function App({ initialUser }: AppProps) {
         <Route path="/v/:token" element={<ViewerPage />} />
         <Route path="/invite/:token" element={<InvitePage />} />
         <Route path="/boards/:boardId/*" element={<BoardRoute />} />
+        <Route path="/app" element={<Navigate to="/" replace />} />
         <Route path="*" element={<OwnBoardRedirect />} />
       </Routes>
     </CurrentUserContext.Provider>

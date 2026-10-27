@@ -1,0 +1,288 @@
+/* Стили лендинга (public/landing.html). Это отдельная страница без React,
+   поэтому цвета повторяют переменные из src/index.css, а не берутся оттуда. */
+:root {
+  --color-background: #f4f3f8;
+  --color-surface: #ffffff;
+  --color-column: #ebe9f3;
+  --color-border: #d9d6e6;
+  --color-text: #1d1b26;
+  --color-text-secondary: #6a6680;
+  --color-accent: #7c4dff;
+  --color-accent-hover: #6a3df0;
+  --color-accent-light: #ece5ff;
+  --color-on-accent: #ffffff;
+
+  --font-body: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Unbounded', var(--font-body);
+
+  color-scheme: light;
+}
+
+/* Тёмная тема — если она включена в системе */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #121118;
+    --color-surface: #1d1b26;
+    --color-column: #17161f;
+    --color-border: #2f2c3d;
+    --color-text: #ece9f7;
+    --color-text-secondary: #9a95b3;
+    --color-accent: #9b78ff;
+    --color-accent-hover: #ab8cff;
+    --color-accent-light: #2c2348;
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--color-text);
+  background-color: var(--color-background);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  line-height: 1.2;
+}
+
+h1,
+h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+h1 {
+  font-size: clamp(30px, 5vw, 52px);
+  max-width: 820px;
+}
+
+h2 {
+  font-size: clamp(24px, 3.2vw, 34px);
+  margin-bottom: 24px;
+}
+
+h3 {
+  font-size: 19px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+p {
+  margin: 0 0 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Рабочая ширина страницы */
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ---------- Шапка ---------- */
+.header {
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+/* ---------- Кнопки ---------- */
+.button {
+  display: inline-block;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--color-on-accent);
+  background-color: var(--color-accent);
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+
+.button:hover {
+  background-color: var(--color-accent-hover);
+}
+
+.button-small {
+  padding: 8px 16px;
+  font-size: 15px;
+  border-radius: 10px;
+}
+
+/* ---------- Первый экран ---------- */
+.hero {
+  padding: 64px 0 72px;
+}
+
+.lead {
+  max-width: 720px;
+  margin: 20px 0 28px;
+  font-size: 19px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+}
+
+.hint {
+  font-size: 15px;
+  color: var(--color-text-secondary);
+}
+
+.screenshot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 48px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgb(29 27 38 / 12%);
+}
+
+/* ---------- Разделы ---------- */
+.section {
+  padding: 64px 0;
+}
+
+/* Каждый второй раздел на чуть другом фоне, чтобы разделы не сливались */
+.section-alt {
+  background-color: var(--color-column);
+}
+
+/* Три шага с номерами в кружках */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.steps li {
+  counter-increment: step;
+}
+
+.steps li::before {
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-accent);
+  background-color: var(--color-accent-light);
+}
+
+/* Текст слева, телефон справа; на узком экране — друг под другом */
+.split {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 48px;
+  align-items: center;
+}
+
+.phone img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 28px;
+  box-shadow: 0 20px 50px rgb(29 27 38 / 12%);
+}
+
+@media (max-width: 760px) {
+  .split {
+    grid-template-columns: 1fr;
+  }
+
+  .phone {
+    max-width: 320px;
+    margin: 0 auto;
+  }
+}
+
+/* Карточки возможностей */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.features li {
+  padding: 20px 22px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background-color: var(--color-surface);
+}
+
+.features p {
+  margin: 0;
+}
+
+/* Вопросы */
+.faq details {
+  max-width: 800px;
+  padding: 16px 20px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  background-color: var(--color-surface);
+}
+
+.faq summary {
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.faq details p {
+  margin: 10px 0 0;
+}
+
+/* Последний призыв */
+.final {
+  text-align: center;
+}
+
+/* ---------- Подвал ---------- */
+.footer {
+  padding: 28px 0;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  border-top: 1px solid var(--color-border);
+}
