@@ -8,6 +8,7 @@
 
 from fastapi import APIRouter, Depends
 
+from .. import rate_limit
 from ..board import (
     archive_card,
     get_board_cards,
@@ -71,7 +72,12 @@ def latest_donations(
     return LatestDonations(on_board=row["on_board"], to_history=row["to_history"])
 
 
-@router.post("", status_code=201)
+def limit_new_cards(board_id: int = Depends(get_board_id)) -> None:
+    """Не больше RATE_LIMIT_NEW_CARD карточек вручную в минуту на доску (см. rate_limit.py)."""
+    rate_limit.new_card.check(str(board_id))
+
+
+@router.post("", status_code=201, dependencies=[Depends(limit_new_cards)])
 def create_card(
     data: CardCreate,
     db: Connection = Depends(get_db),

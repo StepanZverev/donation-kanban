@@ -24,6 +24,7 @@ from ..donationalerts.listener import (
     remember_newest_donation,
     save_connection,
 )
+from ..rate_limit import limit_login
 from ..users import (
     DONATIONALERTS,
     SESSION_COOKIE,
@@ -58,7 +59,7 @@ def status(user: Row = Depends(get_current_user)) -> dict:
     }
 
 
-@router.get("/login")
+@router.get("/login", dependencies=[Depends(limit_login)])
 def login() -> RedirectResponse:
     """Отправляет браузер на страницу DonationAlerts, где пользователь разрешает доступ."""
     if not config.is_donationalerts_configured():

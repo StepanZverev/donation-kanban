@@ -38,6 +38,15 @@ def empty_database(monkeypatch):
         db.execute(f"TRUNCATE {', '.join(tables)} RESTART IDENTITY CASCADE")
 
 
+@pytest.fixture(autouse=True)
+def fresh_rate_limits():
+    """Счётчики частоты запросов (см. app/rate_limit.py) у каждого теста свои."""
+    from app import rate_limit
+
+    for limiter in rate_limit.ALL_LIMITERS:
+        limiter.reset()
+
+
 @pytest.fixture
 def client():
     """Клиент для запросов к API. Каждый тест начинает с пустой базой (см. empty_database)."""

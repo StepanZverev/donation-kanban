@@ -12,6 +12,7 @@ from .cleanup import clean_up_forever
 from .db import init_db
 from .donationalerts.listener import donation_listeners
 from .origin_check import check_origin
+from .rate_limit import limit_all_requests
 from .token_crypto import encrypt_old_tokens
 from .routes import auth, cards, columns, dev, donors, history, me, members, settings, stream, viewer
 
@@ -36,6 +37,8 @@ app = FastAPI(title="Donation Kanban", lifespan=lifespan)
 
 # Каждый запрос сначала проходит проверку: не прислал ли его чужой сайт (см. origin_check.py)
 app.middleware("http")(check_origin)
+# И не шлёт ли этот адрес слишком много запросов (см. rate_limit.py)
+app.middleware("http")(limit_all_requests)
 
 # Подключаем группы эндпоинтов из папки routes/
 app.include_router(cards.router)

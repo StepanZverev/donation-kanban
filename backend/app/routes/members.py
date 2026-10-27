@@ -30,6 +30,7 @@ from ..db import (
     open_db,
     set_board_setting,
 )
+from ..rate_limit import limit_secret_link
 from ..realtime import notify_board_changed, send_updates_until_closed
 from ..schemas import AcceptInvite, BoardInfo, BoardMember, Invite, InviteSettings, MemberNickname
 from ..users import SESSION_COOKIE, find_session_user, get_current_user
@@ -224,7 +225,7 @@ def find_board_member(session_token: str | None, board_id: int) -> tuple[int, st
         return (user["id"], role) if role is not None else None
 
 
-@invites_router.get("/{token}")
+@invites_router.get("/{token}", dependencies=[Depends(limit_secret_link)])
 def get_invite(
     token: str,
     user: Row = Depends(get_current_user),
@@ -239,7 +240,7 @@ def get_invite(
     )
 
 
-@invites_router.post("/{token}/accept")
+@invites_router.post("/{token}/accept", dependencies=[Depends(limit_secret_link)])
 def accept_invite(
     token: str,
     body: AcceptInvite | None = None,
