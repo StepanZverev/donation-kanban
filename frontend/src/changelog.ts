@@ -18,6 +18,11 @@ export type Release = {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '0.9.1',
+    date: '2026-10-27',
+    changes: ['Адрес www.donationdeck.ru теперь открывает сайт: он перекидывает на donationdeck.ru.'],
+  },
+  {
     version: '0.9.0',
     date: '2026-10-26',
     changes: [
