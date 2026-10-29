@@ -691,55 +691,71 @@ p {
   color: var(--color-accent);
 }
 
-/* Объединение: на карточку несут вторую, на первой появляется «+ Объединить» */
+/* Объединение: «Nyasha 200 ₽ + Nyasha 500 ₽», стрелка вниз и общая карточка на 700 ₽.
+   Как у правил: картинку не уменьшаем и наклоняем слабее, чтобы суммы читались */
+.feature-merge .feature-art {
+  width: 42%;
+  padding-right: 12px;
+  mask-image: linear-gradient(to left, #000 85%, transparent 100%);
+}
+
+.feature-merge .feature-art > * {
+  scale: 1;
+  transform: rotateY(-16deg) rotateX(8deg) rotate(-2deg);
+}
+
+.features li.feature-merge:hover .feature-art > * {
+  transform: rotateY(-8deg) rotateX(4deg) rotate(-1deg);
+}
+
 .art-merge {
-  position: relative;
-  width: 190px;
-  height: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
-.art-merge-target {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 170px;
-  padding: 14px 16px;
-  border: 2px dashed #c04dd8;
-  border-left: 4px solid var(--level-color);
-}
-
-.art-merge-hint {
-  position: absolute;
-  inset: 0;
+.art-merge-parts {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 6px;
-  border-radius: 8px;
-  background-color: color-mix(in srgb, var(--color-surface) 92%, transparent);
-  font-weight: 700;
-  color: var(--color-accent);
 }
 
-.art-merge-hint i {
+.art-merge-parts .art-card {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+/* «+» и стрелка — в фиолетовых кружках, как «+ Объединить» на доске */
+.art-merge-plus,
+.art-merge-arrow {
   display: grid;
   place-items: center;
   width: 22px;
   height: 22px;
   border-radius: 50%;
   font-style: normal;
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1;
   color: var(--color-on-accent);
   background-color: var(--color-accent);
 }
 
-.art-merge-dragged {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 150px;
-  transform: rotate(-6deg);
-  box-shadow: 0 16px 30px rgb(29 27 38 / 24%);
+/* Итоговая карточка крупнее и светится, как только что объединённая на доске */
+.art-merge-result {
+  min-width: 150px;
+  padding: 10px 14px;
+  font-size: 16px;
+  box-shadow:
+    0 0 0 2px var(--color-accent),
+    0 10px 26px rgb(124 77 255 / 35%);
+}
+
+.art-merge-result small {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-secondary);
 }
 
 /* Звук: динамик с волнами и светящаяся новая карточка */
@@ -855,7 +871,8 @@ p {
 
   .feature-art,
   .feature-levels .feature-art,
-  .feature-rules .feature-art {
+  .feature-rules .feature-art,
+  .feature-merge .feature-art {
     position: static;
     width: auto;
     margin-bottom: 20px;

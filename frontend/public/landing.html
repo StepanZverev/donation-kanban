@@ -227,13 +227,18 @@
             </li>
             <li class="feature-merge">
               <div class="feature-art" aria-hidden="true">
-                <!-- Одну карточку несут на другую — появляется «+ Объединить», как на доске -->
+                <!-- Два доната одного зрителя складываются в одну карточку с общей суммой -->
                 <div class="art-merge">
-                  <div class="art-card art-merge-target level-mid">
-                    <b>Nyasha</b><span class="sum">300 ₽</span>
-                    <span class="art-merge-hint"><i>+</i> Объединить</span>
+                  <div class="art-merge-parts">
+                    <span class="art-card level-mid"><b>Nyasha</b><span class="sum">200 ₽</span></span>
+                    <i class="art-merge-plus">+</i>
+                    <span class="art-card level-high"><b>Nyasha</b><span class="sum">500 ₽</span></span>
                   </div>
-                  <div class="art-card art-merge-dragged level-mid"><b>Nyasha</b><span class="sum">200 ₽</span></div>
+                  <i class="art-merge-arrow">↓</i>
+                  <span class="art-card art-merge-result level-high">
+                    <b>Nyasha</b><span class="sum">700 ₽</span>
+                    <small>2 доната</small>
+                  </span>
                 </div>
               </div>
               <h3>Объединение донатов</h3>
