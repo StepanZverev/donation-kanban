@@ -596,16 +596,31 @@ p {
   color: var(--color-text-secondary);
 }
 
+/* Размеры заметно растут от уровня к уровню. Картинку уровней не уменьшаем, как остальные,
+   иначе мелкая плашка станет нечитаемой */
+.feature-levels .feature-art > * {
+  scale: 1;
+}
+
+/* Большая плашка шире картинки — край у неё не растворяем, чтобы «от» читалось */
+.feature-levels .feature-art {
+  width: 46%;
+  mask-image: linear-gradient(to left, #000 85%, transparent 100%);
+}
+
 .art-levels .art-card:nth-child(1) {
-  margin-right: 0;
+  font-size: 13px;
 }
 .art-levels .art-card:nth-child(2) {
-  margin-right: 22px;
-  font-size: 15px;
+  margin-right: 14px;
+  padding: 9px 14px;
+  font-size: 17px;
 }
 .art-levels .art-card:nth-child(3) {
-  margin-right: 44px;
-  font-size: 18px;
+  margin-right: 28px;
+  padding: 11px 16px;
+  font-size: 23px;
+  border-left-width: 7px;
   box-shadow: 0 10px 26px rgb(214 71 79 / 30%);
 }
 
@@ -823,6 +838,11 @@ p {
   .feature-art > * {
     scale: 1;
     transform-origin: right top;
+  }
+
+  .feature-levels .feature-art {
+    width: 300px;
+    mask-image: none;
   }
 }
 
