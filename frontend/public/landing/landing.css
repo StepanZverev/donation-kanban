@@ -505,7 +505,7 @@ p {
   --tint: #c04dd8;
 }
 .feature-live {
-  --tint: #e5484d;
+  --tint: #12a594;
 }
 .feature-columns {
   --tint: #2f80ed;
@@ -750,61 +750,65 @@ p {
   color: var(--color-text-secondary);
 }
 
-/* Звук: динамик с волнами и светящаяся новая карточка */
-.art-live {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 12px;
-}
-
-.art-speaker {
+/* Живые обновления: молния на бирюзовой плашке, как меч у модераторов */
+.art-bolt {
   display: grid;
   place-items: center;
-  width: 84px;
-  height: 84px;
-  border-radius: 24px;
+  width: 120px;
+  height: 120px;
+  border-radius: 28px;
   color: #ffffff;
-  background: linear-gradient(135deg, #ff7a7f, #d6474f);
-  box-shadow: 0 16px 34px rgb(214 71 79 / 38%);
+  background: linear-gradient(135deg, #3fd2bd, #0e8f80);
+  box-shadow: 0 20px 40px rgb(18 165 148 / 38%);
 }
 
-.art-speaker svg {
-  width: 52px;
-  height: 52px;
+.art-bolt svg {
+  width: 72px;
+  height: 72px;
 }
 
-.art-fresh {
-  margin-right: 30px;
-  box-shadow:
-    0 0 0 2px var(--color-accent),
-    0 8px 24px rgb(124 77 255 / 35%);
+/* Колонки: три колонки, как в настройках. Крупно и почти без наклона, чтобы всё читалось */
+.feature-columns .feature-art {
+  width: 44%;
+  padding-right: 12px;
+  mask-image: none;
 }
 
-/* Колонки: три маленькие колонки, как в настройках */
+.feature-columns .feature-art > * {
+  scale: 1;
+  transform: rotateY(-14deg) rotateX(6deg) rotate(-1deg);
+}
+
+.features li.feature-columns:hover .feature-art > * {
+  transform: rotateY(-6deg) rotateX(3deg);
+}
+
 .art-columns {
   display: flex;
   gap: 8px;
 }
 
 .art-column {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  width: 66px;
-  padding: 8px;
-  border-radius: 10px;
+  gap: 8px;
+  width: 72px;
+  min-height: 145px;
+  padding: 10px 8px;
+  border-radius: 12px;
   border: 1px solid var(--color-border);
   background-color: var(--color-surface);
   box-shadow: 0 10px 24px rgb(29 27 38 / 12%);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
+  line-height: 1.2;
 }
 
 /* Полоски — заглушки карточек */
 .art-column i {
-  height: 18px;
-  border-radius: 5px;
+  height: 22px;
+  border-radius: 6px;
   background-color: var(--color-column);
 }
 
@@ -817,35 +821,30 @@ p {
   background-color: var(--color-surface);
 }
 
-.art-column-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 400;
-  color: var(--color-text-secondary);
-}
-
-.art-column-actions svg {
-  width: 14px;
-  height: 14px;
+/* Карандаш — в правом нижнем углу колонки */
+.art-column-edit {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 18px;
+  height: 18px;
   color: #2f80ed;
 }
 
 .art-column-add {
   justify-content: center;
   align-items: center;
-  min-height: 100px;
   border: 2px dashed #2f80ed;
   background-color: color-mix(in srgb, #2f80ed 8%, transparent);
   box-shadow: none;
   text-align: center;
-  line-height: 1.1;
   color: #2f80ed;
 }
 
 .art-column-add b {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 500;
+  line-height: 1;
 }
 
 /* На узком экране карточки друг под другом: картинка стоит над текстом
@@ -864,7 +863,8 @@ p {
   .feature-art,
   .feature-levels .feature-art,
   .feature-rules .feature-art,
-  .feature-merge .feature-art {
+  .feature-merge .feature-art,
+  .feature-columns .feature-art {
     position: static;
     width: auto;
     margin-bottom: 20px;
