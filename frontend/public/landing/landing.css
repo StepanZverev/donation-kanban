@@ -405,11 +405,6 @@ p {
   margin: 4px 0;
 }
 
-/* Скриншот повёрнут так же, как доска на первом экране */
-.screen-scene {
-  perspective: 1400px;
-}
-
 .screen img {
   display: block;
   width: 100%;
@@ -417,17 +412,11 @@ p {
   border: 1px solid var(--color-border);
   border-radius: 16px;
   box-shadow: 0 24px 50px rgb(29 27 38 / 14%);
-  transform: rotateY(-12deg) rotateX(6deg);
-  transform-origin: left center;
 }
 
 @media (max-width: 900px) {
   .split {
     grid-template-columns: 1fr;
-  }
-
-  .screen img {
-    transform: none;
   }
 }
 
