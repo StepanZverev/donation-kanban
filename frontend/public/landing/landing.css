@@ -466,8 +466,8 @@ p {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 230px;
-  padding: 28px 270px 28px 28px; /* справа место под картинку */
+  min-height: 200px;
+  padding: 28px 36% 28px 28px; /* справа треть карточки под картинку */
   overflow: hidden; /* картинка в углу может вылезать за край — обрезаем */
   border: 1px solid var(--color-border);
   border-radius: 18px;
@@ -517,8 +517,8 @@ p {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 280px;
-  padding: 0 24px 0 0; /* запас под тени, иначе маска их обрежет */
+  width: 38%;
+  padding: 0 20px 0 0; /* запас под тени, иначе маска их обрежет */
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -529,6 +529,7 @@ p {
 }
 
 .feature-art > * {
+  scale: 0.8; /* картинки собраны крупнее, чем нужно в карточке */
   transform: rotateY(-24deg) rotateX(14deg) rotate(-4deg);
   transform-origin: right center;
   transition: transform 0.3s;
@@ -812,6 +813,7 @@ p {
 
   .feature-art {
     bottom: auto;
+    width: 280px;
     height: 220px;
     padding-top: 22px;
     align-items: flex-start;
@@ -819,6 +821,7 @@ p {
   }
 
   .feature-art > * {
+    scale: 1;
     transform-origin: right top;
   }
 }
