@@ -150,24 +150,12 @@ p {
 }
 
 .hero h1 {
-  margin-top: 18px;
   font-size: clamp(30px, 4vw, 46px);
 }
 
 /* Вторая половина заголовка — цветом бренда */
 .accent {
   color: var(--color-accent);
-}
-
-/* Плашка над заголовком */
-.tag {
-  display: inline-block;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-accent);
-  background-color: var(--color-accent-light);
 }
 
 /* Шаги «донат → делаешь → готово». Текущий шаг подсвечивается */
@@ -200,16 +188,14 @@ p {
   transform: scale(1.06);
 }
 
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px 20px;
-}
-
 .hint {
   font-size: 15px;
   color: var(--color-text-secondary);
+}
+
+/* Подпись под кнопкой */
+.hero-hint {
+  margin-top: 12px;
 }
 
 /* ---------- Живая доска на первом экране ---------- */
@@ -277,6 +263,36 @@ p {
 .board-card p {
   margin: 2px 0 0;
   font-size: 13px;
+}
+
+/* Карточку, которую тащит рука, видно над остальными */
+.board-card.dragged {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 12px 28px rgb(29 27 38 / 22%);
+}
+
+/* Курсор-рука. Белая с тёмной обводкой, как системный курсор */
+.board-hand {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.board-hand svg {
+  display: block;
+  fill: #ffffff;
+  stroke: #1d1b26;
+  stroke-width: 1.2;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 30%));
+  transition: transform 0.15s;
+}
+
+/* Схватила карточку — чуть сжимается */
+.board-hand.grabbing svg {
+  transform: scale(0.85);
 }
 
 /* Только что пришедший донат подсвечивается */
