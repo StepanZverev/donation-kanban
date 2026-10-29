@@ -158,34 +158,53 @@ p {
   color: var(--color-accent);
 }
 
-/* Шаги «донат → делаешь → готово». Текущий шаг подсвечивается */
+/* Три шага: номер в кружке, название и короткое пояснение. Номер текущего шага подсвечивается */
 .flow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
   margin: 28px 0 32px;
   padding: 0;
   list-style: none;
+  counter-reset: step;
 }
 
 .flow li {
-  padding: 10px 16px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 17px;
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
-  transition:
-    background-color 0.3s,
-    color 0.3s,
-    transform 0.3s;
+  position: relative;
+  margin: 14px 0;
+  padding-left: 50px;
+  counter-increment: step;
 }
 
-.flow li.active {
+.flow li::before {
+  content: counter(step);
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-weight: 700;
+  color: var(--color-accent);
+  background-color: var(--color-accent-light);
+  transition:
+    color 0.3s,
+    background-color 0.3s;
+}
+
+.flow li.active::before {
   color: var(--color-on-accent);
   background-color: var(--color-accent);
-  border-color: var(--color-accent);
-  transform: scale(1.06);
+}
+
+.flow b {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.flow span {
+  font-size: 16px;
+  color: var(--color-text-secondary);
 }
 
 .hint {

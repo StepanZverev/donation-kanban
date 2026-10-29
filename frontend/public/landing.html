@@ -65,11 +65,20 @@
           <div>
             <h1>Каждый донат — <span class="accent">задача на&nbsp;доске</span></h1>
 
-            <!-- Шаги подсвечиваются по очереди вместе с анимацией доски (landing/hero-board.js) -->
+            <!-- Номер шага подсвечивается вместе с анимацией доски (landing/hero-board.js) -->
             <ol class="flow">
-              <li data-step="donation">💸 Зритель донатит</li>
-              <li data-step="work">🎮 Ты делаешь</li>
-              <li data-step="done">✅ Готово</li>
+              <li data-step="donation">
+                <b>Зритель донатит</b>
+                <span>И пишет заказ в сообщении.</span>
+              </li>
+              <li data-step="board">
+                <b>Заказ попадает на доску</b>
+                <span>Карточкой в очередь. Сам.</span>
+              </li>
+              <li data-step="done">
+                <b>Ты выполняешь</b>
+                <span>И переносишь карточку в «Выполнено».</span>
+              </li>
             </ol>
 
             <a class="button" href="/app">Открыть доску</a>

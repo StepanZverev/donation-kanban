@@ -3,7 +3,7 @@
 //   1. приходит донат — в «Очереди» появляется карточка;
 //   2. курсор-рука перетаскивает верхнюю карточку в «В работе»;
 //   3. потом перетаскивает карточку из «В работе» в «Выполнено».
-// Вместе с этим подсвечиваются шаги под заголовком (.flow li).
+// Вместе с этим подсвечиваются номера шагов под заголовком (.flow li).
 
 // Донаты, которые по очереди «приходят» на доску: ник, сумма, уровень (цвет), текст
 const DONATIONS = [
@@ -50,15 +50,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function runForever() {
     while (true) {
+      // Шаг 1: зритель донатит
       highlightStep('donation')
+      await wait(STEP_PAUSE / 2)
+
+      // Шаг 2: заказ появляется в «Очереди»
+      highlightStep('board')
       addDonation()
       await wait(STEP_PAUSE)
 
-      highlightStep('work')
-      await dragCard(queue.firstElementChild, work)
-      await wait(STEP_PAUSE)
-
+      // Шаг 3: стример берёт заказ в работу, потом переносит готовый в «Выполнено»
       highlightStep('done')
+      await dragCard(queue.firstElementChild, work)
+      await wait(STEP_PAUSE / 2)
       await dragCard(work.lastElementChild, done)
       await wait(STEP_PAUSE)
     }
