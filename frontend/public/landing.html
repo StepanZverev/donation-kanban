@@ -44,6 +44,7 @@
       href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@600;700&display=swap"
     />
     <link rel="stylesheet" href="/landing/landing.css" />
+    <script src="/landing/hero-board.js" defer></script>
   </head>
 
   <body>
@@ -58,30 +59,52 @@
     </header>
 
     <main>
-      <!-- Первый экран: что это и кнопка -->
+      <!-- Первый экран: слева коротко что это и кнопка, справа доска, на которой сами двигаются карточки -->
       <section class="hero">
-        <div class="container">
-          <h1>Очередь заказов из&nbsp;донатов для&nbsp;стримеров</h1>
-          <p class="lead">
-            Донаты из DonationAlerts сами становятся карточками на канбан-доске. Видно, что заказали
-            зрители и в каком порядке, а заказы двигаются мышкой: из очереди в работу, из работы в
-            выполненные.
-          </p>
-          <div class="actions">
-            <a class="button" href="/app">Открыть доску</a>
-            <span class="hint">Без регистрации: доска откроется сразу, DonationAlerts подключишь потом</span>
+        <div class="container hero-row">
+          <div>
+            <span class="tag">Для стримеров на DonationAlerts</span>
+            <h1>Каждый донат — <span class="accent">задача на&nbsp;доске</span></h1>
+
+            <!-- Шаги подсвечиваются по очереди вместе с анимацией доски (landing/hero-board.js) -->
+            <ol class="flow">
+              <li data-step="donation">💸 Зритель донатит</li>
+              <li data-step="work">🎮 Ты делаешь</li>
+              <li data-step="done">✅ Готово</li>
+            </ol>
+
+            <div class="actions">
+              <a class="button" href="/app">Открыть доску</a>
+              <span class="hint">Бесплатно. Без регистрации.</span>
+            </div>
           </div>
 
-          <!-- picture: в тёмной теме системы показываем тёмный скриншот -->
-          <picture class="screenshot">
-            <source srcset="/landing/board-dark.webp" media="(prefers-color-scheme: dark)" />
-            <img
-              src="/landing/board-light.webp"
-              alt="Доска с колонками «Очередь», «В работе» и «Выполнено» и карточками донатов"
-              width="1920"
-              height="780"
-            />
-          </picture>
+          <!-- Доска нарисована обычным HTML, а не картинкой: так её можно оживить.
+               Карточки внутри двигает landing/hero-board.js -->
+          <div class="board-scene" aria-hidden="true">
+            <div class="board" id="hero-board">
+              <div class="board-column">
+                <div class="board-column-title">Очередь <span class="board-count"></span></div>
+                <div class="board-cards" data-column="queue">
+                  <div class="board-card level-top"><b>Dimon2007</b><span class="sum">1 000 ₽</span><p>Сыграй в Dark Souls без щита</p></div>
+                  <div class="board-card level-high"><b>Катя_стрим</b><span class="sum">500 ₽</span><p>Спой «Звезду по имени Солнце»</p></div>
+                  <div class="board-card level-mid"><b>ЛёхаПро</b><span class="sum">150 ₽</span><p>Расскажи, какая у тебя мышка</p></div>
+                </div>
+              </div>
+              <div class="board-column">
+                <div class="board-column-title">В работе <span class="board-count"></span></div>
+                <div class="board-cards" data-column="work">
+                  <div class="board-card level-high"><b>Вася</b><span class="sum">700 ₽</span><p>Пройди уровень без урона</p></div>
+                </div>
+              </div>
+              <div class="board-column">
+                <div class="board-column-title">Выполнено <span class="board-count"></span></div>
+                <div class="board-cards" data-column="done">
+                  <div class="board-card level-mid"><b>Олег</b><span class="sum">200 ₽</span><p>Поставь трек из нулевых</p></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
