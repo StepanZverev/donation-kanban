@@ -114,6 +114,26 @@
         </div>
       </section>
 
+      <!-- Страница для зрителей -->
+      <section class="section section-alt">
+        <div class="container split">
+          <div>
+            <h2>Зрители видят очередь</h2>
+            <p>Дай зрителям ссылку. Они увидят очередь заказов, правила и кнопку доната.</p>
+          </div>
+          <picture class="phone">
+            <source srcset="/landing/viewer-dark.webp" media="(prefers-color-scheme: dark)" />
+            <img
+              src="/landing/viewer-light.webp"
+              alt="Страница для зрителей на телефоне: статус стримера, кнопка «Предложить задачу» и очередь"
+              width="780"
+              height="1400"
+              loading="lazy"
+            />
+          </picture>
+        </div>
+      </section>
+
       <!-- Как это работает: три шага -->
       <section class="section">
         <div class="container">
@@ -140,33 +160,8 @@
         </div>
       </section>
 
-      <!-- Страница для зрителей -->
-      <section class="section section-alt">
-        <div class="container split">
-          <div>
-            <h2>Зрители видят очередь</h2>
-            <p>
-              Дай зрителям ссылку, например в описании канала или в панели под стримом. Они увидят
-              очередь заказов, правила и кнопку доната, а за своим ником можно следить: видно место в
-              очереди и сколько добавить до первого места.
-            </p>
-            <p>Ссылка только для просмотра: двигать карточки зрители не могут.</p>
-          </div>
-          <picture class="phone">
-            <source srcset="/landing/viewer-dark.webp" media="(prefers-color-scheme: dark)" />
-            <img
-              src="/landing/viewer-light.webp"
-              alt="Страница для зрителей на телефоне: статус стримера, кнопка «Предложить задачу» и очередь"
-              width="780"
-              height="1400"
-              loading="lazy"
-            />
-          </picture>
-        </div>
-      </section>
-
       <!-- Возможности -->
-      <section class="section">
+      <section class="section section-alt">
         <div class="container">
           <h2>Что ещё умеет</h2>
           <ul class="features">
@@ -202,7 +197,7 @@
       </section>
 
       <!-- Частые вопросы: details раскрывается по клику без всякого JavaScript -->
-      <section class="section section-alt">
+      <section class="section">
         <div class="container faq">
           <h2>Вопросы</h2>
           <details>
@@ -231,7 +226,7 @@
       </section>
 
       <!-- Последний призыв -->
-      <section class="section final">
+      <section class="section section-alt final">
         <div class="container">
           <h2>Попробуй на стриме</h2>
           <a class="button" href="/app">Открыть доску</a>

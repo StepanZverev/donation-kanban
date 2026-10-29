@@ -14,8 +14,10 @@ const DONATIONS = [
   ['Тёма', 250, 'mid', 'Покрутись на стуле'],
 ]
 
-// Пауза между шагами, в миллисекундах
-const STEP_PAUSE = 1400
+// Когда от начала круга загорается каждый шаг и сколько длится весь круг, в миллисекундах.
+// На шаг 3 времени больше: за него рука переносит две карточки
+const STEP_STARTS = { board: 2000, done: 4000 }
+const CYCLE_TIME = 9000
 // Сколько карточек помещается в колонку: лишние из «Выполнено» уходят
 const MAX_CARDS = 4
 
@@ -48,23 +50,27 @@ document.addEventListener('DOMContentLoaded', () => {
   updateCounts()
   runForever()
 
+  // Один круг идёт ровно CYCLE_TIME. Шаги переключаются в одно и то же время от начала круга
+  // (STEP_STARTS), сколько бы ни заняла анимация, — поэтому подсветка шагов не скачет.
   async function runForever() {
     while (true) {
+      const cycleStart = performance.now()
+
       // Шаг 1: зритель донатит
       highlightStep('donation')
-      await wait(STEP_PAUSE / 2)
 
       // Шаг 2: заказ появляется в «Очереди»
+      await waitUntil(cycleStart + STEP_STARTS.board)
       highlightStep('board')
       addDonation()
-      await wait(STEP_PAUSE)
 
       // Шаг 3: стример берёт заказ в работу, потом переносит готовый в «Выполнено»
+      await waitUntil(cycleStart + STEP_STARTS.done)
       highlightStep('done')
       await dragCard(queue.firstElementChild, work)
-      await wait(STEP_PAUSE / 2)
       await dragCard(work.lastElementChild, done)
-      await wait(STEP_PAUSE)
+
+      await waitUntil(cycleStart + CYCLE_TIME)
     }
   }
 
@@ -85,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
       easing: 'ease-out',
     })
     // Подсветка «новый донат» гаснет через пару секунд
-    setTimeout(() => card.classList.remove('new'), STEP_PAUSE * 2)
+    setTimeout(() => card.classList.remove('new'), 2500)
   }
 
   // Рука подходит к карточке, хватает её и тащит наверх другой колонки
@@ -195,4 +201,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function wait(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
+// Ждёт до момента moment (время в том же счёте, что performance.now())
+function waitUntil(moment) {
+  return wait(Math.max(0, moment - performance.now()))
 }
