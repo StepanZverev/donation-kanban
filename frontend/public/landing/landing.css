@@ -467,7 +467,7 @@ p {
   flex-direction: column;
   justify-content: center;
   min-height: 200px;
-  padding: 28px 36% 28px 28px; /* справа треть карточки под картинку */
+  padding: 28px 40% 28px 28px; /* справа 40% карточки под картинку */
   overflow: hidden; /* картинка в углу может вылезать за край — обрезаем */
   border: 1px solid var(--color-border);
   border-radius: 18px;
@@ -517,7 +517,7 @@ p {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 38%;
+  width: 42%;
   padding: 0 20px 0 0; /* запас под тени, иначе маска их обрежет */
   display: flex;
   align-items: center;
@@ -624,45 +624,70 @@ p {
   box-shadow: 0 10px 26px rgb(214 71 79 / 30%);
 }
 
-/* Правила: как блок «Как заказать» у зрителя, в миниатюре */
+/* Правила: блок «Как заказать» со страницы зрителя (OrderRules), только крупнее.
+   Картинку не уменьшаем и наклоняем слабее, чтобы текст читался */
+.feature-rules .feature-art {
+  width: 42%;
+  mask-image: linear-gradient(to left, #000 85%, transparent 100%);
+}
+
+.feature-rules .feature-art > * {
+  scale: 1;
+  transform: rotateY(-16deg) rotateX(8deg) rotate(-2deg);
+}
+
+.features li.feature-rules:hover .feature-art > * {
+  transform: rotateY(-8deg) rotateX(4deg) rotate(-1deg);
+}
+
 .art-rules {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  width: 190px;
-  padding: 10px 12px;
+  gap: 8px;
+  width: 200px;
+  padding: 12px 14px;
   border: 1px solid var(--color-border);
   border-radius: 12px;
   background-color: var(--color-surface);
   box-shadow: 0 12px 28px rgb(29 27 38 / 14%);
-  font-size: 11px;
+  font-size: 14px;
   color: var(--color-text);
 }
 
 .art-rules i {
   display: inline-block;
-  width: 12px;
+  width: 14px;
+  margin-right: 2px;
   font-style: normal;
   font-weight: 700;
   color: var(--color-accent);
 }
 
+.art-rules b {
+  font-weight: 600;
+}
+
 .art-rules-title {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--color-text-secondary);
 }
 
-.art-rules-note {
+/* Свои правила стримера — полоска слева, как в приложении */
+.art-rules-own {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-top: 2px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  background-color: var(--color-accent-light);
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid var(--color-accent);
+}
+
+.art-rules-own-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-accent);
 }
 
 /* Объединение: на карточку несут вторую, на первой появляется «+ Объединить» */
@@ -814,35 +839,31 @@ p {
   font-weight: 500;
 }
 
-/* На узком экране карточки друг под другом, картинка сверху справа, текст под ней */
+/* На узком экране карточки друг под другом: картинка стоит над текстом
+   обычным блоком, поэтому никогда на него не наезжает */
 @media (max-width: 900px) {
   .features {
     grid-template-columns: 1fr;
   }
 
   .features li {
-    justify-content: flex-end;
-    min-height: 320px;
+    justify-content: flex-start;
+    min-height: 0;
     padding: 24px;
   }
 
-  .feature-art {
-    bottom: auto;
-    width: 280px;
-    height: 220px;
-    padding-top: 22px;
-    align-items: flex-start;
-    mask-image: linear-gradient(to bottom left, #000 55%, transparent 95%);
+  .feature-art,
+  .feature-levels .feature-art,
+  .feature-rules .feature-art {
+    position: static;
+    width: auto;
+    margin-bottom: 20px;
+    padding: 0;
+    mask-image: none;
   }
 
   .feature-art > * {
     scale: 1;
-    transform-origin: right top;
-  }
-
-  .feature-levels .feature-art {
-    width: 300px;
-    mask-image: none;
   }
 }
 
