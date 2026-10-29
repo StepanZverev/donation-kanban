@@ -355,12 +355,7 @@ p {
 
 /* ---------- Разделы ---------- */
 .section {
-  padding: 64px 0;
-}
-
-/* Каждый второй раздел на чуть другом фоне, чтобы разделы не сливались */
-.section-alt {
-  background-color: var(--color-column);
+  padding: 104px 0;
 }
 
 /* Три шага с номерами в кружках */
@@ -392,53 +387,494 @@ p {
   background-color: var(--color-accent-light);
 }
 
-/* Текст слева, телефон справа; на узком экране — друг под другом */
+/* Текст слева, скриншот справа (как на первом экране); на узком экране — друг под другом */
 .split {
   display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 48px;
-  align-items: center;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
 }
 
-.phone img {
+/* Что получат зрители: пункты один под другим, как шаги на первом экране, только с галочкой вместо номера */
+.viewer-perks {
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.viewer-perks li {
+  position: relative;
+  margin: 14px 0;
+  padding-left: 50px;
+}
+
+.viewer-perks li::before {
+  content: '✓';
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-weight: 700;
+  color: var(--color-accent);
+  background-color: var(--color-accent-light);
+}
+
+.viewer-perks b {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.viewer-perks span {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+}
+
+.screen img {
   display: block;
   width: 100%;
   height: auto;
   border: 1px solid var(--color-border);
-  border-radius: 28px;
-  box-shadow: 0 20px 50px rgb(29 27 38 / 12%);
+  border-radius: 16px;
+  box-shadow: 0 24px 50px rgb(29 27 38 / 14%);
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .split {
     grid-template-columns: 1fr;
   }
-
-  .phone {
-    max-width: 320px;
-    margin: 0 auto;
-  }
 }
 
-/* Карточки возможностей */
+/* ---------- Карточки возможностей ---------- */
+/* Две широкие карточки в ряд: текст слева, картинка справа */
 .features {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* У каждой карточки свой цвет (--tint): им светится угол с картинкой */
 .features li {
-  padding: 20px 22px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 200px;
+  padding: 28px 40% 28px 28px; /* справа 40% карточки под картинку */
+  overflow: hidden; /* картинка в углу может вылезать за край — обрезаем */
   border: 1px solid var(--color-border);
-  border-radius: 14px;
-  background-color: var(--color-surface);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--tint) 24%, transparent), transparent 65%),
+    var(--color-surface);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.features li:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px color-mix(in srgb, var(--tint) 22%, transparent);
+}
+
+.features h3 {
+  font-size: 21px;
 }
 
 .features p {
   margin: 0;
+}
+
+.feature-moderators {
+  --tint: #7c4dff;
+}
+.feature-levels {
+  --tint: #e0a020;
+}
+.feature-rules {
+  --tint: #3f9a68;
+}
+.feature-merge {
+  --tint: #c04dd8;
+}
+.feature-live {
+  --tint: #12a594;
+}
+.feature-columns {
+  --tint: #2f80ed;
+}
+
+/* Картинка в правом верхнем углу: повёрнута в перспективе и тает к левому нижнему краю */
+.feature-art {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 42%;
+  padding: 0 20px 0 0; /* запас под тени, иначе маска их обрежет */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  perspective: 700px;
+  opacity: 0.92;
+  mask-image: linear-gradient(to left, #000 60%, transparent 100%);
+  pointer-events: none;
+}
+
+.feature-art > * {
+  scale: 0.8; /* картинки собраны крупнее, чем нужно в карточке */
+  transform: rotateY(-24deg) rotateX(14deg) rotate(-4deg);
+  transform-origin: right center;
+  transition: transform 0.3s;
+}
+
+/* При наведении картинка чуть выпрямляется */
+.features li:hover .feature-art > * {
+  transform: rotateY(-14deg) rotateX(8deg) rotate(-2deg);
+}
+
+/* Мини-карточка доски, из таких собраны картинки */
+.art-card {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border-left: 4px solid var(--level-color);
+  background-color: var(--color-surface);
+  box-shadow: 0 8px 20px rgb(29 27 38 / 14%);
+  font-size: 13px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.art-card b {
+  display: block;
+}
+
+.art-card .sum {
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  color: var(--level-color);
+}
+
+/* Модераторы: большой меч на фиолетовой плашке */
+.art-sword {
+  display: grid;
+  place-items: center;
+  width: 130px;
+  height: 130px;
+  border-radius: 30px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #a07bff, #6a3df0);
+  box-shadow: 0 20px 40px rgb(124 77 255 / 40%);
+}
+
+.art-sword svg {
+  width: 84px;
+  height: 84px;
+}
+
+/* Уровни: карточки лесенкой, каждая следующая больше и сдвинута левее */
+.art-levels {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.art-levels .art-card {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  border-left-width: 6px;
+  color: var(--color-text-secondary);
+}
+
+/* Размеры заметно растут от уровня к уровню. Картинку уровней не уменьшаем, как остальные,
+   иначе мелкая плашка станет нечитаемой */
+.feature-levels .feature-art > * {
+  scale: 1;
+}
+
+/* Большая плашка шире картинки — край у неё не растворяем, чтобы «от» читалось */
+.feature-levels .feature-art {
+  width: 46%;
+  mask-image: linear-gradient(to left, #000 85%, transparent 100%);
+}
+
+.art-levels .art-card:nth-child(1) {
+  font-size: 13px;
+}
+.art-levels .art-card:nth-child(2) {
+  margin-right: 14px;
+  padding: 9px 14px;
+  font-size: 17px;
+}
+.art-levels .art-card:nth-child(3) {
+  margin-right: 28px;
+  padding: 11px 16px;
+  font-size: 23px;
+  border-left-width: 7px;
+  box-shadow: 0 10px 26px rgb(214 71 79 / 30%);
+}
+
+/* Правила: блок «Как заказать» со страницы зрителя (OrderRules), только крупнее.
+   Картинку не уменьшаем и наклоняем слабее, чтобы текст читался */
+.feature-rules .feature-art {
+  width: 42%;
+  padding-right: 8px; /* ближе к краю карточки, подальше от текста */
+  mask-image: linear-gradient(to left, #000 85%, transparent 100%);
+}
+
+.feature-rules .feature-art > * {
+  scale: 1;
+  transform: rotateY(-16deg) rotateX(8deg) rotate(-2deg);
+}
+
+.features li.feature-rules:hover .feature-art > * {
+  transform: rotateY(-8deg) rotateX(4deg) rotate(-1deg);
+}
+
+.art-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  width: 172px;
+  padding: 11px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background-color: var(--color-surface);
+  box-shadow: 0 12px 28px rgb(29 27 38 / 14%);
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.art-rules i {
+  display: inline-block;
+  width: 14px;
+  margin-right: 2px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--color-accent);
+}
+
+.art-rules b {
+  font-weight: 600;
+}
+
+.art-rules-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+}
+
+/* Свои правила стримера — полоска слева, как в приложении */
+.art-rules-own {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid var(--color-accent);
+}
+
+.art-rules-own-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+/* Объединение: «Nyasha 200 ₽ + Nyasha 500 ₽», стрелка вниз и общая карточка на 700 ₽.
+   Как у правил: картинку не уменьшаем и наклоняем слабее, чтобы суммы читались */
+.feature-merge .feature-art {
+  width: 42%;
+  padding-right: 12px;
+  mask-image: linear-gradient(to left, #000 85%, transparent 100%);
+}
+
+.feature-merge .feature-art > * {
+  scale: 1;
+  transform: rotateY(-16deg) rotateX(8deg) rotate(-2deg);
+}
+
+.features li.feature-merge:hover .feature-art > * {
+  transform: rotateY(-8deg) rotateX(4deg) rotate(-1deg);
+}
+
+/* Две маленькие полупрозрачные карточки сзади, большая — спереди и чуть ниже */
+.art-merge {
+  position: relative;
+  width: 190px;
+  height: 132px;
+}
+
+.art-merge-part {
+  position: absolute;
+  padding: 6px 10px;
+  font-size: 12px;
+  opacity: 0.55;
+}
+
+.art-merge-part:nth-child(1) {
+  top: 0;
+  left: 0;
+  transform: rotate(-6deg);
+}
+
+.art-merge-part:nth-child(2) {
+  top: 8px;
+  left: 62px;
+  transform: rotate(4deg);
+}
+
+.art-merge-result {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  min-width: 150px;
+  padding: 10px 14px;
+  font-size: 17px;
+  box-shadow: 0 12px 28px rgb(214 71 79 / 30%);
+}
+
+.art-merge-result small {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Живые обновления: молния на бирюзовой плашке, как меч у модераторов */
+.art-bolt {
+  display: grid;
+  place-items: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 28px;
+  color: #ffffff;
+  background: linear-gradient(135deg, #3fd2bd, #0e8f80);
+  box-shadow: 0 20px 40px rgb(18 165 148 / 38%);
+}
+
+.art-bolt svg {
+  width: 72px;
+  height: 72px;
+}
+
+/* Колонки: три колонки, как в настройках. Крупно и почти без наклона, чтобы всё читалось */
+.feature-columns .feature-art {
+  width: 44%;
+  padding-right: 12px;
+  mask-image: none;
+}
+
+.feature-columns .feature-art > * {
+  scale: 1;
+  transform: rotateY(-14deg) rotateX(6deg) rotate(-1deg);
+}
+
+.features li.feature-columns:hover .feature-art > * {
+  transform: rotateY(-6deg) rotateX(3deg);
+}
+
+.art-columns {
+  display: flex;
+  gap: 8px;
+}
+
+.art-column {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 72px;
+  min-height: 145px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  box-shadow: 0 10px 24px rgb(29 27 38 / 12%);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Полоски — заглушки карточек */
+.art-column i {
+  height: 22px;
+  border-radius: 6px;
+  background-color: var(--color-column);
+}
+
+.art-column-fixed {
+  border-color: transparent;
+  background-color: var(--color-column);
+}
+
+.art-column-fixed i {
+  background-color: var(--color-surface);
+}
+
+/* Карандаш — в правом нижнем углу колонки */
+.art-column-edit {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 18px;
+  height: 18px;
+  color: #2f80ed;
+}
+
+.art-column-add {
+  justify-content: center;
+  align-items: center;
+  border: 2px dashed #2f80ed;
+  background-color: color-mix(in srgb, #2f80ed 8%, transparent);
+  box-shadow: none;
+  text-align: center;
+  color: #2f80ed;
+}
+
+.art-column-add b {
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* На узком экране карточки друг под другом: картинка стоит над текстом
+   обычным блоком, поэтому никогда на него не наезжает */
+@media (max-width: 900px) {
+  .features {
+    grid-template-columns: 1fr;
+  }
+
+  .features li {
+    justify-content: flex-start;
+    min-height: 0;
+    padding: 24px;
+  }
+
+  .feature-art,
+  .feature-levels .feature-art,
+  .feature-rules .feature-art,
+  .feature-merge .feature-art,
+  .feature-columns .feature-art {
+    position: static;
+    width: auto;
+    margin-bottom: 20px;
+    padding: 0;
+    mask-image: none;
+  }
+
+  .feature-art > * {
+    scale: 1;
+  }
 }
 
 /* Вопросы */

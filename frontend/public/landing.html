@@ -140,69 +140,144 @@
         </div>
       </section>
 
-      <!-- Страница для зрителей -->
-      <section class="section section-alt">
+      <!-- Страница для зрителей: текст слева, скриншот с телефона справа -->
+      <section class="section">
         <div class="container split">
           <div>
-            <h2>Зрители видят очередь</h2>
-            <p>
-              Дай зрителям ссылку, например в описании канала или в панели под стримом. Они увидят
-              очередь заказов, правила и кнопку доната, а за своим ником можно следить: видно место в
-              очереди и сколько добавить до первого места.
-            </p>
-            <p>Ссылка только для просмотра: двигать карточки зрители не могут.</p>
+            <h2>Поделись доской со&nbsp;зрителями</h2>
+            <p>Одна ссылка — и зрители видят всё, что происходит с заказами. Двигать карточки они не могут.</p>
+            <ul class="viewer-perks">
+              <li>
+                <b>Видят очередь</b>
+                <span>Что уже заказали и что ты делаешь сейчас</span>
+              </li>
+              <li>
+                <b>Понимают, как заказать</b>
+                <span>Правила и с какой суммы карточка заметнее</span>
+              </li>
+              <li>
+                <b>Следят за своим ником</b>
+                <span>Место в очереди и сколько добавить до первого</span>
+              </li>
+              <li>
+                <b>Донатят в один клик</b>
+                <span>Кнопка сразу ведёт на твой DonationAlerts</span>
+              </li>
+            </ul>
           </div>
-          <picture class="phone">
+          <!-- Верх страницы зрителя с телефона, низ обрезан -->
+          <picture class="screen">
             <source srcset="/landing/viewer-dark.webp" media="(prefers-color-scheme: dark)" />
             <img
               src="/landing/viewer-light.webp"
-              alt="Страница для зрителей на телефоне: статус стримера, кнопка «Предложить задачу» и очередь"
-              width="780"
-              height="1400"
+              alt="Страница для зрителей: статус стримера, кнопка «Предложить задачу», правила и очередь"
+              width="1170"
+              height="1500"
               loading="lazy"
             />
           </picture>
         </div>
       </section>
 
-      <!-- Возможности -->
+      <!-- Возможности. У каждой карточки в правом верхнем углу своя картинка под наклоном (.feature-art),
+           нарисованная обычным HTML и SVG, как доска на первом экране -->
       <section class="section">
         <div class="container">
           <h2>Что ещё умеет</h2>
           <ul class="features">
-            <li>
+            <li class="feature-moderators">
+              <div class="feature-art" aria-hidden="true">
+                <!-- Меч — значок модератора в приложении (SwordIcon в src/components/Icons) -->
+                <div class="art-sword">
+                  <svg viewBox="0 0 16 16" fill="none">
+                    <path d="M14 2l-.4 2.6-6.4 6.4-2.2-2.2 6.4-6.4z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" />
+                    <path d="M3.6 7.9l4.5 4.5M5.6 10.4l-3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                  </svg>
+                </div>
+              </div>
               <h3>Модераторы</h3>
               <p>Позови помощника по ссылке-приглашению, и он будет вести доску вместе с тобой.</p>
             </li>
-            <li>
+            <li class="feature-levels">
+              <div class="feature-art" aria-hidden="true">
+                <!-- Лесенка из карточек: чем больше сумма, тем выше и ярче -->
+                <div class="art-levels">
+                  <span class="art-card level-mid">от <b class="sum">100 ₽</b></span>
+                  <span class="art-card level-high">от <b class="sum">500 ₽</b></span>
+                  <span class="art-card level-top">от <b class="sum">1 000 ₽</b></span>
+                </div>
+              </div>
               <h3>Уровни приоритета</h3>
-              <p>Свои цвета и пороги сумм: от 100 ₽ — зелёная карточка, от 1000 ₽ — красная.</p>
+              <p>Сам выбирай цвета и суммы. Чем щедрее донат, тем ярче карточка и тем выше она в очереди.</p>
             </li>
-            <li>
+            <li class="feature-rules">
+              <div class="feature-art" aria-hidden="true">
+                <!-- Блок «Как заказать» со страницы зрителя: так же устроен, только крупнее -->
+                <div class="art-rules">
+                  <span class="art-rules-title">Как заказать</span>
+                  <span><i>₽</i> Донат <b>от 100 ₽</b></span>
+                  <div class="art-rules-own">
+                    <span class="art-rules-own-title">От стримера</span>
+                    Без спойлеров, пожалуйста 🙏
+                  </div>
+                </div>
+              </div>
               <h3>Правила приёма</h3>
-              <p>Минимальная сумма, запрет анонимов, пауза. Лишние донаты уйдут в историю, а не в очередь.</p>
+              <p>Минимальная сумма, без анонимов, свои правила для зрителей. Что не подходит, уйдёт в историю, а не в очередь.</p>
             </li>
-            <li>
+            <li class="feature-merge">
+              <div class="feature-art" aria-hidden="true">
+                <!-- Два доната одного зрителя (полупрозрачные, внахлёст) сложились в одну большую карточку -->
+                <div class="art-merge">
+                  <span class="art-card art-merge-part level-mid"><b>Nyasha</b><span class="sum">100 ₽</span></span>
+                  <span class="art-card art-merge-part level-high"><b>Nyasha</b><span class="sum">900 ₽</span></span>
+                  <span class="art-card art-merge-result level-top">
+                    <b>Nyasha</b><span class="sum">1 000 ₽</span>
+                    <small>2 доната</small>
+                  </span>
+                </div>
+              </div>
               <h3>Объединение донатов</h3>
               <p>Несколько донатов от одного зрителя можно склеить в одну карточку с общей суммой.</p>
             </li>
-            <li>
-              <h3>Звук и живые обновления</h3>
-              <p>Новый донат слышно на любой вкладке, а доска обновляется сама у всех, кто её открыл.</p>
-            </li>
-            <li>
-              <h3>Свои колонки</h3>
+            <li class="feature-live">
+              <div class="feature-art" aria-hidden="true">
+                <!-- Молния — «всё на лету» -->
+                <div class="art-bolt">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M13.5 2L4.5 13.5h6.5L9.5 22l9-11.5H12z" fill="currentColor" />
+                  </svg>
+                </div>
+              </div>
+              <h3>Всё обновляется на&nbsp;лету</h3>
               <p>
-                Добавляй колонки, переименовывай и меняй их порядок: «Песни», «Игры», «На потом» — как
-                удобно тебе.
+                Новый донат или перенесённая карточка сразу видны всем: тебе, модераторам и зрителям.
+                Ничего не нужно перезагружать.
               </p>
+            </li>
+            <li class="feature-columns">
+              <div class="feature-art" aria-hidden="true">
+                <!-- Кусочек настроек колонок: «Очередь», своя колонка с карандашом и «+ Новая» -->
+                <div class="art-columns">
+                  <div class="art-column art-column-fixed">Очередь<i></i><i></i><i></i></div>
+                  <div class="art-column">
+                    На потом<i></i>
+                    <svg class="art-column-edit" viewBox="0 0 16 16" fill="none">
+                      <path d="M10.5 2.5l3 3L5.5 13.5H2.5v-3zM9 4l3 3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                  <div class="art-column art-column-add"><b>+</b>Новая</div>
+                </div>
+              </div>
+              <h3>Свои колонки</h3>
+              <p>Добавляй колонки, переименовывай и меняй их порядок, как удобно тебе.</p>
             </li>
           </ul>
         </div>
       </section>
 
       <!-- Частые вопросы: details раскрывается по клику без всякого JavaScript -->
-      <section class="section section-alt">
+      <section class="section">
         <div class="container faq">
           <h2>Вопросы</h2>
           <details>
