@@ -18,6 +18,11 @@ export type Release = {
 
 export const CHANGELOG: Release[] = [
   {
+    version: '1.1.0',
+    date: '2026-10-29',
+    changes: ['Новый первый экран на главной: короче текст, а справа живая доска, на которой сами двигаются карточки.'],
+  },
+  {
     version: '1.0.0',
     date: '2026-10-27',
     changes: [

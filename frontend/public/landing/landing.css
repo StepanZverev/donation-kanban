@@ -137,20 +137,74 @@ p {
 
 /* ---------- Первый экран ---------- */
 .hero {
-  padding: 64px 0 72px;
+  padding: 64px 0 96px;
+  overflow: hidden; /* наклонённая доска не должна вылезать за край страницы */
 }
 
-.lead {
-  max-width: 720px;
-  margin: 20px 0 28px;
-  font-size: 19px;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
+/* Слева текст, справа доска */
+.hero-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
-  gap: 12px 20px;
+  gap: 40px;
+}
+
+.hero h1 {
+  font-size: clamp(30px, 4vw, 46px);
+}
+
+/* Вторая половина заголовка — цветом бренда */
+.accent {
+  color: var(--color-accent);
+}
+
+/* Три шага: номер в кружке, название и короткое пояснение. Номер текущего шага подсвечивается */
+.flow {
+  margin: 28px 0 32px;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.flow li {
+  position: relative;
+  margin: 14px 0;
+  padding-left: 50px;
+  counter-increment: step;
+}
+
+.flow li::before {
+  content: counter(step);
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-weight: 700;
+  color: var(--color-accent);
+  background-color: var(--color-accent-light);
+  transition:
+    color 0.3s,
+    background-color 0.3s;
+}
+
+.flow li.active::before {
+  color: var(--color-on-accent);
+  background-color: var(--color-accent);
+}
+
+.flow b {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.flow span {
+  font-size: 16px;
+  color: var(--color-text-secondary);
 }
 
 .hint {
@@ -158,14 +212,145 @@ p {
   color: var(--color-text-secondary);
 }
 
-.screenshot img {
+/* Подпись под кнопкой */
+.hero-hint {
+  margin-top: 12px;
+}
+
+/* ---------- Живая доска на первом экране ---------- */
+
+/* Доска чуть повёрнута, как будто лежит под углом */
+.board-scene {
+  perspective: 1400px;
+}
+
+.board {
+  position: relative; /* от неё скрипт меряет, где стоят карточки */
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  transform: rotateY(-12deg) rotateX(6deg);
+  transform-origin: left center;
+}
+
+.board-column {
+  padding: 12px 10px;
+  border-radius: 14px;
+  background-color: var(--color-column);
+  box-shadow: 0 24px 50px rgb(29 27 38 / 14%);
+}
+
+.board-column-title {
+  margin: 0 4px 10px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.board-count {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+
+/* Высота как у четырёх карточек: доска не прыгает, когда карточек становится больше */
+.board-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 410px;
+}
+
+.board-card {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border-left: 4px solid var(--level-color);
+  background-color: var(--color-surface);
+  box-shadow: 0 1px 3px rgb(29 27 38 / 8%);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.board-card b {
   display: block;
-  width: 100%;
-  height: auto;
-  margin-top: 48px;
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
-  box-shadow: 0 20px 50px rgb(29 27 38 / 12%);
+}
+
+.board-card .sum {
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  color: var(--level-color);
+}
+
+.board-card p {
+  margin: 2px 0 0;
+  font-size: 13px;
+}
+
+/* Карточку, которую тащит рука, видно над остальными */
+.board-card.dragged {
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 12px 28px rgb(29 27 38 / 22%);
+}
+
+/* Курсор-рука. Белая с тёмной обводкой, как системный курсор */
+.board-hand {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.board-hand svg {
+  display: block;
+  fill: #ffffff;
+  stroke: #1d1b26;
+  stroke-width: 1.2;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 30%));
+  transition: transform 0.15s;
+}
+
+/* Схватила карточку — чуть сжимается */
+.board-hand.grabbing svg {
+  transform: scale(0.85);
+}
+
+/* Только что пришедший донат подсвечивается */
+.board-card.new {
+  box-shadow: 0 0 0 2px var(--color-accent), 0 8px 24px rgb(124 77 255 / 35%);
+}
+
+/* Цвета уровней — как на настоящей доске (DEFAULT_PRIORITY_LEVELS в backend/app/defaults.py) */
+.level-low {
+  --level-color: #85839a;
+}
+.level-mid {
+  --level-color: #3f9a68;
+}
+.level-high {
+  --level-color: #c99a24;
+}
+.level-top {
+  --level-color: #d6474f;
+}
+
+/* На телефоне доска под текстом и без наклона */
+@media (max-width: 900px) {
+  .hero-row {
+    grid-template-columns: 1fr;
+  }
+
+  .board {
+    transform: none;
+  }
+
+  /* Колонки узкие: оставляем на карточках только ник и сумму */
+  .board-cards {
+    height: 250px;
+  }
+
+  .board-card p {
+    display: none;
+  }
 }
 
 /* ---------- Разделы ---------- */
