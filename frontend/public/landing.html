@@ -114,23 +114,37 @@
         </div>
       </section>
 
-      <!-- Страница для зрителей -->
-      <section class="section section-alt">
-        <div class="container split">
-          <div>
-            <h2>Зрители видят очередь</h2>
-            <p>Дай зрителям ссылку. Они увидят очередь заказов, правила и кнопку доната.</p>
+      <!-- Страница для зрителей: текст слева, скриншот справа — как на первом экране -->
+      <section class="section">
+        <div class="container">
+          <h2>Зрители видят очередь</h2>
+          <div class="split">
+            <div>
+              <p>Дай зрителям ссылку — в описании канала, в панели под стримом или в чате. По ней они увидят:</p>
+              <ul class="viewer-list">
+                <li>какие заказы уже в очереди и какие ты делаешь сейчас;</li>
+                <li>на месте ли ты и принимаешь ли сейчас заказы;</li>
+                <li>как заказать и с какой суммы карточка заметнее;</li>
+                <li>кнопку доната — сразу на твою страницу DonationAlerts.</li>
+              </ul>
+              <p>
+                Зритель может найти свой ник и следить за ним: видно место в очереди и сколько добавить до
+                первого места. Двигать карточки по ссылке нельзя — она только для просмотра.
+              </p>
+            </div>
+            <div class="screen-scene">
+              <picture class="screen">
+                <source srcset="/landing/viewer-desktop-dark.webp" media="(prefers-color-scheme: dark)" />
+                <img
+                  src="/landing/viewer-desktop-light.webp"
+                  alt="Страница для зрителей: статус стримера, правила, кнопка «Предложить задачу» и очередь заказов"
+                  width="2080"
+                  height="1400"
+                  loading="lazy"
+                />
+              </picture>
+            </div>
           </div>
-          <picture class="phone">
-            <source srcset="/landing/viewer-dark.webp" media="(prefers-color-scheme: dark)" />
-            <img
-              src="/landing/viewer-light.webp"
-              alt="Страница для зрителей на телефоне: статус стримера, кнопка «Предложить задачу» и очередь"
-              width="780"
-              height="1400"
-              loading="lazy"
-            />
-          </picture>
         </div>
       </section>
 
@@ -161,7 +175,7 @@
       </section>
 
       <!-- Возможности -->
-      <section class="section section-alt">
+      <section class="section">
         <div class="container">
           <h2>Что ещё умеет</h2>
           <ul class="features">
@@ -226,7 +240,7 @@
       </section>
 
       <!-- Последний призыв -->
-      <section class="section section-alt final">
+      <section class="section final">
         <div class="container">
           <h2>Попробуй на стриме</h2>
           <a class="button" href="/app">Открыть доску</a>

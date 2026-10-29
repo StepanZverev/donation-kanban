@@ -355,12 +355,7 @@ p {
 
 /* ---------- Разделы ---------- */
 .section {
-  padding: 64px 0;
-}
-
-/* Каждый второй раздел на чуть другом фоне, чтобы разделы не сливались */
-.section-alt {
-  background-color: var(--color-column);
+  padding: 104px 0;
 }
 
 /* Три шага с номерами в кружках */
@@ -392,31 +387,47 @@ p {
   background-color: var(--color-accent-light);
 }
 
-/* Текст слева, телефон справа; на узком экране — друг под другом */
+/* Текст слева, скриншот справа (как на первом экране); на узком экране — друг под другом */
 .split {
   display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 48px;
-  align-items: center;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: start;
 }
 
-.phone img {
+.viewer-list {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  color: var(--color-text-secondary);
+}
+
+.viewer-list li {
+  margin: 4px 0;
+}
+
+/* Скриншот повёрнут так же, как доска на первом экране */
+.screen-scene {
+  perspective: 1400px;
+}
+
+.screen img {
   display: block;
   width: 100%;
   height: auto;
   border: 1px solid var(--color-border);
-  border-radius: 28px;
-  box-shadow: 0 20px 50px rgb(29 27 38 / 12%);
+  border-radius: 16px;
+  box-shadow: 0 24px 50px rgb(29 27 38 / 14%);
+  transform: rotateY(-12deg) rotateX(6deg);
+  transform-origin: left center;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .split {
     grid-template-columns: 1fr;
   }
 
-  .phone {
-    max-width: 320px;
-    margin: 0 auto;
+  .screen img {
+    transform: none;
   }
 }
 
