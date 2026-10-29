@@ -708,48 +708,40 @@ p {
   transform: rotateY(-8deg) rotateX(4deg) rotate(-1deg);
 }
 
+/* Две маленькие полупрозрачные карточки сзади, большая — спереди и чуть ниже */
 .art-merge {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
+  position: relative;
+  width: 190px;
+  height: 132px;
 }
 
-.art-merge-parts {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.art-merge-parts .art-card {
+.art-merge-part {
+  position: absolute;
   padding: 6px 10px;
   font-size: 12px;
+  opacity: 0.55;
 }
 
-/* «+» и стрелка — в фиолетовых кружках, как «+ Объединить» на доске */
-.art-merge-plus,
-.art-merge-arrow {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  font-style: normal;
-  font-weight: 700;
-  font-size: 15px;
-  line-height: 1;
-  color: var(--color-on-accent);
-  background-color: var(--color-accent);
+.art-merge-part:nth-child(1) {
+  top: 0;
+  left: 0;
+  transform: rotate(-6deg);
 }
 
-/* Итоговая карточка крупнее и светится, как только что объединённая на доске */
+.art-merge-part:nth-child(2) {
+  top: 8px;
+  left: 62px;
+  transform: rotate(4deg);
+}
+
 .art-merge-result {
+  position: absolute;
+  right: 0;
+  bottom: 0;
   min-width: 150px;
   padding: 10px 14px;
-  font-size: 16px;
-  box-shadow:
-    0 0 0 2px var(--color-accent),
-    0 10px 26px rgb(124 77 255 / 35%);
+  font-size: 17px;
+  box-shadow: 0 12px 28px rgb(214 71 79 / 30%);
 }
 
 .art-merge-result small {
