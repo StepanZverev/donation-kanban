@@ -395,14 +395,38 @@ p {
   align-items: start;
 }
 
-.viewer-list {
-  margin: 0 0 12px;
-  padding-left: 20px;
-  color: var(--color-text-secondary);
+/* Что получат зрители: четыре плитки два на два */
+.viewer-perks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
-.viewer-list li {
-  margin: 4px 0;
+.viewer-perks li {
+  padding: 16px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background-color: var(--color-surface);
+}
+
+.perk-icon {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 24px;
+}
+
+.viewer-perks b {
+  display: block;
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+.viewer-perks span:last-child {
+  font-size: 15px;
+  color: var(--color-text-secondary);
 }
 
 .screen img {
@@ -416,6 +440,10 @@ p {
 
 @media (max-width: 900px) {
   .split {
+    grid-template-columns: 1fr;
+  }
+
+  .viewer-perks {
     grid-template-columns: 1fr;
   }
 }
