@@ -1,5 +1,5 @@
 # Образ бэкенда для сервера. Собирается командой из deploy/ (см. deploy/README.md).
-FROM python:3.13-slim
+FROM python:3.15-slim
 
 # Python не пишет .pyc-файлы и сразу выводит логи (иначе они копятся в буфере)
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
