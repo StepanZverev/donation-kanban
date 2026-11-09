@@ -1,12 +1,12 @@
-fastapi==0.143.0
+fastapi==0.162.0
 uvicorn[standard]==0.54.0
 # HTTP-запросы к API DonationAlerts
-httpx2==2.13.1
+httpx2==2.16.0
 # WebSocket-клиент для получения донатов в реальном времени
-websockets==17.2
+websockets==17.4
 # Чтение ключей из файла .env
 python-dotenv==1.2.4
 # Драйвер PostgreSQL: через него Python говорит с базой данных
-psycopg[binary]==3.3.6
+psycopg[binary]==3.3.8
 # Шифрование токенов DonationAlerts в базе (app/token_crypto.py)
 cryptography==50.0.2
